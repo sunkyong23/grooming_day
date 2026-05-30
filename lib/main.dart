@@ -61,6 +61,152 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+class CreatePostScreen extends StatefulWidget {
+  const CreatePostScreen({super.key});
+
+  @override
+  State<CreatePostScreen> createState() => _CreatePostScreenState();
+}
+
+class _CreatePostScreenState extends State<CreatePostScreen> {
+  final TextEditingController captionController = TextEditingController();
+
+  final List<String> tags = [
+    '아깽이',
+    '어른신',
+    '장난꾸러기',
+    '사랑스러운',
+    '귀여워',
+    '행복해',
+    '일상',
+    '평온한하루',
+    '식빵굽기',
+    '발라당',
+    '심기불편',
+    '사고뭉치',
+    '정말못말려',
+  ];
+
+  final List<String> selectedTags = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF7F1),
+        title: const Text('게시글 작성'),
+      ),
+
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+            Container(
+              height: 220,
+              width: double.infinity,
+
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+              ),
+
+              child: const Center(
+                child: Icon(Icons.add_photo_alternate, size: 60),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            TextField(
+              controller: captionController,
+
+              maxLines: 3,
+
+              decoration: InputDecoration(
+                hintText: '우리 냥이를 소개해 주세요 🐱',
+
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text('태그 선택 (최대 3개)'),
+
+            const SizedBox(height: 10),
+
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+
+              children: tags.map((tag) {
+                final selected = selectedTags.contains(tag);
+
+                return FilterChip(
+                  label: Text(
+                    tag,
+                    style: TextStyle(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected
+                          ? const Color(0xFF4A2B22)
+                          : const Color(0xFF8C6A5F),
+                    ),
+                  ),
+
+                  selected: selected,
+
+                  showCheckmark: false,
+
+                  selectedColor: const Color(0xFFFFE9DE),
+
+                  backgroundColor: Colors.white,
+
+                  side: BorderSide(
+                    color: selected
+                        ? const Color(0xFFF5A88B)
+                        : const Color(0xFFE8E1DB),
+                  ),
+
+                  onSelected: (_) {
+                    setState(() {
+                      if (selected) {
+                        selectedTags.remove(tag);
+                      } else {
+                        if (selectedTags.length < 3) {
+                          selectedTags.add(tag);
+                        }
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+
+            const Spacer(),
+
+            SizedBox(
+              width: double.infinity,
+
+              child: ElevatedButton(
+                onPressed: () {},
+
+                child: const Text('게시하기'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -424,14 +570,27 @@ class AddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 54,
-      height: 54,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFFDFAF),
-        shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CreatePostScreen()),
+        );
+      },
+
+      child: Container(
+        width: 54,
+        height: 54,
+        decoration: const BoxDecoration(
+          color: Color(0xFFFFDFAF),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.add_rounded,
+          size: 34,
+          color: Color(0xFF4A2B22),
+        ),
       ),
-      child: const Icon(Icons.add_rounded, size: 34, color: Color(0xFF4A2B22)),
     );
   }
 }
