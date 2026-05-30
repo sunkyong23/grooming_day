@@ -8,12 +8,14 @@ class Post {
   final String caption;
   final int likes;
   final List<String> tags;
+  final bool isAsset;
 
   const Post({
     required this.imagePath,
     required this.caption,
     required this.likes,
     required this.tags,
+    this.isAsset = true,
   });
 }
 
@@ -64,7 +66,9 @@ class _SplashScreenState extends State<SplashScreen> {
 }
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final Function(Post) onPostCreated;
+
+  const CreatePostScreen({super.key, required this.onPostCreated});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -225,7 +229,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
               child: ElevatedButton(
                 onPressed: () {
-                  print('게시하기 클릭!');
+                  if (selectedImage == null) return;
+
+                  final newPost = Post(
+                    imagePath: selectedImage!.path,
+                    caption: captionController.text,
+                    likes: 0,
+                    tags: selectedTags,
+                    isAsset: false,
+                  );
+
+                  widget.onPostCreated(newPost);
+
+                  Navigator.pop(context);
                 },
 
                 child: const Text('게시하기'),
@@ -284,11 +300,17 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  void addPost(Post post) {
+    setState(() {
+      posts.insert(0, post);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
-      bottomNavigationBar: const BottomNavBar(),
+      bottomNavigationBar: BottomNavBar(onPostCreated: addPost),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(22, 22, 22, 120),
@@ -312,6 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   caption: post.caption,
                   likes: post.likes,
                   tagText: post.tags.map((tag) => '#$tag').join('   '),
+                  isAsset: post.isAsset,
                 ),
               ),
             ),
@@ -433,6 +456,7 @@ class CatPostCard extends StatelessWidget {
   final String caption;
   final int likes;
   final String tagText;
+  final bool isAsset;
 
   const CatPostCard({
     super.key,
@@ -440,6 +464,7 @@ class CatPostCard extends StatelessWidget {
     required this.caption,
     required this.likes,
     required this.tagText,
+    required this.isAsset,
   });
 
   @override
@@ -501,12 +526,19 @@ class CatPostCard extends StatelessWidget {
           ),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: Image.asset(
-              imagePath,
-              width: double.infinity,
-              height: 260,
-              fit: BoxFit.cover,
-            ),
+            child: isAsset
+                ? Image.asset(
+                    imagePath,
+                    width: double.infinity,
+                    height: 260,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(imagePath),
+                    width: double.infinity,
+                    height: 260,
+                    fit: BoxFit.cover,
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
@@ -561,7 +593,9 @@ class CatPostCard extends StatelessWidget {
 }
 
 class BottomNavBar extends StatelessWidget {
-  const BottomNavBar({super.key});
+  final Function(Post) onPostCreated;
+
+  const BottomNavBar({super.key, required this.onPostCreated});
 
   @override
   Widget build(BuildContext context) {
@@ -582,14 +616,14 @@ class BottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          NavItem(icon: Icons.home_rounded, label: '홈', active: true),
-          NavItem(icon: Icons.search_rounded, label: '탐색'),
-          AddButton(),
-          NavItem(icon: Icons.bookmark_rounded, label: '꾹꾹'),
-          NavItem(icon: Icons.pets_rounded, label: '프로필'),
+          const NavItem(icon: Icons.home_rounded, label: '홈', active: true),
+          const NavItem(icon: Icons.search_rounded, label: '탐색'),
+          AddButton(onPostCreated: onPostCreated),
+          const NavItem(icon: Icons.bookmark_rounded, label: '꾹꾹'),
+          const NavItem(icon: Icons.pets_rounded, label: '프로필'),
         ],
       ),
     );
@@ -597,7 +631,9 @@ class BottomNavBar extends StatelessWidget {
 }
 
 class AddButton extends StatelessWidget {
-  const AddButton({super.key});
+  final Function(Post) onPostCreated;
+
+  const AddButton({super.key, required this.onPostCreated});
 
   @override
   Widget build(BuildContext context) {
@@ -605,7 +641,9 @@ class AddButton extends StatelessWidget {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const CreatePostScreen()),
+          MaterialPageRoute(
+            builder: (_) => CreatePostScreen(onPostCreated: onPostCreated),
+          ),
         );
       },
 
