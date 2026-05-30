@@ -346,6 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   likes: post.likes,
                   tagText: post.tags.map((tag) => '#$tag').join('   '),
                   isAsset: post.isAsset,
+                  createdAt: post.createdAt,
                 ),
               ),
             ),
@@ -468,6 +469,7 @@ class CatPostCard extends StatelessWidget {
   final int likes;
   final String tagText;
   final bool isAsset;
+  final DateTime createdAt;
 
   const CatPostCard({
     super.key,
@@ -476,6 +478,7 @@ class CatPostCard extends StatelessWidget {
     required this.likes,
     required this.tagText,
     required this.isAsset,
+    required this.createdAt,
   });
 
   @override
@@ -497,7 +500,7 @@ class CatPostCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Row(
-              children: const [
+              children: [
                 CircleAvatar(
                   radius: 17,
                   backgroundColor: Color(0xFFFFE2C6),
@@ -527,7 +530,7 @@ class CatPostCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '2026.05.25',
+                  "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}",
                   style: TextStyle(fontSize: 10, color: Color(0xFFC9AFA7)),
                 ),
                 SizedBox(width: 12),
@@ -631,6 +634,7 @@ class AlbumScreen extends StatelessWidget {
                     likes: post.likes,
                     tagText: post.tags.map((tag) => '#$tag').join('   '),
                     isAsset: post.isAsset,
+                    createdAt: post.createdAt,
                   ),
                 );
               }).toList(),
