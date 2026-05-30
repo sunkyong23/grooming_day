@@ -100,6 +100,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFFFFF7F1),
 
       appBar: AppBar(
@@ -107,147 +108,151 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         title: const Text('게시글 작성'),
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
 
-          children: [
-            GestureDetector(
-              onTap: () async {
-                print('사진 영역 클릭됨!');
-                final XFile? image = await picker.pickImage(
-                  source: ImageSource.gallery,
-                );
-
-                if (image != null) {
-                  setState(() {
-                    selectedImage = File(image.path);
-                  });
-                }
-              },
-
-              child: Container(
-                height: 220,
-                width: double.infinity,
-
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-
-                child: selectedImage == null
-                    ? const Center(
-                        child: Icon(Icons.add_photo_alternate, size: 60),
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.file(
-                          selectedImage!,
-                          width: double.infinity,
-                          height: 220,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: captionController,
-
-              maxLines: 3,
-
-              decoration: InputDecoration(
-                hintText: '우리 냥이를 소개해 주세요 🐱',
-
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text('태그 선택 (최대 3개)'),
-
-            const SizedBox(height: 10),
-
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-
-              children: tags.map((tag) {
-                final selected = selectedTags.contains(tag);
-
-                return FilterChip(
-                  label: Text(
-                    tag,
-                    style: TextStyle(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected
-                          ? const Color(0xFF4A2B22)
-                          : const Color(0xFF8C6A5F),
-                    ),
-                  ),
-
-                  selected: selected,
-
-                  showCheckmark: false,
-
-                  selectedColor: const Color(0xFFFFE9DE),
-
-                  backgroundColor: Colors.white,
-
-                  side: BorderSide(
-                    color: selected
-                        ? const Color(0xFFF5A88B)
-                        : const Color(0xFFE8E1DB),
-                  ),
-
-                  onSelected: (_) {
-                    setState(() {
-                      if (selected) {
-                        selectedTags.remove(tag);
-                      } else {
-                        if (selectedTags.length < 3) {
-                          selectedTags.add(tag);
-                        }
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-
-              child: ElevatedButton(
-                onPressed: () {
-                  if (selectedImage == null) return;
-
-                  final newPost = Post(
-                    imagePath: selectedImage!.path,
-                    caption: captionController.text,
-                    likes: 0,
-                    tags: selectedTags,
-                    isAsset: false,
+            children: [
+              GestureDetector(
+                onTap: () async {
+                  print('사진 영역 클릭됨!');
+                  final XFile? image = await picker.pickImage(
+                    source: ImageSource.gallery,
                   );
 
-                  widget.onPostCreated(newPost);
-
-                  Navigator.pop(context);
+                  if (image != null) {
+                    setState(() {
+                      selectedImage = File(image.path);
+                    });
+                  }
                 },
 
-                child: const Text('게시하기'),
+                child: Container(
+                  height: 220,
+                  width: double.infinity,
+
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+
+                  child: selectedImage == null
+                      ? const Center(
+                          child: Icon(Icons.add_photo_alternate, size: 60),
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.file(
+                            selectedImage!,
+                            width: double.infinity,
+                            height: 220,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+
+              TextField(
+                controller: captionController,
+
+                maxLines: 3,
+
+                decoration: InputDecoration(
+                  hintText: '우리 냥이를 소개해 주세요 🐱',
+
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text('태그 선택 (최대 3개)'),
+
+              const SizedBox(height: 10),
+
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+
+                children: tags.map((tag) {
+                  final selected = selectedTags.contains(tag);
+
+                  return FilterChip(
+                    label: Text(
+                      tag,
+                      style: TextStyle(
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selected
+                            ? const Color(0xFF4A2B22)
+                            : const Color(0xFF8C6A5F),
+                      ),
+                    ),
+
+                    selected: selected,
+
+                    showCheckmark: false,
+
+                    selectedColor: const Color(0xFFFFE9DE),
+
+                    backgroundColor: Colors.white,
+
+                    side: BorderSide(
+                      color: selected
+                          ? const Color(0xFFF5A88B)
+                          : const Color(0xFFE8E1DB),
+                    ),
+
+                    onSelected: (_) {
+                      setState(() {
+                        if (selected) {
+                          selectedTags.remove(tag);
+                        } else {
+                          if (selectedTags.length < 3) {
+                            selectedTags.add(tag);
+                          }
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 40),
+
+              SizedBox(
+                width: double.infinity,
+
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (selectedImage == null) return;
+
+                    final newPost = Post(
+                      imagePath: selectedImage!.path,
+                      caption: captionController.text,
+                      likes: 0,
+                      tags: selectedTags,
+                      isAsset: false,
+                    );
+
+                    widget.onPostCreated(newPost);
+
+                    Navigator.pop(context);
+                  },
+
+                  child: const Text('게시하기'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -310,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
-      bottomNavigationBar: BottomNavBar(onPostCreated: addPost),
+      bottomNavigationBar: BottomNavBar(onPostCreated: addPost, posts: posts),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(22, 22, 22, 120),
@@ -592,10 +597,51 @@ class CatPostCard extends StatelessWidget {
   }
 }
 
+class AlbumScreen extends StatelessWidget {
+  final List<Post> posts;
+
+  const AlbumScreen({super.key, required this.posts});
+
+  @override
+  Widget build(BuildContext context) {
+    final myPosts = posts.where((post) => !post.isAsset).toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF7F1),
+        title: const Text('나의 앨범'),
+      ),
+      body: myPosts.isEmpty
+          ? const Center(child: Text('아직 앨범에 담긴 게시글이 없어요 🐾'))
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: myPosts.map((post) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: CatPostCard(
+                    imagePath: post.imagePath,
+                    caption: post.caption,
+                    likes: post.likes,
+                    tagText: post.tags.map((tag) => '#$tag').join('   '),
+                    isAsset: post.isAsset,
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+}
+
 class BottomNavBar extends StatelessWidget {
   final Function(Post) onPostCreated;
+  final List<Post> posts;
 
-  const BottomNavBar({super.key, required this.onPostCreated});
+  const BottomNavBar({
+    super.key,
+    required this.onPostCreated,
+    required this.posts,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -622,7 +668,18 @@ class BottomNavBar extends StatelessWidget {
           const NavItem(icon: Icons.home_rounded, label: '홈', active: true),
           const NavItem(icon: Icons.search_rounded, label: '탐색'),
           AddButton(onPostCreated: onPostCreated),
-          const NavItem(icon: Icons.bookmark_rounded, label: '꾹꾹'),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AlbumScreen(posts: posts)),
+              );
+            },
+            child: const NavItem(
+              icon: Icons.photo_library_rounded,
+              label: '앨범',
+            ),
+          ),
           const NavItem(icon: Icons.pets_rounded, label: '프로필'),
         ],
       ),
