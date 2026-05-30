@@ -1,6 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+class Post {
+  final String imagePath;
+  final String caption;
+  final int likes;
+  final List<String> tags;
+
+  const Post({
+    required this.imagePath,
+    required this.caption,
+    required this.likes,
+    required this.tags,
+  });
+}
+
 void main() {
   runApp(const GroomingDayApp());
 }
@@ -47,9 +61,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final List<String> tags = const [
     '오늘의 😺',
     '아깽이',
@@ -65,6 +84,27 @@ class HomeScreen extends StatelessWidget {
     '심기불편',
     '사고뭉치',
     '정말못말려',
+  ];
+
+  final List<Post> posts = [
+    const Post(
+      imagePath: 'assets/images/cat1.png',
+      caption: '크아아아앙!!!! 내 하품을 받아라 ♡',
+      likes: 72,
+      tags: ['귀여워', '일상', '평온한하루'],
+    ),
+    const Post(
+      imagePath: 'assets/images/cat2.png',
+      caption: '노곤하당',
+      likes: 25,
+      tags: ['귀여워', '일상'],
+    ),
+    const Post(
+      imagePath: 'assets/images/cat1.png',
+      caption: '오늘도 우다다다다다 🐱',
+      likes: 99,
+      tags: ['장난꾸러기', '귀여워'],
+    ),
   ];
 
   @override
@@ -86,18 +126,17 @@ class HomeScreen extends StatelessWidget {
               children: tags.map((tag) => TagChip(text: tag)).toList(),
             ),
             const SizedBox(height: 24),
-            const CatPostCard(
-              imagePath: 'assets/images/cat1.png',
-              caption: '크아아아앙!!!! 내 하품을 받아라 ♡',
-              likes: 72,
-              tagText: '#귀여워   #일상   #평온한하루',
-            ),
-            const SizedBox(height: 18),
-            const CatPostCard(
-              imagePath: 'assets/images/cat2.png',
-              caption: '노곤하당',
-              likes: 25,
-              tagText: '#귀여워   #일상',
+
+            ...posts.map(
+              (post) => Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: CatPostCard(
+                  imagePath: post.imagePath,
+                  caption: post.caption,
+                  likes: post.likes,
+                  tagText: post.tags.map((tag) => '#$tag').join('   '),
+                ),
+              ),
             ),
           ],
         ),
@@ -556,7 +595,14 @@ class LoginScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           '처음 오셨나요? 집사 등록하기',
                           style: TextStyle(
@@ -662,6 +708,137 @@ class LoginInput extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class RegisterScreen extends StatelessWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Color(0xFF5A2C24),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              const Text(
+                '처음 뵙는 집사님!\n정말 반가워요 :)',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  height: 1.35,
+                  color: Color(0xFF351A14),
+                ),
+              ),
+
+              const SizedBox(height: 54),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.96),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFB58A7B).withOpacity(0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  children: [
+                    LoginInput(
+                      icon: Icons.person_outline_rounded,
+                      label: '아이디',
+                      hint: '사용할 아이디를 입력해주세요',
+                    ),
+                    SizedBox(height: 22),
+                    LoginInput(
+                      icon: Icons.lock_outline_rounded,
+                      label: '비밀번호',
+                      hint: '비밀번호를 입력해주세요',
+                      obscure: true,
+                    ),
+                    SizedBox(height: 22),
+                    LoginInput(
+                      icon: Icons.lock_outline_rounded,
+                      label: '비밀번호 확인',
+                      hint: '비밀번호를 다시 입력해주세요',
+                      obscure: true,
+                    ),
+                    SizedBox(height: 22),
+                    LoginInput(
+                      icon: Icons.email_outlined,
+                      label: '이메일',
+                      hint: '이메일을 입력해주세요',
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(),
+
+              SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE89078),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    '계정 생성하기',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    '이미 계정이 있으신가요?  로그인',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Color(0xFFE89078),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
