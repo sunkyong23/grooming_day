@@ -9,12 +9,14 @@ class Post {
   final int likes;
   final List<String> tags;
   final bool isAsset;
+  final DateTime createdAt;
 
-  const Post({
+  Post({
     required this.imagePath,
     required this.caption,
     required this.likes,
     required this.tags,
+    required this.createdAt,
     this.isAsset = true,
   });
 }
@@ -240,6 +242,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       caption: captionController.text,
                       likes: 0,
                       tags: selectedTags,
+                      createdAt: DateTime.now(),
                       isAsset: false,
                     );
 
@@ -285,23 +288,26 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List<Post> posts = [
-    const Post(
+    Post(
       imagePath: 'assets/images/cat1.png',
       caption: '크아아아앙!!!! 내 하품을 받아라 ♡',
       likes: 72,
       tags: ['귀여워', '일상', '평온한하루'],
+      createdAt: DateTime.now(),
     ),
-    const Post(
+    Post(
       imagePath: 'assets/images/cat2.png',
       caption: '노곤하당',
       likes: 25,
       tags: ['귀여워', '일상'],
+      createdAt: DateTime.now(),
     ),
-    const Post(
+    Post(
       imagePath: 'assets/images/cat1.png',
       caption: '오늘도 우다다다다다 🐱',
       likes: 99,
       tags: ['장난꾸러기', '귀여워'],
+      createdAt: DateTime.now(),
     ),
   ];
 
