@@ -224,7 +224,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               width: double.infinity,
 
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  print('게시하기 클릭!');
+                },
 
                 child: const Text('게시하기'),
               ),
