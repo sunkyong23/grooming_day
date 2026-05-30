@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:image_cropper/image_cropper.dart';
 
 class Post {
   final String imagePath;
@@ -10,6 +11,7 @@ class Post {
   final List<String> tags;
   final bool isAsset;
   final DateTime createdAt;
+  final double aspectRatio;
 
   Post({
     required this.imagePath,
@@ -17,6 +19,7 @@ class Post {
     required this.likes,
     required this.tags,
     required this.createdAt,
+    required this.aspectRatio,
     this.isAsset = true,
   });
 }
@@ -80,7 +83,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   File? selectedImage;
   final ImagePicker picker = ImagePicker();
   final TextEditingController captionController = TextEditingController();
-
+  double selectedAspectRatio = 4 / 5;
   final List<String> tags = [
     '아깽이',
     '어른신',
@@ -125,15 +128,71 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     source: ImageSource.gallery,
                   );
 
-                  if (image != null) {
+                  if (image == null) return;
+
+                  final ratio = await showModalBottomSheet<double>(
+                    context: context,
+                    builder: (context) {
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const ListTile(
+                              title: Text(
+                                '사진 비율 선택',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            ListTile(
+                              title: const Text('세로형 4:5'),
+                              onTap: () => Navigator.pop(context, 4 / 5),
+                            ),
+                            ListTile(
+                              title: const Text('가로형 4:3'),
+                              onTap: () => Navigator.pop(context, 4 / 3),
+                            ),
+                            ListTile(
+                              title: const Text('정사각형 1:1'),
+                              onTap: () => Navigator.pop(context, 1.0),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+
+                  if (ratio == null) return;
+
+                  selectedAspectRatio = ratio;
+
+                  final croppedFile = await ImageCropper().cropImage(
+                    sourcePath: image.path,
+                    aspectRatio: CropAspectRatio(
+                      ratioX: ratio == 4 / 3
+                          ? 4
+                          : ratio == 1.0
+                          ? 1
+                          : 4,
+                      ratioY: ratio == 4 / 3
+                          ? 3
+                          : ratio == 1.0
+                          ? 1
+                          : 5,
+                    ),
+                  );
+
+                  if (croppedFile != null) {
                     setState(() {
-                      selectedImage = File(image.path);
+                      selectedImage = File(croppedFile.path);
                     });
                   }
                 },
 
                 child: Container(
-                  height: 220,
+                  constraints: BoxConstraints(
+                    minHeight: selectedImage == null ? 220 : 0,
+                    maxHeight: selectedImage == null ? 260 : double.infinity,
+                  ),
                   width: double.infinity,
 
                   decoration: BoxDecoration(
@@ -150,7 +209,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           child: Image.file(
                             selectedImage!,
                             width: double.infinity,
-                            height: 220,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -243,6 +301,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       likes: 0,
                       tags: selectedTags,
                       createdAt: DateTime.now(),
+                      aspectRatio: selectedAspectRatio,
                       isAsset: false,
                     );
 
@@ -294,6 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
       likes: 72,
       tags: ['귀여워', '일상', '평온한하루'],
       createdAt: DateTime.now(),
+      aspectRatio: 4 / 5,
     ),
     Post(
       imagePath: 'assets/images/cat2.png',
@@ -301,6 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
       likes: 25,
       tags: ['귀여워', '일상'],
       createdAt: DateTime.now(),
+      aspectRatio: 4 / 5,
     ),
     Post(
       imagePath: 'assets/images/cat1.png',
@@ -308,6 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
       likes: 99,
       tags: ['장난꾸러기', '귀여워'],
       createdAt: DateTime.now(),
+      aspectRatio: 4 / 5,
     ),
   ];
 
@@ -544,14 +606,12 @@ class CatPostCard extends StatelessWidget {
                 ? Image.asset(
                     imagePath,
                     width: double.infinity,
-                    height: 260,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitWidth,
                   )
                 : Image.file(
                     File(imagePath),
                     width: double.infinity,
-                    height: 260,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fitWidth,
                   ),
           ),
           Padding(
