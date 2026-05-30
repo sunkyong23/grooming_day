@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class Post {
   final String imagePath;
@@ -69,6 +71,8 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
+  File? selectedImage;
+  final ImagePicker picker = ImagePicker();
   final TextEditingController captionController = TextEditingController();
 
   final List<String> tags = [
@@ -106,17 +110,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Container(
-              height: 220,
-              width: double.infinity,
+            GestureDetector(
+              onTap: () async {
+                print('사진 영역 클릭됨!');
+                final XFile? image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
 
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-              ),
+                if (image != null) {
+                  setState(() {
+                    selectedImage = File(image.path);
+                  });
+                }
+              },
 
-              child: const Center(
-                child: Icon(Icons.add_photo_alternate, size: 60),
+              child: Container(
+                height: 220,
+                width: double.infinity,
+
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+
+                child: selectedImage == null
+                    ? const Center(
+                        child: Icon(Icons.add_photo_alternate, size: 60),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.file(
+                          selectedImage!,
+                          width: double.infinity,
+                          height: 220,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
               ),
             ),
 
