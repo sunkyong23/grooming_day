@@ -436,14 +436,232 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFFF7F1),
-      body: Center(
-        child: Text(
-          '로그인 화면',
-          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 50, 28, 28),
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+
+              const Icon(
+                Icons.pets_rounded,
+                size: 72,
+                color: Color(0xFF5A2C24),
+              ),
+
+              const SizedBox(height: 18),
+
+              const Text(
+                '그루밍데이',
+                style: TextStyle(
+                  fontSize: 38,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF351A14),
+                  letterSpacing: -1,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              const Text(
+                'grooming day',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 3,
+                  color: Color(0xFF9B746A),
+                ),
+              ),
+
+              const Spacer(flex: 2),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.96),
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFB58A7B).withOpacity(0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const LoginInput(
+                      icon: Icons.person_outline_rounded,
+                      label: '아이디',
+                      hint: '아이디를 입력해주세요',
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    const LoginInput(
+                      icon: Icons.lock_outline_rounded,
+                      label: '비밀번호',
+                      hint: '비밀번호를 입력해주세요',
+                      obscure: true,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 58,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE89078),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const HomeScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          '집사 입장하기',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFFE89078),
+                          side: const BorderSide(
+                            color: Color(0xFFE89078),
+                            width: 1.4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                        ),
+                        onPressed: () {},
+                        child: const Text(
+                          '처음 오셨나요? 집사 등록하기',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 26),
+
+              TextButton(
+                onPressed: () {},
+                child: const Text(
+                  '비밀번호를 잊으셨나요?',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF6A352C),
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+
+              const Spacer(flex: 1),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class LoginInput extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String hint;
+  final bool obscure;
+
+  const LoginInput({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.hint,
+    this.obscure = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: const Color(0xFF6A352C), size: 26),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF351A14),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          obscureText: obscure,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFFD0B8AE)),
+            filled: true,
+            fillColor: const Color(0xFFFFF4EC),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 18,
+            ),
+            suffixIcon: obscure
+                ? const Icon(
+                    Icons.visibility_off_outlined,
+                    color: Color(0xFF9B746A),
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFF2D6C8)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: Color(0xFFF2D6C8)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(
+                color: Color(0xFFE89078),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
