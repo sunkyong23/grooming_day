@@ -7,9 +7,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Post {
-  final String imagePath;
+  final String id;
+  final String imageUrl;
   final String caption;
   final int likes;
   final List<String> tags;
@@ -21,7 +23,8 @@ class Post {
   bool isScrapped;
 
   Post({
-    required this.imagePath,
+    required this.id,
+    required this.imageUrl,
     required this.caption,
     required this.likes,
     required this.tags,
@@ -49,7 +52,7 @@ class GroomingDayApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      home: const SplashScreen(),
     );
   }
 }
@@ -264,7 +267,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const AuthGate()),
       (route) => false,
     );
   }
@@ -324,7 +327,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const AuthGate()),
       );
     });
   }
@@ -610,11 +613,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 width: double.infinity,
 
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (selectedImage == null) return;
 
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user == null) return;
+
+                    final postId = FirebaseFirestore.instance
+                        .collection('posts')
+                        .doc()
+                        .id;
+
+                    final storageRef = FirebaseStorage.instance
+                        .ref()
+                        .child('posts')
+                        .child(user.uid)
+                        .child('$postId.jpg');
+
+                    await storageRef.putFile(selectedImage!);
+
+                    final imageUrl = await storageRef.getDownloadURL();
+
                     final newPost = Post(
-                      imagePath: selectedImage!.path,
+                      id: postId,
+                      imageUrl: imageUrl,
                       caption: captionController.text,
                       likes: 0,
                       tags: selectedTags,
@@ -625,9 +647,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       isAsset: false,
                     );
 
+                    await FirebaseFirestore.instance
+                        .collection('posts')
+                        .doc(postId)
+                        .set({
+                          'id': postId,
+                          'imageUrl': imageUrl,
+                          'caption': captionController.text,
+                          'likes': 0,
+                          'tags': selectedTags,
+                          'createdAt': Timestamp.now(),
+                          'aspectRatio': selectedAspectRatio,
+                          'catName': '가을이',
+                          'userId': currentUserId,
+                          'ownerUid': user.uid,
+                        });
+
                     widget.onPostCreated(newPost);
 
-                    Navigator.pop(context);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
                   },
 
                   child: const Text('게시하기'),
@@ -670,7 +710,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Post> posts = [
     Post(
-      imagePath: 'assets/images/cat1.png',
+      id: 'sample1',
+      imageUrl: 'assets/images/cat1.png',
       caption: '크아아아앙!!!! 내 하품을 받아라 ♡',
       likes: 72,
       tags: ['귀여워', '일상', '평온한하루'],
@@ -678,9 +719,11 @@ class _HomeScreenState extends State<HomeScreen> {
       aspectRatio: 4 / 5,
       catName: '가을이',
       userId: 'groomingday23',
+      isAsset: true,
     ),
     Post(
-      imagePath: 'assets/images/cat2.png',
+      id: 'sample2',
+      imageUrl: 'assets/images/cat2.png',
       caption: '노곤하당',
       likes: 25,
       tags: ['귀여워', '일상'],
@@ -688,9 +731,11 @@ class _HomeScreenState extends State<HomeScreen> {
       aspectRatio: 4 / 5,
       catName: '모노',
       userId: 'monocat01',
+      isAsset: true,
     ),
     Post(
-      imagePath: 'assets/images/cat1.png',
+      id: 'sample3',
+      imageUrl: 'assets/images/cat1.png',
       caption: '오늘도 우다다다다다 🐱',
       likes: 99,
       tags: ['장난꾸러기', '귀여워'],
@@ -698,12 +743,48 @@ class _HomeScreenState extends State<HomeScreen> {
       aspectRatio: 4 / 5,
       catName: '누렁',
       userId: 'cat22',
+      isAsset: true,
     ),
   ];
 
   void addPost(Post post) {
     setState(() {
       posts.insert(0, post);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadPostsFromFirestore();
+  }
+
+  Future<void> loadPostsFromFirestore() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    final loadedPosts = snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return Post(
+        id: data['id'] ?? doc.id,
+        imageUrl: data['imageUrl'] ?? '',
+        caption: data['caption'] ?? '',
+        likes: data['likes'] ?? 0,
+        tags: List<String>.from(data['tags'] ?? []),
+        createdAt: (data['createdAt'] as Timestamp).toDate(),
+        aspectRatio: (data['aspectRatio'] ?? 4 / 5).toDouble(),
+        catName: data['catName'] ?? '가을이',
+        userId: data['userId'] ?? '',
+        isAsset: false,
+      );
+    }).toList();
+
+    setState(() {
+      posts.removeWhere((post) => !post.isAsset);
+      posts.insertAll(0, loadedPosts);
     });
   }
 
@@ -935,7 +1016,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     (post) => Padding(
                       padding: const EdgeInsets.only(bottom: 18),
                       child: CatPostCard(
-                        imagePath: post.imagePath,
+                        imagePath: post.imageUrl,
                         caption: post.caption,
                         likes: post.likes,
                         tagText: post.tags.map((tag) => '#$tag').join('   '),
@@ -1181,7 +1262,7 @@ class CatPostCard extends StatelessWidget {
                       maxScale: 4.0,
                       child: isAsset
                           ? Image.asset(imagePath)
-                          : Image.file(File(imagePath)),
+                          : Image.network(imagePath),
                     ),
                   ),
                 ),
@@ -1195,8 +1276,8 @@ class CatPostCard extends StatelessWidget {
                       width: double.infinity,
                       fit: BoxFit.fitWidth,
                     )
-                  : Image.file(
-                      File(imagePath),
+                  : Image.network(
+                      imagePath,
                       width: double.infinity,
                       fit: BoxFit.fitWidth,
                     ),
@@ -1288,7 +1369,7 @@ class AlbumScreen extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 18),
                   child: CatPostCard(
-                    imagePath: post.imagePath,
+                    imagePath: post.imageUrl,
                     caption: post.caption,
                     likes: post.likes,
                     tagText: post.tags.map((tag) => '#$tag').join('   '),
@@ -1591,7 +1672,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               color: Colors.white.withOpacity(0.92),
               borderRadius: BorderRadius.circular(22),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -1626,7 +1707,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               return ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(File(post.imagePath), fit: BoxFit.cover),
+                child: post.isAsset
+                    ? Image.asset(post.imageUrl, fit: BoxFit.cover)
+                    : Image.network(post.imageUrl, fit: BoxFit.cover),
               );
             },
           ),
@@ -1643,6 +1726,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           scrappedPosts.isEmpty
               ? const Text(
                   '아직 스크랩한 게시글이 없어요 🐾',
+
                   style: TextStyle(color: Color(0xFFB08678)),
                 )
               : GridView.builder(
@@ -1660,13 +1744,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: post.isAsset
-                          ? Image.asset(post.imagePath, fit: BoxFit.cover)
-                          : Image.file(File(post.imagePath), fit: BoxFit.cover),
+                          ? Image.asset(post.imageUrl, fit: BoxFit.cover)
+                          : Image.network(post.imageUrl, fit: BoxFit.cover),
                     );
                   },
                 ),
+
+          const SizedBox(height: 80),
+
+          Center(
+            child: TextButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+              child: const Text(
+                '로그아웃',
+                style: TextStyle(color: Color(0xFFB08678), fontSize: 14),
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasData) {
+          return const HomeScreen();
+        }
+
+        return const LoginScreen();
+      },
     );
   }
 }
