@@ -12,6 +12,8 @@ class Post {
   final bool isAsset;
   final DateTime createdAt;
   final double aspectRatio;
+  final String catName;
+  final String userId;
 
   Post({
     required this.imagePath,
@@ -20,6 +22,8 @@ class Post {
     required this.tags,
     required this.createdAt,
     required this.aspectRatio,
+    required this.catName,
+    required this.userId,
     this.isAsset = true,
   });
 }
@@ -302,6 +306,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       tags: selectedTags,
                       createdAt: DateTime.now(),
                       aspectRatio: selectedAspectRatio,
+                      catName: '가을이',
+                      userId: 'groomingday23',
                       isAsset: false,
                     );
 
@@ -354,6 +360,8 @@ class _HomeScreenState extends State<HomeScreen> {
       tags: ['귀여워', '일상', '평온한하루'],
       createdAt: DateTime.now(),
       aspectRatio: 4 / 5,
+      catName: '가을이',
+      userId: 'groomingday23',
     ),
     Post(
       imagePath: 'assets/images/cat2.png',
@@ -362,6 +370,8 @@ class _HomeScreenState extends State<HomeScreen> {
       tags: ['귀여워', '일상'],
       createdAt: DateTime.now(),
       aspectRatio: 4 / 5,
+      catName: '모노',
+      userId: 'monocat01',
     ),
     Post(
       imagePath: 'assets/images/cat1.png',
@@ -370,6 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
       tags: ['장난꾸러기', '귀여워'],
       createdAt: DateTime.now(),
       aspectRatio: 4 / 5,
+      catName: '누렁',
+      userId: 'cat22',
     ),
   ];
 
@@ -409,6 +421,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   tagText: post.tags.map((tag) => '#$tag').join('   '),
                   isAsset: post.isAsset,
                   createdAt: post.createdAt,
+                  catName: post.catName,
+                  userId: post.userId,
                 ),
               ),
             ),
@@ -532,6 +546,8 @@ class CatPostCard extends StatelessWidget {
   final String tagText;
   final bool isAsset;
   final DateTime createdAt;
+  final String catName;
+  final String userId;
 
   const CatPostCard({
     super.key,
@@ -541,6 +557,8 @@ class CatPostCard extends StatelessWidget {
     required this.tagText,
     required this.isAsset,
     required this.createdAt,
+    required this.catName,
+    required this.userId,
   });
 
   @override
@@ -574,7 +592,7 @@ class CatPostCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '가을이',
+                        catName,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
@@ -582,7 +600,7 @@ class CatPostCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'groomingday',
+                        '@${userId}',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFFB08678),
@@ -695,6 +713,8 @@ class AlbumScreen extends StatelessWidget {
                     tagText: post.tags.map((tag) => '#$tag').join('   '),
                     isAsset: post.isAsset,
                     createdAt: post.createdAt,
+                    catName: post.catName,
+                    userId: post.userId,
                   ),
                 );
               }).toList(),
@@ -750,7 +770,15 @@ class BottomNavBar extends StatelessWidget {
               label: '앨범',
             ),
           ),
-          const NavItem(icon: Icons.pets_rounded, label: '프로필'),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ProfileScreen(posts: posts)),
+              );
+            },
+            child: const NavItem(icon: Icons.pets_rounded, label: '프로필'),
+          ),
         ],
       ),
     );
@@ -1193,6 +1221,73 @@ class RegisterScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class ProfileScreen extends StatelessWidget {
+  final List<Post> posts;
+
+  const ProfileScreen({super.key, required this.posts});
+
+  @override
+  Widget build(BuildContext context) {
+    final myPosts = posts.where((post) => !post.isAsset).toList();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF7F1),
+        title: const Text('프로필'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(22),
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 38,
+                backgroundColor: Color(0xFFFFE2C6),
+                child: Text('🐱', style: TextStyle(fontSize: 34)),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '@groomingday23',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '게시글 ${myPosts.length}개',
+                    style: const TextStyle(color: Color(0xFFB08678)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.92),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '가을이',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                ),
+                SizedBox(height: 8),
+                Text('오늘도 귀여움으로 하루를 채우는 고양이 🐾'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
