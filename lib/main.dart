@@ -14,6 +14,7 @@ class Post {
   final double aspectRatio;
   final String catName;
   final String userId;
+  bool isScrapped;
 
   Post({
     required this.imagePath,
@@ -25,6 +26,7 @@ class Post {
     required this.catName,
     required this.userId,
     this.isAsset = true,
+    this.isScrapped = false,
   });
 }
 
@@ -423,6 +425,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   createdAt: post.createdAt,
                   catName: post.catName,
                   userId: post.userId,
+                  isScrapped: post.isScrapped,
+                  onScrapTap: () {
+                    setState(() {
+                      post.isScrapped = !post.isScrapped;
+                    });
+                  },
                 ),
               ),
             ),
@@ -548,6 +556,8 @@ class CatPostCard extends StatelessWidget {
   final DateTime createdAt;
   final String catName;
   final String userId;
+  final bool isScrapped;
+  final VoidCallback onScrapTap;
 
   const CatPostCard({
     super.key,
@@ -559,6 +569,8 @@ class CatPostCard extends StatelessWidget {
     required this.createdAt,
     required this.catName,
     required this.userId,
+    required this.isScrapped,
+    required this.onScrapTap,
   });
 
   @override
@@ -618,19 +630,40 @@ class CatPostCard extends StatelessWidget {
               ],
             ),
           ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: isAsset
-                ? Image.asset(
-                    imagePath,
-                    width: double.infinity,
-                    fit: BoxFit.fitWidth,
-                  )
-                : Image.file(
-                    File(imagePath),
-                    width: double.infinity,
-                    fit: BoxFit.fitWidth,
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                barrierColor: Colors.black87,
+                builder: (_) => GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: InteractiveViewer(
+                      minScale: 1.0,
+                      maxScale: 4.0,
+                      child: isAsset
+                          ? Image.asset(imagePath)
+                          : Image.file(File(imagePath)),
+                    ),
                   ),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: isAsset
+                  ? Image.asset(
+                      imagePath,
+                      width: double.infinity,
+                      fit: BoxFit.fitWidth,
+                    )
+                  : Image.file(
+                      File(imagePath),
+                      width: double.infinity,
+                      fit: BoxFit.fitWidth,
+                    ),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
@@ -647,10 +680,21 @@ class CatPostCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.bookmark_border_rounded,
-                      color: Color(0xFF9A6B60),
-                      size: 23,
+                    GestureDetector(
+                      onTap: onScrapTap,
+                      child: AnimatedScale(
+                        duration: const Duration(milliseconds: 200),
+                        scale: isScrapped ? 1.15 : 1.0,
+                        child: Icon(
+                          isScrapped
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_border_rounded,
+                          color: isScrapped
+                              ? const Color(0xFFFF8A7A)
+                              : const Color(0xFFC9B8AF),
+                          size: 23,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -715,6 +759,8 @@ class AlbumScreen extends StatelessWidget {
                     createdAt: post.createdAt,
                     catName: post.catName,
                     userId: post.userId,
+                    isScrapped: post.isScrapped,
+                    onScrapTap: () {},
                   ),
                 );
               }).toList(),
@@ -1234,6 +1280,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final myPosts = posts.where((post) => !post.isAsset).toList();
+    final scrappedPosts = posts.where((post) => post.isScrapped).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
@@ -1287,6 +1334,68 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            '내 게시글',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: myPosts.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 6,
+              mainAxisSpacing: 6,
+            ),
+            itemBuilder: (context, index) {
+              final post = myPosts[index];
+
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(File(post.imagePath), fit: BoxFit.cover),
+              );
+            },
+          ),
+
+          const SizedBox(height: 28),
+
+          const Text(
+            '스크랩',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+
+          const SizedBox(height: 12),
+
+          scrappedPosts.isEmpty
+              ? const Text(
+                  '아직 스크랩한 게시글이 없어요 🐾',
+                  style: TextStyle(color: Color(0xFFB08678)),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: scrappedPosts.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 6,
+                    mainAxisSpacing: 6,
+                  ),
+                  itemBuilder: (context, index) {
+                    final post = scrappedPosts[index];
+
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: post.isAsset
+                          ? Image.asset(post.imagePath, fit: BoxFit.cover)
+                          : Image.file(File(post.imagePath), fit: BoxFit.cover),
+                    );
+                  },
+                ),
         ],
       ),
     );
