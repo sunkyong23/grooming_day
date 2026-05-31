@@ -375,6 +375,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   ];
 
   final List<String> selectedTags = [];
+  String currentUserId = 'groomingday23';
   Future<File?> pickAndCropImage(ImageSource source) async {
     final XFile? image = await picker.pickImage(source: source);
 
@@ -394,8 +395,29 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   void initState() {
     super.initState();
 
+    loadCurrentUserId();
+
     if (widget.initialImage != null) {
       selectedImage = widget.initialImage;
+    }
+  }
+
+  Future<void> loadCurrentUserId() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (!mounted) return;
+
+    if (doc.exists) {
+      setState(() {
+        currentUserId = doc.data()?['userId'] ?? 'groomingday23';
+      });
     }
   }
 
@@ -599,7 +621,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       createdAt: DateTime.now(),
                       aspectRatio: selectedAspectRatio,
                       catName: '가을이',
-                      userId: 'groomingday23',
+                      userId: currentUserId,
                       isAsset: false,
                     );
 
