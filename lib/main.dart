@@ -97,7 +97,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   double selectedAspectRatio = 4 / 5;
   final List<String> tags = [
     '아깽이',
-    '어른신',
+    '어르신',
     '장난꾸러기',
     '사랑스러운',
     '귀여워',
@@ -365,9 +365,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final List<String> tags = const [
-    '오늘의 😺',
+    '오늘의',
     '아깽이',
-    '어른신',
+    '어르신',
     '장난꾸러기',
     '사랑스러운',
     '귀여워',
@@ -380,6 +380,8 @@ class _HomeScreenState extends State<HomeScreen> {
     '사고뭉치',
     '정말못말려',
   ];
+
+  String? selectedFeedTag = '오늘의';
 
   final List<Post> posts = [
     Post(
@@ -506,6 +508,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredPosts = selectedFeedTag == null
+        ? ([...posts]..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+        : selectedFeedTag == '오늘의'
+        ? ([...posts]..sort((a, b) => b.likes.compareTo(a.likes)))
+        : posts.where((post) => post.tags.contains(selectedFeedTag)).toList();
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       bottomNavigationBar: BottomNavBar(onPostCreated: addPost, posts: posts),
@@ -530,8 +537,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Row(
                             children: tags.map((tag) {
                               return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: TagChip(text: tag),
+                                padding: const EdgeInsets.only(right: 14),
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.translucent,
+                                  onTap: () {
+                                    setState(() {
+                                      selectedFeedTag = selectedFeedTag == tag
+                                          ? null
+                                          : tag;
+                                    });
+                                  },
+                                  child: TagChip(
+                                    key: ValueKey(tag),
+                                    text: tag,
+                                    isSelected: selectedFeedTag == tag,
+                                  ),
+                                ),
                               );
                             }).toList(),
                           ),
@@ -578,7 +599,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                       mainAxisSpacing: 10,
                                       childAspectRatio: 2.5,
                                       children: tags.map((tag) {
-                                        return TagChip(text: tag);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedFeedTag =
+                                                  selectedFeedTag == tag
+                                                  ? null
+                                                  : tag;
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                          child: TagChip(
+                                            key: ValueKey('sheet_$tag'),
+                                            text: tag,
+                                            isSelected: selectedFeedTag == tag,
+                                          ),
+                                        );
                                       }).toList(),
                                     ),
                                   ],
@@ -588,21 +624,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFE2C6),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            '전체보기',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF8A5A4F),
-                            ),
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.grid_view_rounded,
+                            size: 20,
+                            color: Color(0xFF8A756C),
                           ),
                         ),
                       ),
@@ -620,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const SizedBox(height: 24),
 
-                  ...posts.map(
+                  ...filteredPosts.map(
                     (post) => Padding(
                       padding: const EdgeInsets.only(bottom: 18),
                       child: CatPostCard(
@@ -735,29 +761,39 @@ class SoftDivider extends StatelessWidget {
 
 class TagChip extends StatelessWidget {
   final String text;
+  final bool isSelected;
 
-  const TagChip({super.key, required this.text});
+  const TagChip({super.key, required this.text, this.isSelected = false});
 
   @override
   Widget build(BuildContext context) {
-    final bool selected = text.contains('오늘의');
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFFFFE4DE) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: selected ? const Color(0xFFFFA09A) : const Color(0xFFF5E5DD),
-        ),
+        color: isSelected ? const Color(0xFFFFF0E7) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: selected ? const Color(0xFFE57373) : const Color(0xFF5D3B34),
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              letterSpacing: -0.3,
+              color: isSelected
+                  ? const Color(0xFF3D241E)
+                  : const Color(0xFF6A554B),
+            ),
+          ),
+
+          if (text == '오늘의') ...[
+            const SizedBox(width: 4),
+
+            Image.asset('assets/icons/today_cat.png', width: 16, height: 16),
+          ],
+        ],
       ),
     );
   }
