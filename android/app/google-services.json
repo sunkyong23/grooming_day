@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "683237863646",
+    "project_id": "grooming-day-49863",
+    "storage_bucket": "grooming-day-49863.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683237863646:android:65aecf73286858c31a124f",
+        "android_client_info": {
+          "package_name": "com.example.grooming_day"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByx7sIlOWZ5W7b50cCGg4eLSkzD3UxNfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
