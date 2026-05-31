@@ -78,8 +78,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
 class CreatePostScreen extends StatefulWidget {
   final Function(Post) onPostCreated;
+  final File? initialImage;
 
-  const CreatePostScreen({super.key, required this.onPostCreated});
+  const CreatePostScreen({
+    super.key,
+    required this.onPostCreated,
+    this.initialImage,
+  });
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -107,8 +112,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   ];
 
   final List<String> selectedTags = [];
+  Future<File?> pickAndCropImage(ImageSource source) async {
+    final XFile? image = await picker.pickImage(source: source);
+
+    if (image == null) return null;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: image.path,
+      aspectRatio: const CropAspectRatio(ratioX: 4, ratioY: 5),
+    );
+
+    if (croppedFile == null) return null;
+
+    return File(croppedFile.path);
+  }
 
   @override
+  void initState() {
+    super.initState();
+
+    if (widget.initialImage != null) {
+      selectedImage = widget.initialImage;
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -150,12 +177,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               ),
                             ),
                             ListTile(
-                              title: const Text('세로형 4:5'),
-                              onTap: () => Navigator.pop(context, 4 / 5),
-                            ),
-                            ListTile(
                               title: const Text('가로형 4:3'),
                               onTap: () => Navigator.pop(context, 4 / 3),
+                            ),
+                            ListTile(
+                              title: const Text('세로형 4:5'),
+                              onTap: () => Navigator.pop(context, 4 / 5),
                             ),
                             ListTile(
                               title: const Text('정사각형 1:1'),
@@ -393,45 +420,228 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> openCameraAndCreatePost() async {
+    final picker = ImagePicker();
+
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image == null) return;
+
+    final CropAspectRatio? selectedRatio =
+        await showModalBottomSheet<CropAspectRatio>(
+          context: context,
+          backgroundColor: const Color(0xFFFFF7F1),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          builder: (_) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '사진 비율 선택',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 18),
+
+                  ListTile(
+                    leading: const Icon(Icons.crop_landscape),
+                    title: const Text('가로 4:3'),
+                    onTap: () {
+                      Navigator.pop(
+                        context,
+                        const CropAspectRatio(ratioX: 4, ratioY: 3),
+                      );
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.crop_portrait),
+                    title: const Text('세로 4:5'),
+                    onTap: () {
+                      Navigator.pop(
+                        context,
+                        const CropAspectRatio(ratioX: 4, ratioY: 5),
+                      );
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.crop_square),
+                    title: const Text('정사각형 1:1'),
+                    onTap: () {
+                      Navigator.pop(
+                        context,
+                        const CropAspectRatio(ratioX: 1, ratioY: 1),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+
+    if (selectedRatio == null) return;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: image.path,
+      aspectRatio: selectedRatio,
+    );
+
+    if (croppedFile == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreatePostScreen(
+          onPostCreated: addPost,
+          initialImage: File(croppedFile.path),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       bottomNavigationBar: BottomNavBar(onPostCreated: addPost, posts: posts),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(22, 22, 22, 120),
+        child: Column(
           children: [
-            const Header(),
-            const SizedBox(height: 22),
-            const SoftDivider(),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 10,
-              children: tags.map((tag) => TagChip(text: tag)).toList(),
-            ),
-            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Header(onCameraTap: openCameraAndCreatePost),
+                  const SizedBox(height: 14),
+                  Container(height: 1, color: const Color(0xFFE9DDD4)),
 
-            ...posts.map(
-              (post) => Padding(
-                padding: const EdgeInsets.only(bottom: 18),
-                child: CatPostCard(
-                  imagePath: post.imagePath,
-                  caption: post.caption,
-                  likes: post.likes,
-                  tagText: post.tags.map((tag) => '#$tag').join('   '),
-                  isAsset: post.isAsset,
-                  createdAt: post.createdAt,
-                  catName: post.catName,
-                  userId: post.userId,
-                  isScrapped: post.isScrapped,
-                  onScrapTap: () {
-                    setState(() {
-                      post.isScrapped = !post.isScrapped;
-                    });
-                  },
-                ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: tags.map((tag) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: TagChip(text: tag),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: const Color(0xFFFFF7F1),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(28),
+                              ),
+                            ),
+                            builder: (_) {
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  22,
+                                  20,
+                                  22,
+                                  30,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      '태그 전체보기',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF3D241E),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GridView.count(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 10,
+                                      childAspectRatio: 2.5,
+                                      children: tags.map((tag) {
+                                        return TagChip(text: tag);
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE2C6),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '전체보기',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF8A5A4F),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
+                children: [
+                  const SizedBox(height: 24),
+
+                  ...posts.map(
+                    (post) => Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: CatPostCard(
+                        imagePath: post.imagePath,
+                        caption: post.caption,
+                        likes: post.likes,
+                        tagText: post.tags.map((tag) => '#$tag').join('   '),
+                        isAsset: post.isAsset,
+                        createdAt: post.createdAt,
+                        catName: post.catName,
+                        userId: post.userId,
+                        isScrapped: post.isScrapped,
+                        onScrapTap: () {
+                          setState(() {
+                            post.isScrapped = !post.isScrapped;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -442,17 +652,19 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class Header extends StatelessWidget {
-  const Header({super.key});
+  final VoidCallback onCameraTap;
+
+  const Header({super.key, required this.onCameraTap});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: const [
+      children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 '그루밍데이',
                 style: TextStyle(
                   fontSize: 27,
@@ -460,7 +672,7 @@ class Header extends StatelessWidget {
                   color: Color(0xFF351A14),
                 ),
               ),
-              SizedBox(height: 6),
+              const SizedBox(height: 6),
               Text(
                 '오늘도 너와 함께하는 하루',
                 style: TextStyle(fontSize: 16, color: Color(0xFF5E3D35)),
@@ -470,7 +682,7 @@ class Header extends StatelessWidget {
         ),
         HeaderIcon(icon: Icons.notifications_none_rounded),
         SizedBox(width: 10),
-        HeaderIcon(icon: Icons.photo_camera_outlined),
+        HeaderIcon(icon: Icons.photo_camera_outlined, onTap: onCameraTap),
       ],
     );
   }
@@ -478,19 +690,23 @@ class Header extends StatelessWidget {
 
 class HeaderIcon extends StatelessWidget {
   final IconData icon;
+  final VoidCallback? onTap;
 
-  const HeaderIcon({super.key, required this.icon});
+  const HeaderIcon({super.key, required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEACB),
-        borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        width: 52,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFDCD1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(icon, color: const Color(0xFF7A4A42), size: 23),
       ),
-      child: Icon(icon, color: const Color(0xFF7A4A42), size: 23),
     );
   }
 }
