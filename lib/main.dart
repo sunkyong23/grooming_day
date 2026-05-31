@@ -6,6 +6,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Post {
   final String imagePath;
@@ -242,12 +243,22 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final userIdController = TextEditingController();
 
   Future<void> register() async {
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    final userCredential = await FirebaseAuth.instance
+        .createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+
+    final uid = userCredential.user!.uid;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'email': emailController.text.trim(),
+      'userId': userIdController.text.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
 
     if (!mounted) return;
 
@@ -271,6 +282,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         padding: const EdgeInsets.all(28),
         child: Column(
           children: [
+            TextField(
+              controller: userIdController,
+              decoration: const InputDecoration(hintText: '아이디'),
+            ),
+            const SizedBox(height: 14),
+
             TextField(
               controller: emailController,
               decoration: const InputDecoration(hintText: '이메일'),
