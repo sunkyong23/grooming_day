@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Post {
   final String imagePath;
@@ -48,6 +49,245 @@ class GroomingDayApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SplashScreen(),
+    );
+  }
+}
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future<void> login() async {
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(30, 80, 30, 36),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 70),
+
+                const Center(
+                  child: Text(
+                    '그루밍데이',
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -2,
+                      color: Color(0xFF3D241E),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                const Center(
+                  child: Text(
+                    '오늘도 너와 함께하는 하루',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF7A5B50),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 52),
+
+                _LoginInput(
+                  controller: emailController,
+                  hintText: '이메일',
+                  icon: Icons.mail_outline_rounded,
+                ),
+
+                const SizedBox(height: 14),
+
+                _LoginInput(
+                  controller: passwordController,
+                  hintText: '비밀번호',
+                  icon: Icons.lock_outline_rounded,
+                  obscureText: true,
+                ),
+
+                const SizedBox(height: 28),
+
+                Center(
+                  child: SizedBox(
+                    width: 220,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD9C9),
+                        foregroundColor: const Color(0xFF5A3A31),
+                        elevation: 4,
+                        shadowColor: Colors.black.withOpacity(0.12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                      ),
+                      child: const Text(
+                        '집사 입장하기',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RegisterScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      '처음 오셨나요? 집사 등록하기',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8A756C),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hintText;
+  final IconData icon;
+  final bool obscureText;
+
+  const _LoginInput({
+    required this.controller,
+    required this.hintText,
+    required this.icon,
+    this.obscureText = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.72),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFF0DDD2), width: 1),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: const Color(0xFF9B7A70)),
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            color: Color(0xFFB79B92),
+            fontWeight: FontWeight.w500,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 17),
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  Future<void> register() async {
+    await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      appBar: AppBar(
+        title: const Text('집사 등록하기'),
+        backgroundColor: const Color(0xFFFFF7F1),
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          children: [
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(hintText: '이메일'),
+            ),
+            const SizedBox(height: 14),
+
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(hintText: '비밀번호'),
+            ),
+            const SizedBox(height: 28),
+
+            ElevatedButton(onPressed: register, child: const Text('집사 등록 완료')),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1157,175 +1397,6 @@ class NavItem extends StatelessWidget {
   }
 }
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF7F1),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 50, 28, 28),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-
-              const Icon(
-                Icons.pets_rounded,
-                size: 72,
-                color: Color(0xFF5A2C24),
-              ),
-
-              const SizedBox(height: 18),
-
-              const Text(
-                '그루밍데이',
-                style: TextStyle(
-                  fontSize: 38,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF351A14),
-                  letterSpacing: -1,
-                ),
-              ),
-
-              const SizedBox(height: 6),
-
-              const Text(
-                'grooming day',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 3,
-                  color: Color(0xFF9B746A),
-                ),
-              ),
-
-              const Spacer(flex: 2),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.96),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFB58A7B).withOpacity(0.12),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const LoginInput(
-                      icon: Icons.person_outline_rounded,
-                      label: '아이디',
-                      hint: '아이디를 입력해주세요',
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    const LoginInput(
-                      icon: Icons.lock_outline_rounded,
-                      label: '비밀번호',
-                      hint: '비밀번호를 입력해주세요',
-                      obscure: true,
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 58,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE89078),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const HomeScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '집사 입장하기',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFFE89078),
-                          side: const BorderSide(
-                            color: Color(0xFFE89078),
-                            width: 1.4,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '처음 오셨나요? 집사 등록하기',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 26),
-
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  '비밀번호를 잊으셨나요?',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF6A352C),
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-
-              const Spacer(flex: 1),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class LoginInput extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1395,137 +1466,6 @@ class LoginInput extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class RegisterScreen extends StatelessWidget {
-  const RegisterScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF7F1),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 44, 28, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Color(0xFF5A2C24),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                '처음 뵙는 집사님!\n정말 반가워요 :)',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w900,
-                  height: 1.35,
-                  color: Color(0xFF351A14),
-                ),
-              ),
-
-              const SizedBox(height: 54),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.96),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFB58A7B).withOpacity(0.12),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  children: [
-                    LoginInput(
-                      icon: Icons.person_outline_rounded,
-                      label: '아이디',
-                      hint: '사용할 아이디를 입력해주세요',
-                    ),
-                    SizedBox(height: 22),
-                    LoginInput(
-                      icon: Icons.lock_outline_rounded,
-                      label: '비밀번호',
-                      hint: '비밀번호를 입력해주세요',
-                      obscure: true,
-                    ),
-                    SizedBox(height: 22),
-                    LoginInput(
-                      icon: Icons.lock_outline_rounded,
-                      label: '비밀번호 확인',
-                      hint: '비밀번호를 다시 입력해주세요',
-                      obscure: true,
-                    ),
-                    SizedBox(height: 22),
-                    LoginInput(
-                      icon: Icons.email_outlined,
-                      label: '이메일',
-                      hint: '이메일을 입력해주세요',
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
-
-              SizedBox(
-                width: double.infinity,
-                height: 58,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE89078),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    '계정 생성하기',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    '이미 계정이 있으신가요?  로그인',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFFE89078),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
