@@ -1487,15 +1487,47 @@ class LoginInput extends StatelessWidget {
   }
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
 
   const ProfileScreen({super.key, required this.posts});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String userId = '로딩중...';
+
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (doc.exists) {
+      setState(() {
+        userId = doc['userId'];
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final myPosts = posts.where((post) => !post.isAsset).toList();
-    final scrappedPosts = posts.where((post) => post.isScrapped).toList();
+    final myPosts = widget.posts.where((post) => !post.isAsset).toList();
+    final scrappedPosts = widget.posts
+        .where((post) => post.isScrapped)
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
@@ -1517,8 +1549,8 @@ class ProfileScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '@groomingday23',
+                  Text(
+                    '@$userId',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 6),
