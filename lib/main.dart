@@ -8,6 +8,8 @@ import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Post {
   final String id;
@@ -356,6 +358,26 @@ class CreatePostScreen extends StatefulWidget {
   State<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
+Future<File?> compressImage(File file) async {
+  final dir = await getTemporaryDirectory();
+
+  final targetPath = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+  final compressedFile = await FlutterImageCompress.compressAndGetFile(
+    file.absolute.path,
+    targetPath,
+    quality: 60,
+    minWidth: 1000,
+    minHeight: 1000,
+  );
+
+  if (compressedFile == null) {
+    return null;
+  }
+
+  return File(compressedFile.path);
+}
+
 class _CreatePostScreenState extends State<CreatePostScreen> {
   File? selectedImage;
   final ImagePicker picker = ImagePicker();
@@ -630,7 +652,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         .child(user.uid)
                         .child('$postId.jpg');
 
-                    await storageRef.putFile(selectedImage!);
+                    final compressedImage = await compressImage(selectedImage!);
+
+                    final uploadFile = compressedImage ?? selectedImage!;
+
+                    await storageRef.putFile(uploadFile);
 
                     final imageUrl = await storageRef.getDownloadURL();
 
