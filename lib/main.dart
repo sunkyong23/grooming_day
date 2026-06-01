@@ -251,27 +251,63 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final userIdController = TextEditingController();
 
   Future<void> register() async {
-    final userCredential = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
+    final userId = userIdController.text.trim();
 
-    final uid = userCredential.user!.uid;
+    final regex = RegExp(r'^[a-zA-Z0-9]+$');
 
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
-      'email': emailController.text.trim(),
-      'userId': userIdController.text.trim(),
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    if (!regex.hasMatch(userId)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('아이디는 영어와 숫자만 사용할 수 있습니다.')));
+      return;
+    }
 
-    if (!mounted) return;
+    try {
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const AuthGate()),
-      (route) => false,
-    );
+      final uid = userCredential.user!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'uid': uid,
+        'email': emailController.text.trim(),
+        'userId': userId,
+        'profileImageUrl': '',
+        'bio': '',
+        'accountType': 'catOwner',
+        'isDeleted': false,
+        'isSuspended': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = '회원가입 중 오류가 발생했습니다.';
+
+      if (e.code == 'invalid-email') {
+        message = '이메일 형식이 올바르지 않습니다.';
+      } else if (e.code == 'email-already-in-use') {
+        message = '이미 사용 중인 이메일입니다.';
+      } else if (e.code == 'weak-password') {
+        message = '비밀번호는 6자 이상 입력해주세요.';
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
@@ -302,7 +338,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: const InputDecoration(hintText: '비밀번호'),
+              decoration: const InputDecoration(hintText: '비밀번호 (6자 이상)'),
             ),
             const SizedBox(height: 28),
 
