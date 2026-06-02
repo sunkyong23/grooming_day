@@ -359,6 +359,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final userIdController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   bool isTermsAgreed = false;
   bool isPrivacyAgreed = false;
@@ -406,6 +407,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         return;
       }
+
+      if (passwordController.text.trim() !=
+          confirmPasswordController.text.trim()) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')));
+        return;
+      }
+
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
@@ -466,60 +476,156 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: const Color(0xFFFFF7F1),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          children: [
-            TextField(
-              controller: userIdController,
-              decoration: const InputDecoration(hintText: '아이디'),
-            ),
-            const SizedBox(height: 14),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            children: [
+              TextField(
+                controller: userIdController,
+                decoration: const InputDecoration(hintText: '아이디'),
+              ),
+              const SizedBox(height: 14),
 
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(hintText: '이메일'),
-            ),
-            const SizedBox(height: 14),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(hintText: '이메일'),
+              ),
+              const SizedBox(height: 14),
 
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: '비밀번호 (6자 이상)'),
-            ),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(hintText: '비밀번호 (6자 이상)'),
+              ),
 
-            Row(
-              children: [
-                Checkbox(
-                  value: isTermsAgreed,
-                  onChanged: (value) {
-                    setState(() {
-                      isTermsAgreed = value ?? false;
-                    });
-                  },
-                ),
-                const Expanded(child: Text('이용약관에 동의합니다. (필수)')),
-              ],
-            ),
+              const SizedBox(height: 14),
 
-            Row(
-              children: [
-                Checkbox(
-                  value: isPrivacyAgreed,
-                  onChanged: (value) {
-                    setState(() {
-                      isPrivacyAgreed = value ?? false;
-                    });
-                  },
-                ),
-                const Expanded(child: Text('개인정보 처리방침에 동의합니다. (필수)')),
-              ],
-            ),
+              TextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(hintText: '비밀번호 확인'),
+              ),
 
-            const SizedBox(height: 28),
+              Row(
+                children: [
+                  Checkbox(
+                    value: isTermsAgreed,
+                    onChanged: (value) {
+                      setState(() {
+                        isTermsAgreed = value ?? false;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TermsScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        '이용약관에 동의합니다. (필수)',
+                        style: TextStyle(decoration: TextDecoration.underline),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
-            ElevatedButton(onPressed: register, child: const Text('집사 등록 완료')),
-          ],
+              Row(
+                children: [
+                  Checkbox(
+                    value: isPrivacyAgreed,
+                    onChanged: (value) {
+                      setState(() {
+                        isPrivacyAgreed = value ?? false;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PrivacyPolicyScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        '개인정보 처리방침에 동의합니다. (필수)',
+                        style: TextStyle(decoration: TextDecoration.underline),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 28),
+
+              ElevatedButton(
+                onPressed: register,
+                child: const Text('집사 등록 완료'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class TermsScreen extends StatelessWidget {
+  const TermsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('이용약관')),
+      body: const Padding(
+        padding: EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Text('''
+그루밍데이 이용약관
+
+제1조 (목적)
+본 서비스는 반려묘 사진 및 기록을 공유하는 서비스를 제공합니다.
+
+제2조 (회원의 의무)
+타인의 권리를 침해하는 게시물을 등록할 수 없습니다.
+
+제3조 (서비스 이용)
+회원은 관련 법령을 준수해야 합니다.
+            '''),
+        ),
+      ),
+    );
+  }
+}
+
+class PrivacyPolicyScreen extends StatelessWidget {
+  const PrivacyPolicyScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('개인정보 처리방침')),
+      body: const Padding(
+        padding: EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Text('''
+개인정보 처리방침
+
+그루밍데이는 회원가입 시 이메일, 사용자 아이디 정보를 저장합니다.
+
+수집된 정보는 서비스 제공 목적 외에는 사용하지 않습니다.
+
+회원 탈퇴 시 관련 정보는 삭제됩니다.
+            '''),
         ),
       ),
     );
@@ -1989,11 +2095,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('취소'),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: () {
                 Navigator.pop(context);
-                await _deleteAccount();
+                _showReauthDialog();
               },
               child: const Text('탈퇴', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showReauthDialog() {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('본인 확인'),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(hintText: '비밀번호를 입력하세요'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+
+                final user = FirebaseAuth.instance.currentUser;
+
+                if (user == null) return;
+
+                final credential = EmailAuthProvider.credential(
+                  email: user.email!,
+                  password: passwordController.text.trim(),
+                );
+
+                try {
+                  await user.reauthenticateWithCredential(credential);
+
+                  await _deleteAccount();
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
+                  );
+                }
+              },
+              child: const Text('확인'),
             ),
           ],
         );
