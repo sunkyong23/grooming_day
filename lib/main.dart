@@ -1974,6 +1974,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('계정 탈퇴'),
+          content: const Text('정말 탈퇴하시겠습니까?\n모든 정보가 삭제됩니다.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteAccount();
+              },
+              child: const Text('탈퇴', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      final uid = user.uid;
+
+      final postsSnapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .where('ownerUid', isEqualTo: uid)
+          .get();
+
+      for (final doc in postsSnapshot.docs) {
+        final postId = doc.id;
+
+        try {
+          await FirebaseStorage.instance.ref('posts/$uid/$postId.jpg').delete();
+        } catch (e) {
+          print('게시글 이미지 삭제 실패: $e');
+        }
+
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(postId)
+            .delete();
+      }
+
+      try {
+        await FirebaseStorage.instance.ref('users/$uid/profile.jpg').delete();
+      } catch (e) {
+        print('프로필 이미지 삭제 실패: $e');
+      }
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+
+      await user.delete();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      print('계정 탈퇴 오류: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final myPosts = widget.posts.where((post) => !post.isAsset).toList();
@@ -2169,21 +2245,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 80),
 
           Center(
-            child: TextButton(
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+            child: Column(
+              children: [
+                TextButton(
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
 
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              child: const Text(
-                '로그아웃',
-                style: TextStyle(color: Color(0xFFB08678), fontSize: 14),
-              ),
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
+                  },
+                  child: const Text(
+                    '로그아웃',
+                    style: TextStyle(color: Color(0xFFB08678), fontSize: 14),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                TextButton(
+                  onPressed: () {
+                    _showDeleteAccountDialog();
+                  },
+                  child: const Text(
+                    '계정 탈퇴',
+                    style: TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
