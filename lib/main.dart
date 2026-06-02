@@ -69,8 +69,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool isLoading = false;
 
   Future<void> login() async {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+    });
+
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
@@ -97,6 +104,12 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -162,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 220,
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: login,
+                      onPressed: isLoading ? null : login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFD9C9),
                         foregroundColor: const Color(0xFF5A3A31),
@@ -172,8 +185,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(28),
                         ),
                       ),
-                      child: const Text(
-                        '집사 입장하기',
+                      child: Text(
+                        isLoading ? '입장 중...' : '집사 입장하기',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -242,6 +255,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final emailController = TextEditingController();
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -273,33 +287,44 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const SizedBox(height: 28),
 
             ElevatedButton(
-              onPressed: () async {
-                try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(
-                    email: emailController.text.trim(),
-                  );
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      setState(() {
+                        isLoading = true;
+                      });
 
-                  if (!mounted) return;
+                      try {
+                        await FirebaseAuth.instance.sendPasswordResetEmail(
+                          email: emailController.text.trim(),
+                        );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('비밀번호 재설정 메일을 발송했습니다.')),
-                  );
-                } on FirebaseAuthException catch (e) {
-                  String message = '메일 발송에 실패했습니다.';
+                        if (!mounted) return;
 
-                  if (e.code == 'invalid-email') {
-                    message = '올바른 이메일 형식이 아닙니다.';
-                  }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('비밀번호 재설정 메일을 발송했습니다.')),
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        String message = '메일 발송에 실패했습니다.';
 
-                  if (!mounted) return;
+                        if (e.code == 'invalid-email') {
+                          message = '올바른 이메일 형식이 아닙니다.';
+                        }
 
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(message)));
-                }
-              },
+                        if (!mounted) return;
 
-              child: const Text('재설정 메일 보내기'),
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(message)));
+                      } finally {
+                        if (mounted) {
+                          setState(() {
+                            isLoading = false;
+                          });
+                        }
+                      }
+                    },
+              child: Text(isLoading ? '발송 중...' : '재설정 메일 보내기'),
             ),
           ],
         ),
@@ -364,7 +389,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool isTermsAgreed = false;
   bool isPrivacyAgreed = false;
 
+  bool isLoading = false;
+
   Future<void> register() async {
+    if (isLoading) return;
     if (!isTermsAgreed) {
       ScaffoldMessenger.of(
         context,
@@ -380,6 +408,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final userId = userIdController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    if (userId.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('아이디를 입력해주세요.')));
+      return;
+    }
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('이메일을 입력해주세요.')));
+      return;
+    }
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호를 입력해주세요.')));
+      return;
+    }
+
+    if (confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호 확인을 입력해주세요.')));
+      return;
+    }
 
     final regex = RegExp(r'^[a-zA-Z0-9]+$');
 
@@ -390,8 +449,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')));
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
     try {
-      // 아이디 중복 검사
       final duplicateCheck = await FirebaseFirestore.instance
           .collection('users')
           .where('userId', isEqualTo: userId)
@@ -408,35 +477,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      if (passwordController.text.trim() !=
-          confirmPasswordController.text.trim()) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')));
-        return;
-      }
-
       final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text.trim(),
-          );
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final uid = userCredential.user!.uid;
 
       await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'uid': uid,
-        'email': emailController.text.trim(),
+        'email': email,
         'userId': userId,
         'profileImageUrl': '',
         'bio': '',
         'accountType': 'catOwner',
         'isDeleted': false,
         'isSuspended': false,
-
         'termsAgreedAt': FieldValue.serverTimestamp(),
         'privacyAgreedAt': FieldValue.serverTimestamp(),
-
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -464,6 +520,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -568,8 +630,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 28),
 
               ElevatedButton(
-                onPressed: register,
-                child: const Text('집사 등록 완료'),
+                onPressed: isLoading ? null : register,
+                child: Text(isLoading ? '가입 중...' : '집사 등록 완료'),
               ),
             ],
           ),
@@ -1091,6 +1153,25 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  Future<void> loadMyScraps() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('scraps')
+        .get();
+
+    final scrappedPostIds = snapshot.docs.map((doc) => doc.id).toSet();
+
+    setState(() {
+      for (final post in posts) {
+        post.isScrapped = scrappedPostIds.contains(post.id);
+      }
+    });
+  }
+
   void addPost(Post post) {
     setState(() {
       posts.insert(0, post);
@@ -1100,7 +1181,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    loadPostsFromFirestore();
+    loadInitialData();
+  }
+
+  Future<void> loadInitialData() async {
+    await loadPostsFromFirestore();
+    await loadMyScraps();
   }
 
   Future<void> loadPostsFromFirestore() async {
@@ -1130,6 +1216,36 @@ class _HomeScreenState extends State<HomeScreen> {
       posts.removeWhere((post) => !post.isAsset);
       posts.insertAll(0, loadedPosts);
     });
+  }
+
+  Future<void> toggleScrap(Post post) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final scrapRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('scraps')
+        .doc(post.id);
+
+    final newValue = !post.isScrapped;
+
+    setState(() {
+      post.isScrapped = newValue;
+    });
+
+    if (newValue) {
+      await scrapRef.set({
+        'postId': post.id,
+        'imageUrl': post.imageUrl,
+        'caption': post.caption,
+        'catName': post.catName,
+        'userId': post.userId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      await scrapRef.delete();
+    }
   }
 
   Future<void> openCameraAndCreatePost() async {
@@ -1370,9 +1486,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         userId: post.userId,
                         isScrapped: post.isScrapped,
                         onScrapTap: () {
-                          setState(() {
-                            post.isScrapped = !post.isScrapped;
-                          });
+                          toggleScrap(post);
                         },
                       ),
                     ),
@@ -1950,6 +2064,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? selectedProfileImage;
 
   String bio = '';
+  String email = '';
 
   @override
   void initState() {
@@ -2076,6 +2191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userId = doc['userId'];
         profileImageUrl = doc['profileImageUrl'] ?? '';
         bio = doc['bio'] ?? '';
+        email = doc['email'] ?? '';
       });
     }
   }
@@ -2190,6 +2306,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await FirebaseStorage.instance.ref('users/$uid/profile.jpg').delete();
       } catch (e) {
         print('프로필 이미지 삭제 실패: $e');
+      }
+
+      final scrapsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('scraps')
+          .get();
+
+      for (final doc in scrapsSnapshot.docs) {
+        await doc.reference.delete();
       }
 
       await FirebaseFirestore.instance.collection('users').doc(uid).delete();
@@ -2398,43 +2524,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
+          const SizedBox(height: 40),
 
-          const SizedBox(height: 80),
-
-          Center(
-            child: Column(
-              children: [
-                TextButton(
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    }
-                  },
-                  child: const Text(
-                    '로그아웃',
-                    style: TextStyle(color: Color(0xFFB08678), fontSize: 14),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(
+                    email: email,
+                    onDeleteAccountTap: _showDeleteAccountDialog,
                   ),
                 ),
-
-                const SizedBox(height: 12),
-
-                TextButton(
-                  onPressed: () {
-                    _showDeleteAccountDialog();
-                  },
-                  child: const Text(
-                    '계정 탈퇴',
-                    style: TextStyle(color: Colors.red, fontSize: 14),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: const Row(
+                children: [
+                  Icon(Icons.settings_rounded, color: Color(0xFF8A756C)),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      '설정',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D241E),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 60),
         ],
       ),
     );
@@ -2569,6 +2693,604 @@ class AuthGate extends StatelessWidget {
 
         return const LoginScreen();
       },
+    );
+  }
+}
+
+class ChangePasswordScreen extends StatefulWidget {
+  const ChangePasswordScreen({super.key});
+
+  @override
+  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+}
+
+class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final currentPasswordController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _changePassword() async {
+    final currentPassword = currentPasswordController.text.trim();
+    final newPassword = newPasswordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    if (currentPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('모든 항목을 입력해주세요.')));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('새 비밀번호는 6자 이상이어야 합니다.')));
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('새 비밀번호가 일치하지 않습니다.')));
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || user.email == null) {
+        throw FirebaseAuthException(
+          code: 'user-not-found',
+          message: '로그인 정보를 찾을 수 없습니다.',
+        );
+      }
+
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('비밀번호가 변경되었습니다.')));
+
+      Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+      String message = '비밀번호 변경에 실패했습니다.';
+
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = '현재 비밀번호가 올바르지 않습니다.';
+      } else if (e.code == 'weak-password') {
+        message = '새 비밀번호가 너무 약합니다.';
+      } else if (e.code == 'requires-recent-login') {
+        message = '보안을 위해 다시 로그인 후 시도해주세요.';
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text(
+          '비밀번호 변경',
+          style: TextStyle(color: Color(0xFF5C4033)),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            TextField(
+              controller: currentPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '현재 비밀번호'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: newPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '새 비밀번호'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '새 비밀번호 확인'),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _changePassword,
+                child: Text(isLoading ? '변경 중...' : '비밀번호 변경하기'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SettingsScreen extends StatelessWidget {
+  final String email;
+  final VoidCallback onDeleteAccountTap;
+
+  const SettingsScreen({
+    super.key,
+    required this.email,
+    required this.onDeleteAccountTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text('설정', style: TextStyle(color: Color(0xFF5C4033))),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.campaign_rounded,
+                color: Color(0xFF8A756C),
+              ),
+              title: const Text(
+                '공지사항',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFFB08678),
+              ),
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const NoticeScreen()));
+              },
+            ),
+
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.rocket_launch_rounded,
+                color: Color(0xFF8A756C),
+              ),
+              title: const Text(
+                '업데이트 내역',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFFB08678),
+              ),
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const UpdateScreen()));
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            const SizedBox(height: 32),
+
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PrivacyPolicyScreen(),
+                  ),
+                );
+              },
+              child: const Text('개인정보 처리방침'),
+            ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const TermsScreen()));
+              },
+              child: const Text('이용약관'),
+            ),
+
+            const SizedBox(height: 20),
+            Text(
+              '이메일\n$email',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF8A756C)),
+            ),
+
+            const SizedBox(height: 12),
+
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
+              child: const Text('비밀번호 변경'),
+            ),
+
+            TextButton(
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+              child: const Text('로그아웃'),
+            ),
+
+            TextButton(
+              onPressed: onDeleteAccountTap,
+              child: const Text('계정 탈퇴', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NoticeScreen extends StatelessWidget {
+  const NoticeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text('공지사항', style: TextStyle(color: Color(0xFF5C4033))),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('notices')
+            .where('isVisible', isEqualTo: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(
+              child: Text(
+                '등록된 공지사항이 없어요 🐾',
+                style: TextStyle(color: Color(0xFFB08678)),
+              ),
+            );
+          }
+
+          final notices = snapshot.data!.docs;
+
+          notices.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+
+            final aPinned = aData['isPinned'] == true;
+            final bPinned = bData['isPinned'] == true;
+
+            if (aPinned != bPinned) {
+              return aPinned ? -1 : 1;
+            }
+
+            final aCreatedAt = aData['createdAt'] as Timestamp?;
+            final bCreatedAt = bData['createdAt'] as Timestamp?;
+
+            if (aCreatedAt == null || bCreatedAt == null) return 0;
+
+            return bCreatedAt.compareTo(aCreatedAt);
+          });
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(24),
+            itemCount: notices.length,
+            separatorBuilder: (context, index) =>
+                const Divider(height: 28, color: Color(0xFFE8DCD4)),
+            itemBuilder: (context, index) {
+              final notice = notices[index];
+              final data = notice.data() as Map<String, dynamic>;
+
+              final title = data['title'] ?? '제목 없음';
+              final content = data['content'] ?? '';
+              final isPinned = data['isPinned'] ?? false;
+              final createdAt = data['createdAt'] as Timestamp?;
+              final dateText = createdAt == null
+                  ? ''
+                  : '${createdAt.toDate().year}.${createdAt.toDate().month.toString().padLeft(2, '0')}.${createdAt.toDate().day.toString().padLeft(2, '0')}';
+
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+
+                title: Text(
+                  isPinned ? '📌 $title' : title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3D241E),
+                  ),
+                ),
+
+                subtitle: dateText.isEmpty
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          dateText,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFB08678),
+                          ),
+                        ),
+                      ),
+
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFFB08678),
+                ),
+
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          NoticeDetailScreen(title: title, content: content),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class NoticeDetailScreen extends StatelessWidget {
+  final String title;
+  final String content;
+
+  const NoticeDetailScreen({
+    super.key,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text('공지사항', style: TextStyle(color: Color(0xFF5C4033))),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF3D241E),
+              height: 1.35,
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6A554B),
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class UpdateScreen extends StatelessWidget {
+  const UpdateScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text(
+          '업데이트 내역',
+          style: TextStyle(color: Color(0xFF5C4033)),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('updates')
+            .where('isVisible', isEqualTo: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final updates = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(24),
+            itemCount: updates.length,
+            itemBuilder: (context, index) {
+              final data = updates[index].data() as Map<String, dynamic>;
+
+              final version = data['version'] ?? '';
+
+              final title = data['title'] ?? '';
+
+              final content = data['content'] ?? '';
+
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '🚀 $version',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF3D241E),
+                  ),
+                ),
+                subtitle: Text(title),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => UpdateDetailScreen(
+                        version: version,
+                        title: title,
+                        content: content,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class UpdateDetailScreen extends StatelessWidget {
+  final String version;
+  final String title;
+  final String content;
+
+  const UpdateDetailScreen({
+    super.key,
+    required this.version,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F2),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF8F2),
+        elevation: 0,
+        title: const Text(
+          '업데이트 내역',
+          style: TextStyle(color: Color(0xFF5C4033)),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text(
+            '🚀 $version',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFB08678),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF3D241E),
+              height: 1.35,
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          Text(
+            content,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6A554B),
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
