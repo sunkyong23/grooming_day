@@ -1843,6 +1843,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String profileImageUrl = '';
   File? selectedProfileImage;
 
+  String bio = '';
+
   @override
   void initState() {
     super.initState();
@@ -1908,6 +1910,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  Future<void> editBio() async {
+    final bioController = TextEditingController(text: bio);
+
+    final newBio = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('소개글 수정'),
+          content: TextField(
+            controller: bioController,
+            maxLength: 50,
+            decoration: const InputDecoration(hintText: '한줄 소개를 입력해주세요'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, bioController.text.trim());
+              },
+              child: const Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newBio == null) return;
+
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'bio': newBio,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      bio = newBio;
+    });
+  }
+
   Future<void> loadUser() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -1922,6 +1969,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         userId = doc['userId'];
         profileImageUrl = doc['profileImageUrl'] ?? '';
+        bio = doc['bio'] ?? '';
       });
     }
   }
@@ -1939,6 +1987,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: const Color(0xFFFFF7F1),
         title: const Text('프로필'),
       ),
+
       body: ListView(
         padding: const EdgeInsets.all(22),
         children: [
@@ -1961,15 +2010,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : null,
                 ),
               ),
+
               const SizedBox(width: 16),
+
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '@$userId',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '@$userId',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => EditProfileScreen(
+                                currentUserId: userId,
+                                currentBio: bio,
+                              ),
+                            ),
+                          );
+
+                          if (result != null) {
+                            setState(() {
+                              userId = result['userId'];
+                              bio = result['bio'];
+                            });
+                          }
+                        },
+                        child: const Text('편집'),
+                      ),
+                    ],
                   ),
+
                   const SizedBox(height: 6),
+
+                  Text(
+                    bio.isEmpty ? '소개글을 작성해주세요 🐾' : bio,
+                    style: const TextStyle(
+                      color: Color(0xFF7A6A5B),
+                      fontSize: 14,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
                   Text(
                     '게시글 ${myPosts.length}개',
                     style: const TextStyle(color: Color(0xFFB08678)),
@@ -1978,7 +2070,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
+
           const SizedBox(height: 24),
+
+          // 여기부터 기존 가을이 카드 Container 이어서 두면 됨
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -1988,18 +2083,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '가을이',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '가을이',
+
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 8),
-                Text('오늘도 귀여움으로 하루를 채우는 고양이 🐾'),
               ],
             ),
           ),
+          const SizedBox(height: 8),
+          const Text('오늘도 귀여움으로 하루를 채우는 고양이 🐾'),
 
           const SizedBox(height: 24),
-
           const Text(
             '내 게시글',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
@@ -2084,6 +2187,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class EditProfileScreen extends StatefulWidget {
+  final String currentUserId;
+  final String currentBio;
+
+  const EditProfileScreen({
+    super.key,
+    required this.currentUserId,
+    required this.currentBio,
+  });
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  late TextEditingController userIdController;
+  late TextEditingController bioController;
+
+  @override
+  void initState() {
+    super.initState();
+    userIdController = TextEditingController(text: widget.currentUserId);
+    bioController = TextEditingController(text: widget.currentBio);
+  }
+
+  Future<void> saveProfile() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final newUserId = userIdController.text.trim();
+    final newBio = bioController.text.trim();
+
+    final regex = RegExp(r'^[a-zA-Z0-9]+$');
+
+    if (!regex.hasMatch(newUserId)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('아이디는 영어와 숫자만 사용할 수 있습니다.')));
+      return;
+    }
+
+    final duplicateCheck = await FirebaseFirestore.instance
+        .collection('users')
+        .where('userId', isEqualTo: newUserId)
+        .limit(1)
+        .get();
+
+    if (duplicateCheck.docs.isNotEmpty && duplicateCheck.docs.first.id != uid) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('이미 사용 중인 아이디입니다.')));
+      return;
+    }
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'userId': newUserId,
+      'bio': newBio,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    if (!mounted) return;
+
+    Navigator.pop(context, {'userId': newUserId, 'bio': newBio});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFF7F1),
+        elevation: 0,
+        title: const Text('프로필 편집'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            TextField(
+              controller: userIdController,
+              decoration: const InputDecoration(
+                labelText: '아이디',
+                hintText: '아이디를 입력해주세요',
+              ),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: bioController,
+              maxLength: 50,
+              decoration: const InputDecoration(
+                labelText: '소개글',
+                hintText: '한줄 소개를 입력해주세요',
+              ),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: saveProfile,
+                child: const Text('저장'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
