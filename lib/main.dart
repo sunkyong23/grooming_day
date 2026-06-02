@@ -71,17 +71,33 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   Future<void> login() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String message = '로그인에 실패했습니다.';
+
+      if (e.code == 'invalid-credential' ||
+          e.code == 'user-not-found' ||
+          e.code == 'wrong-password') {
+        message = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
@@ -175,6 +191,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      '비밀번호를 잊으셨나요?',
+                      style: TextStyle(color: Color(0xFF888888), fontSize: 14),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
                           builder: (_) => const RegisterScreen(),
                         ),
                       );
@@ -192,6 +227,81 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final emailController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7F1),
+      appBar: AppBar(
+        title: const Text('비밀번호 재설정'),
+        backgroundColor: const Color(0xFFFFF7F1),
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+
+            const Text(
+              '가입한 이메일을 입력해주세요.\n비밀번호 재설정 메일을 보내드릴게요.',
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 28),
+
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(hintText: '이메일'),
+            ),
+
+            const SizedBox(height: 28),
+
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await FirebaseAuth.instance.sendPasswordResetEmail(
+                    email: emailController.text.trim(),
+                  );
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('비밀번호 재설정 메일을 발송했습니다.')),
+                  );
+                } on FirebaseAuthException catch (e) {
+                  String message = '메일 발송에 실패했습니다.';
+
+                  if (e.code == 'invalid-email') {
+                    message = '올바른 이메일 형식이 아닙니다.';
+                  }
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(message)));
+                }
+              },
+
+              child: const Text('재설정 메일 보내기'),
+            ),
+          ],
         ),
       ),
     );
@@ -250,7 +360,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final passwordController = TextEditingController();
   final userIdController = TextEditingController();
 
+  bool isTermsAgreed = false;
+  bool isPrivacyAgreed = false;
+
   Future<void> register() async {
+    if (!isTermsAgreed) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('이용약관에 동의해주세요.')));
+      return;
+    }
+
+    if (!isPrivacyAgreed) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('개인정보 처리방침에 동의해주세요.')));
+      return;
+    }
+
     final userId = userIdController.text.trim();
 
     final regex = RegExp(r'^[a-zA-Z0-9]+$');
@@ -263,6 +390,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
+      // 아이디 중복 검사
+      final duplicateCheck = await FirebaseFirestore.instance
+          .collection('users')
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (duplicateCheck.docs.isNotEmpty) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('이미 사용 중인 아이디입니다.')));
+
+        return;
+      }
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
@@ -280,6 +423,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'accountType': 'catOwner',
         'isDeleted': false,
         'isSuspended': false,
+
+        'termsAgreedAt': FieldValue.serverTimestamp(),
+        'privacyAgreedAt': FieldValue.serverTimestamp(),
+
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -340,6 +487,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: true,
               decoration: const InputDecoration(hintText: '비밀번호 (6자 이상)'),
             ),
+
+            Row(
+              children: [
+                Checkbox(
+                  value: isTermsAgreed,
+                  onChanged: (value) {
+                    setState(() {
+                      isTermsAgreed = value ?? false;
+                    });
+                  },
+                ),
+                const Expanded(child: Text('이용약관에 동의합니다. (필수)')),
+              ],
+            ),
+
+            Row(
+              children: [
+                Checkbox(
+                  value: isPrivacyAgreed,
+                  onChanged: (value) {
+                    setState(() {
+                      isPrivacyAgreed = value ?? false;
+                    });
+                  },
+                ),
+                const Expanded(child: Text('개인정보 처리방침에 동의합니다. (필수)')),
+              ],
+            ),
+
             const SizedBox(height: 28),
 
             ElevatedButton(onPressed: register, child: const Text('집사 등록 완료')),
@@ -1275,8 +1451,8 @@ class CatPostCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 17,
-                  backgroundColor: Color(0xFFFFE2C6),
-                  child: Text('🐱', style: TextStyle(fontSize: 17)),
+                  backgroundColor: const Color(0xFFFFE2C6),
+                  child: const Text('🐱', style: TextStyle(fontSize: 17)),
                 ),
                 SizedBox(width: 9),
                 Expanded(
@@ -1664,10 +1840,72 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   String userId = '로딩중...';
 
+  String profileImageUrl = '';
+  File? selectedProfileImage;
+
   @override
   void initState() {
     super.initState();
     loadUser();
+  }
+
+  Future<void> uploadProfileImage() async {
+    final picker = ImagePicker();
+
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile == null) return;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: pickedFile.path,
+      aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+      uiSettings: [
+        IOSUiSettings(
+          title: '프로필 사진 자르기',
+          aspectRatioLockEnabled: true,
+          resetAspectRatioEnabled: false,
+        ),
+      ],
+    );
+
+    if (croppedFile == null) return;
+
+    final tempDir = await getTemporaryDirectory();
+    final targetPath =
+        '${tempDir.path}/profile_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final compressedFile = await FlutterImageCompress.compressAndGetFile(
+      croppedFile.path,
+      targetPath,
+      quality: 70,
+      minWidth: 800,
+      minHeight: 800,
+    );
+
+    if (compressedFile == null) return;
+
+    final file = File(compressedFile.path);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    final ref = FirebaseStorage.instance
+        .ref()
+        .child('users')
+        .child(uid)
+        .child('profile.jpg');
+
+    await ref.putFile(file);
+
+    final imageUrl = await ref.getDownloadURL();
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'profileImageUrl': imageUrl,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      selectedProfileImage = file;
+      profileImageUrl = imageUrl;
+    });
   }
 
   Future<void> loadUser() async {
@@ -1683,6 +1921,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (doc.exists) {
       setState(() {
         userId = doc['userId'];
+        profileImageUrl = doc['profileImageUrl'] ?? '';
       });
     }
   }
@@ -1705,10 +1944,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 38,
-                backgroundColor: Color(0xFFFFE2C6),
-                child: Text('🐱', style: TextStyle(fontSize: 34)),
+              GestureDetector(
+                onTap: uploadProfileImage,
+                child: CircleAvatar(
+                  radius: 38,
+                  backgroundColor: const Color(0xFFFFE2C6),
+                  backgroundImage: profileImageUrl.isNotEmpty
+                      ? NetworkImage(profileImageUrl)
+                      : null,
+                  child: profileImageUrl.isEmpty
+                      ? const Icon(
+                          Icons.camera_alt,
+                          color: Color(0xFF8A756C),
+                          size: 30,
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 16),
               Column(
