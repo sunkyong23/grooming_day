@@ -6,8 +6,6 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/post.dart';
 import 'settings_screen.dart';
@@ -18,6 +16,8 @@ import '../widgets/profile_header.dart';
 import '../widgets/profile_post_grid.dart';
 import '../widgets/settings_tile.dart';
 import '../widgets/cat_profile_card.dart';
+
+import '../services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -79,22 +79,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (compressedFile == null) return;
 
     final file = File(compressedFile.path);
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final imageUrl = await UserService.updateProfileImage(file);
 
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(uid)
-        .child('profile.jpg');
-
-    await ref.putFile(file);
-
-    final imageUrl = await ref.getDownloadURL();
-
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'profileImageUrl': imageUrl,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    if (imageUrl == null) return;
 
     setState(() {
       selectedProfileImage = file;
@@ -135,12 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (newBio == null) return;
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'bio': newBio,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await UserService.updateBio(newBio);
 
     setState(() {
       bio = newBio;
@@ -148,23 +130,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> loadUser() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final data = await UserService.loadCurrentUser();
 
-    if (uid == null) return;
+    if (data == null) return;
 
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
-    if (doc.exists) {
-      setState(() {
-        userId = doc['userId'];
-        profileImageUrl = doc['profileImageUrl'] ?? '';
-        bio = doc['bio'] ?? '';
-        email = doc['email'] ?? '';
-      });
-    }
+    setState(() {
+      userId = data['userId'] ?? '';
+      profileImageUrl = data['profileImageUrl'] ?? '';
+      bio = data['bio'] ?? '';
+      email = data['email'] ?? '';
+    });
   }
 
   void _showDeleteAccountDialog() {
@@ -251,51 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _deleteAccount() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) return;
-
-      final uid = user.uid;
-
-      final postsSnapshot = await FirebaseFirestore.instance
-          .collection('posts')
-          .where('ownerUid', isEqualTo: uid)
-          .get();
-
-      for (final doc in postsSnapshot.docs) {
-        final postId = doc.id;
-
-        try {
-          await FirebaseStorage.instance.ref('posts/$uid/$postId.jpg').delete();
-        } catch (e) {
-          // print('게시글 이미지 삭제 실패: $e');
-        }
-
-        await FirebaseFirestore.instance
-            .collection('posts')
-            .doc(postId)
-            .delete();
-      }
-
-      try {
-        await FirebaseStorage.instance.ref('users/$uid/profile.jpg').delete();
-      } catch (e) {
-        // print('프로필 이미지 삭제 실패: $e');
-      }
-
-      final scrapsSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('scraps')
-          .get();
-
-      for (final doc in scrapsSnapshot.docs) {
-        await doc.reference.delete();
-      }
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
-
-      await user.delete();
+      await UserService.deleteCurrentUserAccount();
 
       if (!mounted) return;
 
