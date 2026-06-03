@@ -134,16 +134,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               GestureDetector(
                 onTap: () async {
-                  print('사진 영역 클릭됨!');
+                  // print('사진 영역 클릭됨!');
                   final XFile? image = await picker.pickImage(
                     source: ImageSource.gallery,
                   );
 
                   if (image == null) return;
+                  if (!context.mounted) return;
 
                   final ratio = await showModalBottomSheet<double>(
                     context: context,
-                    builder: (context) {
+                    builder: (bottomSheetContext) {
                       return SafeArea(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -156,15 +157,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             ),
                             ListTile(
                               title: const Text('가로형 4:3'),
-                              onTap: () => Navigator.pop(context, 4 / 3),
+                              onTap: () =>
+                                  Navigator.pop(bottomSheetContext, 4 / 3),
                             ),
                             ListTile(
                               title: const Text('세로형 4:5'),
-                              onTap: () => Navigator.pop(context, 4 / 5),
+                              onTap: () =>
+                                  Navigator.pop(bottomSheetContext, 4 / 5),
                             ),
                             ListTile(
                               title: const Text('정사각형 1:1'),
-                              onTap: () => Navigator.pop(context, 1.0),
+                              onTap: () =>
+                                  Navigator.pop(bottomSheetContext, 1.0),
                             ),
                           ],
                         ),

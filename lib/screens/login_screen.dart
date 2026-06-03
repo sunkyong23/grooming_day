@@ -130,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         backgroundColor: const Color(0xFFFFD9C9),
                         foregroundColor: const Color(0xFF5A3A31),
                         elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.12),
+                        shadowColor: Colors.black.withValues(alpha: 0.12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(28),
                         ),

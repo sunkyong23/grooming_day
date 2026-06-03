@@ -178,6 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
     if (image == null) return;
+    if (!mounted) return;
 
     final CropAspectRatio? selectedRatio =
         await showModalBottomSheet<CropAspectRatio>(
@@ -237,13 +238,13 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
     if (selectedRatio == null) return;
-
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: image.path,
       aspectRatio: selectedRatio,
     );
 
     if (croppedFile == null) return;
+    if (!mounted) return;
 
     Navigator.push(
       context,
@@ -577,11 +578,11 @@ class CatPostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.94),
+        color: Colors.white..withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB58A7B).withOpacity(0.13),
+            color: const Color(0xFFB58A7B).withValues(alpha: 0.13),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -612,7 +613,7 @@ class CatPostCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '@${userId}',
+                        '@$userId',
                         style: TextStyle(
                           fontSize: 11,
                           color: Color(0xFFB08678),
@@ -792,7 +793,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -5),
           ),

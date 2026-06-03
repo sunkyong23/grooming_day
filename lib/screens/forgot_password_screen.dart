@@ -49,6 +49,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         isLoading = true;
                       });
 
+                      final messenger = ScaffoldMessenger.of(context);
+
                       try {
                         await FirebaseAuth.instance.sendPasswordResetEmail(
                           email: emailController.text.trim(),
@@ -56,7 +58,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                         if (!mounted) return;
 
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('비밀번호 재설정 메일을 발송했습니다.')),
                         );
                       } on FirebaseAuthException catch (e) {
@@ -68,9 +70,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                         if (!mounted) return;
 
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(SnackBar(content: Text(message)));
+                        messenger.showSnackBar(
+                          SnackBar(content: Text(message)),
+                        );
                       } finally {
                         if (mounted) {
                           setState(() {

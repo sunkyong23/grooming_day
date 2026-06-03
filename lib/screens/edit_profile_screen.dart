@@ -47,6 +47,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         .limit(1)
         .get();
 
+    if (!mounted) return;
+
     if (duplicateCheck.docs.isNotEmpty && duplicateCheck.docs.first.id != uid) {
       ScaffoldMessenger.of(
         context,

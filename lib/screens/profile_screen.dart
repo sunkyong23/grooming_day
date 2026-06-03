@@ -223,12 +223,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   password: passwordController.text.trim(),
                 );
 
+                final messenger = ScaffoldMessenger.of(context);
+
                 try {
                   await user.reauthenticateWithCredential(credential);
 
                   await _deleteAccount();
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  if (!mounted) return;
+
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
                   );
                 }
@@ -260,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         try {
           await FirebaseStorage.instance.ref('posts/$uid/$postId.jpg').delete();
         } catch (e) {
-          print('게시글 이미지 삭제 실패: $e');
+          // print('게시글 이미지 삭제 실패: $e');
         }
 
         await FirebaseFirestore.instance
@@ -272,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await FirebaseStorage.instance.ref('users/$uid/profile.jpg').delete();
       } catch (e) {
-        print('프로필 이미지 삭제 실패: $e');
+        // print('프로필 이미지 삭제 실패: $e');
       }
 
       final scrapsSnapshot = await FirebaseFirestore.instance
@@ -296,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         (route) => false,
       );
     } catch (e) {
-      print('계정 탈퇴 오류: $e');
+      // print('계정 탈퇴 오류: $e');
     }
   }
 
