@@ -1,20 +1,23 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:image_cropper/image_cropper.dart';
 
 import '../models/post.dart';
 
 import 'create_post_screen.dart';
-import 'profile_screen.dart';
 
 import '../widgets/soft_divider.dart';
 import '../widgets/cat_post_card.dart';
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
+
+import '../widgets/bottom_nav_bar.dart';
+
+import '../services/post_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -83,16 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   Future<void> loadMyScraps() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('scraps')
-        .get();
-
-    final scrappedPostIds = snapshot.docs.map((doc) => doc.id).toSet();
+    final scrappedPostIds = await PostService.loadMyScrapIds();
 
     setState(() {
       for (final post in posts) {
@@ -119,27 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadPostsFromFirestore() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .orderBy('createdAt', descending: true)
-        .get();
-
-    final loadedPosts = snapshot.docs.map((doc) {
-      final data = doc.data();
-
-      return Post(
-        id: data['id'] ?? doc.id,
-        imageUrl: data['imageUrl'] ?? '',
-        caption: data['caption'] ?? '',
-        likes: data['likes'] ?? 0,
-        tags: List<String>.from(data['tags'] ?? []),
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-        aspectRatio: (data['aspectRatio'] ?? 4 / 5).toDouble(),
-        catName: data['catName'] ?? '가을이',
-        userId: data['userId'] ?? '',
-        isAsset: false,
-      );
-    }).toList();
+    final loadedPosts = await PostService.loadPosts();
 
     setState(() {
       posts.removeWhere((post) => !post.isAsset);
@@ -148,33 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> toggleScrap(Post post) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final scrapRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('scraps')
-        .doc(post.id);
-
     final newValue = !post.isScrapped;
 
     setState(() {
       post.isScrapped = newValue;
     });
 
-    if (newValue) {
-      await scrapRef.set({
-        'postId': post.id,
-        'imageUrl': post.imageUrl,
-        'caption': post.caption,
-        'catName': post.catName,
-        'userId': post.userId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      await scrapRef.delete();
-    }
+    await PostService.setScrap(post: post, isScrapped: newValue);
   }
 
   Future<void> openCameraAndCreatePost() async {
@@ -428,177 +382,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class AlbumScreen extends StatelessWidget {
-  final List<Post> posts;
-
-  const AlbumScreen({super.key, required this.posts});
-
-  @override
-  Widget build(BuildContext context) {
-    final myPosts = posts.where((post) => !post.isAsset).toList();
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF7F1),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('나의 앨범'),
-      ),
-      body: myPosts.isEmpty
-          ? const Center(child: Text('아직 앨범에 담긴 게시글이 없어요 🐾'))
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: myPosts.map((post) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  child: CatPostCard(
-                    imagePath: post.imageUrl,
-                    caption: post.caption,
-                    likes: post.likes,
-                    tagText: post.tags.map((tag) => '#$tag').join('   '),
-                    isAsset: post.isAsset,
-                    createdAt: post.createdAt,
-                    catName: post.catName,
-                    userId: post.userId,
-                    isScrapped: post.isScrapped,
-                    onScrapTap: () {},
-                  ),
-                );
-              }).toList(),
-            ),
-    );
-  }
-}
-
-class BottomNavBar extends StatelessWidget {
-  final Function(Post) onPostCreated;
-  final List<Post> posts;
-
-  const BottomNavBar({
-    super.key,
-    required this.onPostCreated,
-    required this.posts,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 86,
-      padding: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E7),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          const NavItem(icon: Icons.home_rounded, label: '홈', active: true),
-          const NavItem(icon: Icons.search_rounded, label: '탐색'),
-          AddButton(onPostCreated: onPostCreated),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AlbumScreen(posts: posts)),
-              );
-            },
-            child: const NavItem(
-              icon: Icons.photo_library_rounded,
-              label: '앨범',
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ProfileScreen(posts: posts)),
-              );
-            },
-            child: const NavItem(icon: Icons.pets_rounded, label: '프로필'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class AddButton extends StatelessWidget {
-  final Function(Post) onPostCreated;
-
-  const AddButton({super.key, required this.onPostCreated});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CreatePostScreen(onPostCreated: onPostCreated),
-          ),
-        );
-      },
-
-      child: Container(
-        width: 54,
-        height: 54,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFFDFAF),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.add_rounded,
-          size: 34,
-          color: Color(0xFF4A2B22),
-        ),
-      ),
-    );
-  }
-}
-
-class NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const NavItem({
-    super.key,
-    required this.icon,
-    required this.label,
-    this.active = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = active ? const Color(0xFF8A4F45) : const Color(0xFF6A443B);
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 28, color: color),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w900 : FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
     );
   }
 }
