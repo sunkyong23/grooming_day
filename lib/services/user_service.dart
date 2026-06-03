@@ -113,4 +113,28 @@ class UserService {
 
     return duplicateCheck.docs.isNotEmpty;
   }
+
+  static Future<bool> isUserIdAvailable(
+    String userId,
+    String currentUid,
+  ) async {
+    final duplicateCheck = await FirebaseFirestore.instance
+        .collection('users')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    return duplicateCheck.docs.every((doc) => doc.id == currentUid);
+  }
+
+  static Future<void> updateProfile({
+    required String uid,
+    required String userId,
+    required String bio,
+  }) async {
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'userId': userId,
+      'bio': bio,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
 }

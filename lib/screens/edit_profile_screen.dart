@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String currentUserId;
@@ -41,26 +42,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    final duplicateCheck = await FirebaseFirestore.instance
-        .collection('users')
-        .where('userId', isEqualTo: newUserId)
-        .limit(1)
-        .get();
+    final isAvailable = await UserService.isUserIdAvailable(newUserId, uid);
 
     if (!mounted) return;
 
-    if (duplicateCheck.docs.isNotEmpty && duplicateCheck.docs.first.id != uid) {
+    if (!isAvailable) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('이미 사용 중인 아이디입니다.')));
       return;
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'userId': newUserId,
-      'bio': newBio,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    await UserService.updateProfile(uid: uid, userId: newUserId, bio: newBio);
 
     if (!mounted) return;
 
