@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'notice_detail_screen.dart';
+import '../services/notice_service.dart';
 
 class NoticeScreen extends StatelessWidget {
   const NoticeScreen({super.key});
@@ -16,10 +17,7 @@ class NoticeScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notices')
-            .where('isVisible', isEqualTo: true)
-            .snapshots(),
+        stream: NoticeService.notices(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

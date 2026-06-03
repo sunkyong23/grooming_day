@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'update_detail_screen.dart';
+import '../services/update_service.dart';
 
 class UpdateScreen extends StatelessWidget {
   const UpdateScreen({super.key});
@@ -20,10 +21,7 @@ class UpdateScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('updates')
-            .where('isVisible', isEqualTo: true)
-            .snapshots(),
+        stream: UpdateService.updates(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
