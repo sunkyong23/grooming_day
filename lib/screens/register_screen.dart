@@ -4,10 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'terms_screen.dart';
 import 'privacy_policy_screen.dart';
 
-import 'auth_gate.dart';
-
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+
+import 'create_cat_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -119,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const AuthGate()),
+        MaterialPageRoute(builder: (_) => const CreateCatScreen()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
