@@ -14,6 +14,10 @@ import 'settings_screen.dart';
 
 import 'login_screen.dart';
 import 'edit_profile_screen.dart';
+import '../widgets/profile_header.dart';
+import '../widgets/profile_post_grid.dart';
+import '../widgets/settings_tile.dart';
+import '../widgets/cat_profile_card.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -321,144 +325,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: ListView(
         padding: const EdgeInsets.all(22),
         children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: uploadProfileImage,
-                child: CircleAvatar(
-                  radius: 38,
-                  backgroundColor: const Color(0xFFFFE2C6),
-                  backgroundImage: profileImageUrl.isNotEmpty
-                      ? NetworkImage(profileImageUrl)
-                      : null,
-                  child: profileImageUrl.isEmpty
-                      ? const Icon(
-                          Icons.camera_alt,
-                          color: Color(0xFF8A756C),
-                          size: 30,
-                        )
-                      : null,
+          ProfileHeader(
+            userId: userId,
+            bio: bio,
+            profileImageUrl: profileImageUrl,
+            postCount: myPosts.length,
+            onProfileImageTap: uploadProfileImage,
+            onEditTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      EditProfileScreen(currentUserId: userId, currentBio: bio),
                 ),
-              ),
+              );
 
-              const SizedBox(width: 16),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '@$userId',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EditProfileScreen(
-                                currentUserId: userId,
-                                currentBio: bio,
-                              ),
-                            ),
-                          );
-
-                          if (result != null) {
-                            setState(() {
-                              userId = result['userId'];
-                              bio = result['bio'];
-                            });
-                          }
-                        },
-                        child: const Text('편집'),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    bio.isEmpty ? '소개글을 작성해주세요 🐾' : bio,
-                    style: const TextStyle(
-                      color: Color(0xFF7A6A5B),
-                      fontSize: 14,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '게시글 ${myPosts.length}개',
-                    style: const TextStyle(color: Color(0xFFB08678)),
-                  ),
-                ],
-              ),
-            ],
+              if (result != null) {
+                setState(() {
+                  userId = result['userId'];
+                  bio = result['bio'];
+                });
+              }
+            },
           ),
 
           const SizedBox(height: 24),
 
-          // 여기부터 기존 가을이 카드 Container 이어서 두면 됨
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      '가을이',
-
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text('오늘도 귀여움으로 하루를 채우는 고양이 🐾'),
+          const CatProfileCard(),
 
           const SizedBox(height: 24),
+
           const Text(
             '내 게시글',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
 
           const SizedBox(height: 12),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: myPosts.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 6,
-              mainAxisSpacing: 6,
-            ),
-            itemBuilder: (context, index) {
-              final post = myPosts[index];
-
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: post.isAsset
-                    ? Image.asset(post.imageUrl, fit: BoxFit.cover)
-                    : Image.network(post.imageUrl, fit: BoxFit.cover),
-              );
-            },
-          ),
+          ProfilePostGrid(posts: myPosts),
 
           const SizedBox(height: 28),
 
@@ -475,29 +378,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   style: TextStyle(color: Color(0xFFB08678)),
                 )
-              : GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: scrappedPosts.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 6,
-                    mainAxisSpacing: 6,
-                  ),
-                  itemBuilder: (context, index) {
-                    final post = scrappedPosts[index];
-
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: post.isAsset
-                          ? Image.asset(post.imageUrl, fit: BoxFit.cover)
-                          : Image.network(post.imageUrl, fit: BoxFit.cover),
-                    );
-                  },
-                ),
+              : ProfilePostGrid(posts: scrappedPosts),
           const SizedBox(height: 40),
 
-          GestureDetector(
+          SettingsTile(
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -508,26 +392,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               );
             },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: const Row(
-                children: [
-                  Icon(Icons.settings_rounded, color: Color(0xFF8A756C)),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      '설정',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3D241E),
-                      ),
-                    ),
-                  ),
-                  Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
-                ],
-              ),
-            ),
           ),
           const SizedBox(height: 60),
         ],
