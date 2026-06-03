@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'terms_screen.dart';
 import 'privacy_policy_screen.dart';
 
 import 'auth_gate.dart';
+
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -95,13 +97,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final duplicateCheck = await FirebaseFirestore.instance
-          .collection('users')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
+      final isDuplicated = await UserService.isUserIdDuplicated(userId);
 
-      if (duplicateCheck.docs.isNotEmpty) {
+      if (isDuplicated) {
         if (!mounted) return;
 
         ScaffoldMessenger.of(
@@ -111,25 +109,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final uid = userCredential.user!.uid;
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
-        'email': email,
-        'userId': userId,
-        'profileImageUrl': '',
-        'bio': '',
-        'accountType': 'catOwner',
-        'isDeleted': false,
-        'isSuspended': false,
-        'termsAgreedAt': FieldValue.serverTimestamp(),
-        'privacyAgreedAt': FieldValue.serverTimestamp(),
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await AuthService.registerUser(
+        email: email,
+        password: password,
+        userId: userId,
+      );
 
       if (!mounted) return;
 

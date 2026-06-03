@@ -104,4 +104,13 @@ class UserService {
 
     return data['userId'] ?? '';
   }
+
+  static Future<bool> isUserIdDuplicated(String userId) async {
+    final duplicateCheck = await FirebaseFirestore.instance
+        .collection('users')
+        .where('userId', isEqualTo: userId)
+        .get();
+
+    return duplicateCheck.docs.isNotEmpty;
+  }
 }

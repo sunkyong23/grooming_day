@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
@@ -9,6 +8,7 @@ import 'update_screen.dart';
 import 'login_screen.dart';
 
 import 'change_password_screen.dart';
+import '../services/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   final String email;
@@ -130,7 +130,7 @@ class SettingsScreen extends StatelessWidget {
 
             TextButton(
               onPressed: () async {
-                await FirebaseAuth.instance.signOut();
+                await AuthService.signOut();
 
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(

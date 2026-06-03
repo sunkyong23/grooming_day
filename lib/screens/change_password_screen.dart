@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -56,22 +57,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null || user.email == null) {
-        throw FirebaseAuthException(
-          code: 'user-not-found',
-          message: '로그인 정보를 찾을 수 없습니다.',
-        );
-      }
-
-      final credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: currentPassword,
+      await AuthService.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
       );
-
-      await user.reauthenticateWithCredential(credential);
-      await user.updatePassword(newPassword);
 
       if (!mounted) return;
 
