@@ -18,6 +18,8 @@ import '../widgets/settings_tile.dart';
 import '../widgets/cat_profile_card.dart';
 
 import '../services/user_service.dart';
+import '../widgets/delete_account_dialog.dart';
+import '../widgets/reauth_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -146,79 +148,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('계정 탈퇴'),
-          content: const Text('정말 탈퇴하시겠습니까?\n모든 정보가 삭제됩니다.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showReauthDialog();
-              },
-              child: const Text('탈퇴', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
+        return DeleteAccountDialog(onConfirm: _showReauthDialog);
       },
     );
   }
 
   void _showReauthDialog() {
-    final passwordController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('본인 확인'),
-          content: TextField(
-            controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(hintText: '비밀번호를 입력하세요'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
+        return ReauthDialog(
+          onConfirm: (password) async {
+            final user = FirebaseAuth.instance.currentUser;
 
-                final user = FirebaseAuth.instance.currentUser;
+            if (user == null) return;
 
-                if (user == null) return;
+            final credential = EmailAuthProvider.credential(
+              email: user.email!,
+              password: password,
+            );
 
-                final credential = EmailAuthProvider.credential(
-                  email: user.email!,
-                  password: passwordController.text.trim(),
-                );
+            final messenger = ScaffoldMessenger.of(context);
 
-                final messenger = ScaffoldMessenger.of(context);
+            try {
+              await user.reauthenticateWithCredential(credential);
+              await _deleteAccount();
+            } catch (e) {
+              if (!mounted) return;
 
-                try {
-                  await user.reauthenticateWithCredential(credential);
-
-                  await _deleteAccount();
-                } catch (e) {
-                  if (!mounted) return;
-
-                  messenger.showSnackBar(
-                    const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
-                  );
-                }
-              },
-              child: const Text('확인'),
-            ),
-          ],
+              messenger.showSnackBar(
+                const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
+              );
+            }
+          },
         );
       },
     );
