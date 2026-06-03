@@ -113,6 +113,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
