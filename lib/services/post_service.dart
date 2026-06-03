@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -68,5 +72,58 @@ class PostService {
     } else {
       await scrapRef.delete();
     }
+  }
+
+  static Future<Post?> createPost({
+    required File imageFile,
+    required String caption,
+    required List<String> tags,
+    required double aspectRatio,
+    required String catName,
+    required String userId,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return null;
+
+    final postId = FirebaseFirestore.instance.collection('posts').doc().id;
+
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('posts')
+        .child(user.uid)
+        .child('$postId.jpg');
+
+    await storageRef.putFile(imageFile);
+
+    final imageUrl = await storageRef.getDownloadURL();
+
+    final newPost = Post(
+      id: postId,
+      imageUrl: imageUrl,
+      caption: caption,
+      likes: 0,
+      tags: tags,
+      createdAt: DateTime.now(),
+      aspectRatio: aspectRatio,
+      catName: catName,
+      userId: userId,
+      isAsset: false,
+    );
+
+    await FirebaseFirestore.instance.collection('posts').doc(postId).set({
+      'id': postId,
+      'imageUrl': imageUrl,
+      'caption': caption,
+      'likes': 0,
+      'tags': tags,
+      'createdAt': Timestamp.now(),
+      'aspectRatio': aspectRatio,
+      'catName': catName,
+      'userId': userId,
+      'ownerUid': user.uid,
+    });
+
+    return newPost;
   }
 }

@@ -96,4 +96,12 @@ class UserService {
 
     await user.delete();
   }
+
+  static Future<String> loadCurrentUserId() async {
+    final data = await loadCurrentUser();
+
+    if (data == null) return '';
+
+    return data['userId'] ?? '';
+  }
 }

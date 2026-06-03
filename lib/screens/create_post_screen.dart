@@ -3,13 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/post.dart';
+
+import '../services/image_service.dart';
+import '../services/post_service.dart';
+import '../services/user_service.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final Function(Post) onPostCreated;
@@ -23,26 +22,6 @@ class CreatePostScreen extends StatefulWidget {
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
-}
-
-Future<File?> compressImage(File file) async {
-  final dir = await getTemporaryDirectory();
-
-  final targetPath = '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-  final compressedFile = await FlutterImageCompress.compressAndGetFile(
-    file.absolute.path,
-    targetPath,
-    quality: 60,
-    minWidth: 1000,
-    minHeight: 1000,
-  );
-
-  if (compressedFile == null) {
-    return null;
-  }
-
-  return File(compressedFile.path);
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
@@ -95,22 +74,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> loadCurrentUserId() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-
-    if (uid == null) return;
-
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    final loadedUserId = await UserService.loadCurrentUserId();
 
     if (!mounted) return;
 
-    if (doc.exists) {
-      setState(() {
-        currentUserId = doc.data()?['userId'] ?? 'groomingday23';
-      });
-    }
+    setState(() {
+      currentUserId = loadedUserId;
+    });
   }
 
   @override
@@ -310,56 +280,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   onPressed: () async {
                     if (selectedImage == null) return;
 
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user == null) return;
-
-                    final postId = FirebaseFirestore.instance
-                        .collection('posts')
-                        .doc()
-                        .id;
-
-                    final storageRef = FirebaseStorage.instance
-                        .ref()
-                        .child('posts')
-                        .child(user.uid)
-                        .child('$postId.jpg');
-
-                    final compressedImage = await compressImage(selectedImage!);
+                    final compressedImage = await ImageService.compressImage(
+                      selectedImage!,
+                    );
 
                     final uploadFile = compressedImage ?? selectedImage!;
 
-                    await storageRef.putFile(uploadFile);
-
-                    final imageUrl = await storageRef.getDownloadURL();
-
-                    final newPost = Post(
-                      id: postId,
-                      imageUrl: imageUrl,
+                    final newPost = await PostService.createPost(
+                      imageFile: uploadFile,
                       caption: captionController.text,
-                      likes: 0,
                       tags: selectedTags,
-                      createdAt: DateTime.now(),
                       aspectRatio: selectedAspectRatio,
                       catName: '가을이',
                       userId: currentUserId,
-                      isAsset: false,
                     );
 
-                    await FirebaseFirestore.instance
-                        .collection('posts')
-                        .doc(postId)
-                        .set({
-                          'id': postId,
-                          'imageUrl': imageUrl,
-                          'caption': captionController.text,
-                          'likes': 0,
-                          'tags': selectedTags,
-                          'createdAt': Timestamp.now(),
-                          'aspectRatio': selectedAspectRatio,
-                          'catName': '가을이',
-                          'userId': currentUserId,
-                          'ownerUid': user.uid,
-                        });
+                    if (newPost == null) return;
 
                     widget.onPostCreated(newPost);
 
