@@ -10,11 +10,15 @@ class CatProfile {
   final DateTime? adoptionDate;
   final String profileImageUrl;
   final String introduction;
+  final List<String> personalityTags;
   final bool isRepresentative;
+  final bool isPublic;
 
   final bool isHidden;
   final bool isDeleted;
   final int sortOrder;
+
+  final DateTime? createdAt;
 
   CatProfile({
     required this.id,
@@ -26,11 +30,15 @@ class CatProfile {
     this.adoptionDate,
     required this.profileImageUrl,
     required this.introduction,
+    required this.personalityTags,
     required this.isRepresentative,
+    required this.isPublic,
 
     required this.isHidden,
     required this.isDeleted,
     required this.sortOrder,
+
+    this.createdAt,
   });
 
   factory CatProfile.fromMap(Map<String, dynamic> data) {
@@ -39,7 +47,7 @@ class CatProfile {
       ownerUid: data['ownerUid'] ?? '',
       name: data['name'] ?? '',
       breed: data['breed'] ?? '',
-      gender: data['gender'] ?? '',
+      gender: data['gender'] ?? 'unknown',
       birthDate: data['birthDate'] == null
           ? null
           : (data['birthDate'] as Timestamp).toDate(),
@@ -48,10 +56,15 @@ class CatProfile {
           : (data['adoptionDate'] as Timestamp).toDate(),
       profileImageUrl: data['profileImageUrl'] ?? '',
       introduction: data['introduction'] ?? '',
+      personalityTags: List<String>.from(data['personalityTags'] ?? []),
       isRepresentative: data['isRepresentative'] ?? false,
+      isPublic: data['isPublic'] ?? true,
       isHidden: data['isHidden'] ?? false,
       isDeleted: data['isDeleted'] ?? false,
       sortOrder: data['sortOrder'] ?? 0,
+      createdAt: data['createdAt'] == null
+          ? null
+          : (data['createdAt'] as Timestamp).toDate(),
     );
   }
 
@@ -66,11 +79,16 @@ class CatProfile {
       'adoptionDate': adoptionDate,
       'profileImageUrl': profileImageUrl,
       'introduction': introduction,
+      'personalityTags': personalityTags,
       'isRepresentative': isRepresentative,
+      'isPublic': isPublic,
       'isHidden': isHidden,
       'isDeleted': isDeleted,
       'sortOrder': sortOrder,
+      'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 }
+
+enum CatGender { male, female, unknown }

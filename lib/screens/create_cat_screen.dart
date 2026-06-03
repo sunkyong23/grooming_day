@@ -6,6 +6,8 @@ import 'package:image_cropper/image_cropper.dart';
 
 import '../utils/cat_validator.dart';
 
+import '../services/cat_service.dart';
+
 class CreateCatScreen extends StatefulWidget {
   const CreateCatScreen({super.key});
 
@@ -99,8 +101,15 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     return '${selectedBirthDate!.year}.${selectedBirthDate!.month.toString().padLeft(2, '0')}.${selectedBirthDate!.day.toString().padLeft(2, '0')}';
   }
 
-  void submitCatProfile() {
+  Future<void> submitCatProfile() async {
     final name = nameController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('고양이 이름을 입력해주세요.')));
+      return;
+    }
 
     if (!CatValidator.isValidKoreanName(name)) {
       ScaffoldMessenger.of(
@@ -123,9 +132,20 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
       return;
     }
 
+    await CatService.createCat(
+      name: name,
+      breed: breedController.text.trim(),
+      gender: selectedGender,
+      imageFile: selectedImage,
+    );
+
+    if (!mounted) return;
+
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('고양이 프로필 입력 화면 준비 완료 🐱')));
+    ).showSnackBar(const SnackBar(content: Text('고양이 프로필이 등록되었어요 🐱')));
+
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   @override

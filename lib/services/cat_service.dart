@@ -13,6 +13,7 @@ class CatService {
     required String name,
     required String breed,
     required String gender,
+    File? imageFile,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
@@ -21,6 +22,16 @@ class CatService {
     final ownerUserId = await UserService.loadCurrentUserId();
 
     final catId = FirebaseFirestore.instance.collection('cats').doc().id;
+
+    String profileImageUrl = '';
+
+    if (imageFile != null) {
+      profileImageUrl = await uploadCatProfileImage(
+        imageFile: imageFile,
+        ownerUid: uid,
+        catProfileId: catId,
+      );
+    }
 
     await FirebaseFirestore.instance.collection('catProfiles').doc(catId).set({
       'id': catId,
@@ -31,7 +42,7 @@ class CatService {
       'breed': breed,
       'gender': gender,
 
-      'profileImageUrl': '',
+      'profileImageUrl': profileImageUrl,
       'introduction': '',
 
       'isRepresentative': false,
