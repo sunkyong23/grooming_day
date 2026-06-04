@@ -25,7 +25,8 @@ class PostService {
         tags: List<String>.from(data['tags'] ?? []),
         createdAt: (data['createdAt'] as Timestamp).toDate(),
         aspectRatio: (data['aspectRatio'] ?? 4 / 5).toDouble(),
-        catName: data['catName'] ?? '가을이',
+        catName: data['catName'] ?? '',
+        catProfileId: data['catProfileId'] ?? '',
         userId: data['userId'] ?? '',
         isAsset: false,
       );
@@ -80,6 +81,7 @@ class PostService {
     required List<String> tags,
     required double aspectRatio,
     required String catName,
+    required String catProfileId,
     required String userId,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -108,6 +110,7 @@ class PostService {
       aspectRatio: aspectRatio,
       catName: catName,
       userId: userId,
+      catProfileId: catProfileId,
       isAsset: false,
     );
 
@@ -120,10 +123,41 @@ class PostService {
       'createdAt': Timestamp.now(),
       'aspectRatio': aspectRatio,
       'catName': catName,
+      'catProfileId': catProfileId,
       'userId': userId,
       'ownerUid': user.uid,
     });
 
     return newPost;
+  }
+
+  static Future<List<Post>> loadPostsByCatProfile(String catProfileId) async {
+    print('조회할 catProfileId = $catProfileId');
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .where('catProfileId', isEqualTo: catProfileId)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    print('조회된 문서 수 = ${snapshot.docs.length}');
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return Post(
+        id: data['id'] ?? doc.id,
+        imageUrl: data['imageUrl'] ?? '',
+        caption: data['caption'] ?? '',
+        likes: data['likes'] ?? 0,
+        tags: List<String>.from(data['tags'] ?? []),
+        createdAt: (data['createdAt'] as Timestamp).toDate(),
+        aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
+        catName: data['catName'] ?? '',
+        catProfileId: data['catProfileId'] ?? '',
+        userId: data['userId'] ?? '',
+        isAsset: false,
+      );
+    }).toList();
   }
 }

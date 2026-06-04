@@ -188,6 +188,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       tags: selectedTags,
       aspectRatio: selectedAspectRatio,
       catName: selectedCatProfile!.name,
+      catProfileId: selectedCatProfile!.id,
       userId: currentUserId,
     );
 

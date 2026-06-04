@@ -97,11 +97,46 @@ class CatService {
             return CatProfile.fromMap({...data, 'id': data['id'] ?? doc.id});
           })
           .where((cat) {
-            return cat.isDeleted == false && cat.isHidden == false;
+            return cat.isDeleted == false;
           })
           .toList();
     } catch (e) {
       return [];
     }
+  }
+
+  static Future<void> hideCatProfile(String catId) async {
+    await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .doc(catId)
+        .update({'isHidden': true, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  static Future<List<CatProfile>> loadHiddenCatProfiles() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return [];
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .where('ownerUid', isEqualTo: uid)
+        .where('isHidden', isEqualTo: true)
+        .where('isDeleted', isEqualTo: false)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+
+      return CatProfile.fromMap({...data, 'id': data['id'] ?? doc.id});
+    }).toList();
+  }
+
+  static Future<Set<String>> loadHiddenCatIds() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .where('isHidden', isEqualTo: true)
+        .get();
+
+    return snapshot.docs.map((doc) => doc.id).toSet();
   }
 }

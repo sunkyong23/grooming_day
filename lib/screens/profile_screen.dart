@@ -276,7 +276,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: catProfiles.map((cat) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: CatProfileCard(cat: cat),
+                      child: CatProfileCard(
+                        cat: cat,
+                        onChanged: loadCatProfiles,
+                      ),
                     );
                   }).toList(),
                 ),

@@ -18,6 +18,7 @@ import '../widgets/header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
+import '../services/cat_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,6 +47,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String? selectedFeedTag = '오늘의';
 
+  Set<String> hiddenCatIds = {};
+
+  Future<void> loadHiddenCats() async {
+    final loadedHiddenCatIds = await CatService.loadHiddenCatIds();
+
+    if (!mounted) return;
+
+    setState(() {
+      hiddenCatIds = loadedHiddenCatIds;
+    });
+  }
+
   final List<Post> posts = [
     Post(
       id: 'sample1',
@@ -58,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
       catName: '가을이',
       userId: 'groomingday23',
       isAsset: true,
+      catProfileId: '',
     ),
     Post(
       id: 'sample2',
@@ -70,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       catName: '모노',
       userId: 'monocat01',
       isAsset: true,
+      catProfileId: '',
     ),
     Post(
       id: 'sample3',
@@ -82,6 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
       catName: '누렁',
       userId: 'cat22',
       isAsset: true,
+      catProfileId: '',
     ),
   ];
 
@@ -109,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> loadInitialData() async {
     await loadPostsFromFirestore();
+    await loadHiddenCats();
     await loadMyScraps();
   }
 
@@ -218,11 +235,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final visiblePosts = posts.where((post) {
+      return !hiddenCatIds.contains(post.catProfileId);
+    }).toList();
+
     final filteredPosts = selectedFeedTag == null
-        ? ([...posts]..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+        ? ([...visiblePosts]
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
         : selectedFeedTag == '오늘의'
-        ? ([...posts]..sort((a, b) => b.likes.compareTo(a.likes)))
-        : posts.where((post) => post.tags.contains(selectedFeedTag)).toList();
+        ? ([...visiblePosts]..sort((a, b) => b.likes.compareTo(a.likes)))
+        : visiblePosts
+              .where((post) => post.tags.contains(selectedFeedTag))
+              .toList();
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       bottomNavigationBar: BottomNavBar(onPostCreated: addPost, posts: posts),

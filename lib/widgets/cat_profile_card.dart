@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../models/cat_profile.dart';
-
 import '../screens/cat_profile_detail_screen.dart';
 
 class CatProfileCard extends StatelessWidget {
   final CatProfile cat;
+  final VoidCallback? onChanged;
 
-  const CatProfileCard({super.key, required this.cat});
+  const CatProfileCard({super.key, required this.cat, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => CatProfileDetailScreen(cat: cat)),
         );
+
+        if (result == true) {
+          onChanged?.call();
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(18),
@@ -41,12 +45,40 @@ class CatProfileCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    cat.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          cat.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (cat.isHidden) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE9DE),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '숨김',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFB08678),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(

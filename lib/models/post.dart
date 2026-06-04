@@ -8,7 +8,9 @@ class Post {
   final DateTime createdAt;
   final double aspectRatio;
   final String catName;
+  final String catProfileId;
   final String userId;
+
   bool isScrapped;
 
   Post({
@@ -20,7 +22,9 @@ class Post {
     required this.createdAt,
     required this.aspectRatio,
     required this.catName,
+    required this.catProfileId,
     required this.userId,
+
     this.isAsset = true,
     this.isScrapped = false,
   });
