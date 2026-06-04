@@ -21,6 +21,9 @@ import '../services/user_service.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../widgets/reauth_dialog.dart';
 
+import '../models/cat_profile.dart';
+import '../services/cat_service.dart';
+
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
 
@@ -39,10 +42,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String bio = '';
   String email = '';
 
+  List<CatProfile> catProfiles = [];
+
   @override
   void initState() {
     super.initState();
     loadUser();
+    loadCatProfiles();
+  }
+
+  Future<void> loadCatProfiles() async {
+    final cats = await CatService.loadMyCatProfiles();
+
+    if (!mounted) return;
+
+    setState(() {
+      catProfiles = cats;
+    });
   }
 
   Future<void> uploadProfileImage() async {
@@ -244,7 +260,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 24),
 
-          const CatProfileCard(),
+          const Text(
+            '내 고양이',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
+
+          const SizedBox(height: 12),
+
+          catProfiles.isEmpty
+              ? const Text(
+                  '등록된 고양이 프로필이 없어요 🐾',
+                  style: TextStyle(color: Color(0xFFB08678)),
+                )
+              : Column(
+                  children: catProfiles.map((cat) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: CatProfileCard(cat: cat),
+                    );
+                  }).toList(),
+                ),
 
           const SizedBox(height: 24),
 

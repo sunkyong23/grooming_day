@@ -8,12 +8,16 @@ import '../utils/cat_validator.dart';
 
 import '../services/cat_service.dart';
 
+import 'home_screen.dart';
+
 class CreateCatScreen extends StatefulWidget {
   const CreateCatScreen({super.key});
 
   @override
   State<CreateCatScreen> createState() => _CreateCatScreenState();
 }
+
+bool isSubmitting = false;
 
 class _CreateCatScreenState extends State<CreateCatScreen> {
   final nameController = TextEditingController();
@@ -104,6 +108,12 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
   Future<void> submitCatProfile() async {
     final name = nameController.text.trim();
 
+    if (isSubmitting) return;
+
+    setState(() {
+      isSubmitting = true;
+    });
+
     if (name.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -145,7 +155,10 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
       context,
     ).showSnackBar(const SnackBar(content: Text('고양이 프로필이 등록되었어요 🐱')));
 
-    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -301,8 +314,14 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: submitCatProfile,
-                child: const Text('고양이 프로필 만들기'),
+                onPressed: isSubmitting ? null : submitCatProfile,
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('고양이 프로필 만들기'),
               ),
             ),
           ],

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/cat_profile.dart';
 
 class CatProfileDetailScreen extends StatelessWidget {
-  final CatProfile catProfile;
+  final CatProfile cat;
 
-  const CatProfileDetailScreen({super.key, required this.catProfile});
+  const CatProfileDetailScreen({super.key, required this.cat});
 
   @override
   Widget build(BuildContext context) {
@@ -13,26 +13,21 @@ class CatProfileDetailScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: Text(catProfile.name),
+        title: Text(cat.name),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: CircleAvatar(
-                radius: 56,
-                backgroundColor: const Color(0xFFFFE2C6),
-                backgroundImage: catProfile.profileImageUrl.isNotEmpty
-                    ? NetworkImage(catProfile.profileImageUrl)
+                radius: 60,
+                backgroundImage: cat.profileImageUrl.isNotEmpty
+                    ? NetworkImage(cat.profileImageUrl)
                     : null,
-                child: catProfile.profileImageUrl.isEmpty
-                    ? const Icon(
-                        Icons.pets_rounded,
-                        size: 36,
-                        color: Color(0xFF8A756C),
-                      )
+                child: cat.profileImageUrl.isEmpty
+                    ? const Icon(Icons.pets, size: 40)
                     : null,
               ),
             ),
@@ -41,67 +36,63 @@ class CatProfileDetailScreen extends StatelessWidget {
 
             Center(
               child: Text(
-                catProfile.name,
+                cat.name,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF3D241E),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('성별: ${catProfile.gender}'),
-                  const SizedBox(height: 8),
-                  Text(
-                    '품종: ${catProfile.breed.isEmpty ? '미입력' : catProfile.breed}',
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '소개: ${catProfile.introduction.isEmpty ? '아직 소개글이 없어요.' : catProfile.introduction}',
-                  ),
-                ],
-              ),
-            ),
+            _infoTile('품종', cat.breed),
+            _infoTile('성별', cat.gender),
 
-            const SizedBox(height: 28),
+            if (cat.introduction.isNotEmpty) _infoTile('소개', cat.introduction),
+
+            const SizedBox(height: 30),
 
             const Text(
               '앨범',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF3D241E),
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
             ),
 
             const SizedBox(height: 12),
 
             Container(
+              height: 160,
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(22),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
               ),
-              child: const Center(
-                child: Text(
-                  '아직 등록된 게시글이 없어요 🐾',
-                  style: TextStyle(color: Color(0xFF8A756C)),
-                ),
-              ),
+              child: const Text('해당 고양이 게시글이 표시될 예정 🐾'),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoTile(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Text(
+              '$title : ',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            Expanded(child: Text(value)),
           ],
         ),
       ),

@@ -8,6 +8,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'user_service.dart';
 import 'image_service.dart';
 
+import '../models/cat_profile.dart';
+
 class CatService {
   static Future<void> createCat({
     required String name,
@@ -75,5 +77,31 @@ class CatService {
     await storageRef.putFile(uploadFile);
 
     return storageRef.getDownloadURL();
+  }
+
+  static Future<List<CatProfile>> loadMyCatProfiles() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return [];
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('catProfiles')
+          .where('ownerUid', isEqualTo: uid)
+          .get();
+
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+
+            return CatProfile.fromMap({...data, 'id': data['id'] ?? doc.id});
+          })
+          .where((cat) {
+            return cat.isDeleted == false && cat.isHidden == false;
+          })
+          .toList();
+    } catch (e) {
+      return [];
+    }
   }
 }

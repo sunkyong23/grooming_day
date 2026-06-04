@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../models/cat_profile.dart';
 import '../models/post.dart';
+import '../services/cat_service.dart';
 import '../services/image_service.dart';
 import '../services/post_service.dart';
 import '../services/user_service.dart';
@@ -31,6 +33,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   double selectedAspectRatio = 4 / 5;
   String currentUserId = 'groomingday23';
 
+  List<CatProfile> catProfiles = [];
+  CatProfile? selectedCatProfile;
+  bool isLoadingCats = true;
+
   final List<String> tags = [
     '아깽이',
     '어르신',
@@ -54,6 +60,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.initState();
 
     loadCurrentUserId();
+    loadMyCatProfiles();
 
     if (widget.initialImage != null) {
       selectedImage = widget.initialImage;
@@ -74,6 +81,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() {
       currentUserId = loadedUserId;
     });
+  }
+
+  Future<void> loadMyCatProfiles() async {
+    try {
+      final loadedCats = await CatService.loadMyCatProfiles();
+
+      if (!mounted) return;
+
+      setState(() {
+        catProfiles = loadedCats;
+        selectedCatProfile = loadedCats.isNotEmpty ? loadedCats.first : null;
+        isLoadingCats = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        catProfiles = [];
+        selectedCatProfile = null;
+        isLoadingCats = false;
+      });
+    }
   }
 
   Future<void> pickImageFromGallery() async {
@@ -143,6 +172,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<void> submitPost() async {
     if (selectedImage == null) return;
 
+    if (selectedCatProfile == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('고양이 프로필을 선택해주세요.')));
+      return;
+    }
+
     final compressedImage = await ImageService.compressImage(selectedImage!);
     final uploadFile = compressedImage ?? selectedImage!;
 
@@ -151,7 +187,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       caption: captionController.text,
       tags: selectedTags,
       aspectRatio: selectedAspectRatio,
-      catName: '가을이',
+      catName: selectedCatProfile!.name,
       userId: currentUserId,
     );
 
@@ -217,6 +253,45 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                 ),
               ),
+              const SizedBox(height: 20),
+              if (isLoadingCats)
+                const Center(child: CircularProgressIndicator())
+              else if (catProfiles.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text(
+                    '게시글을 작성하려면 먼저 고양이 프로필을 등록해주세요.',
+                    style: TextStyle(color: Color(0xFF8C6A5F), fontSize: 14),
+                  ),
+                )
+              else
+                DropdownButtonFormField<CatProfile>(
+                  initialValue: selectedCatProfile,
+                  decoration: InputDecoration(
+                    labelText: '고양이 선택',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  items: catProfiles.map((cat) {
+                    return DropdownMenuItem<CatProfile>(
+                      value: cat,
+                      child: Text(cat.name),
+                    );
+                  }).toList(),
+                  onChanged: (cat) {
+                    setState(() {
+                      selectedCatProfile = cat;
+                    });
+                  },
+                ),
               const SizedBox(height: 20),
               TextField(
                 controller: captionController,
