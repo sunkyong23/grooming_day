@@ -36,8 +36,10 @@ class _ReauthDialogState extends State<ReauthDialog> {
         ),
         TextButton(
           onPressed: () async {
+            final password = passwordController.text.trim();
+
             Navigator.pop(context);
-            await widget.onConfirm(passwordController.text.trim());
+            await widget.onConfirm(password);
           },
           child: const Text('확인'),
         ),

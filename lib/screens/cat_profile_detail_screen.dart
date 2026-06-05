@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/cat_profile.dart';
-
 import '../services/cat_service.dart';
 
 import '../models/post.dart';
@@ -26,18 +25,51 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
   }
 
   Future<void> loadCatPosts() async {
-    print('고양이 ID = ${widget.cat.id}');
-    print('고양이 이름 = ${widget.cat.name}');
-
     final posts = await PostService.loadPostsByCatProfile(widget.cat.id);
-
-    print('불러온 게시글 수 = ${posts.length}');
 
     if (!mounted) return;
 
     setState(() {
       catPosts = posts;
     });
+  }
+
+  String getCatAge(DateTime? birthDate) {
+    if (birthDate == null) {
+      return '나이 정보 없음';
+    }
+
+    final now = DateTime.now();
+
+    int years = now.year - birthDate.year;
+    int months = now.month - birthDate.month;
+
+    if (now.day < birthDate.day) {
+      months -= 1;
+    }
+
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+
+    if (years <= 0) {
+      return '$months개월';
+    }
+
+    if (months == 0) {
+      return '$years살';
+    }
+
+    return '$years살 $months개월';
+  }
+
+  String getBirthDateText(DateTime? birthDate) {
+    if (birthDate == null) {
+      return '생일 정보 없음';
+    }
+
+    return '${birthDate.year}.${birthDate.month.toString().padLeft(2, '0')}.${birthDate.day.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -90,15 +122,25 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
             Center(
               child: CircleAvatar(
                 radius: 60,
-                backgroundImage: widget.cat.profileImageUrl.isNotEmpty
+                backgroundColor: const Color(0xFFFFE2C6),
+                backgroundImage:
+                    !widget.cat.isVirtualCat &&
+                        widget.cat.profileImageUrl.isNotEmpty
                     ? NetworkImage(widget.cat.profileImageUrl)
                     : null,
-                child: widget.cat.profileImageUrl.isEmpty
+                child: widget.cat.isVirtualCat
+                    ? Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Image.asset(
+                          'assets/icons/today_cat.png',
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    : widget.cat.profileImageUrl.isEmpty
                     ? const Icon(Icons.pets, size: 40)
                     : null,
               ),
             ),
-
             const SizedBox(height: 20),
 
             Center(
@@ -111,13 +153,82 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
 
-            _infoTile('품종', widget.cat.breed),
-            _infoTile('성별', widget.cat.gender),
+            if (!widget.cat.isVirtualCat) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  getCatAge(widget.cat.birthDate),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF8C6A5F),
+                  ),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 20),
 
             if (widget.cat.introduction.isNotEmpty)
-              _infoTile('소개', widget.cat.introduction),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  widget.cat.introduction,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: Color(0xFF4A2B22),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+            if (widget.cat.personalityTags.isNotEmpty) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.cat.personalityTags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE9DE),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFF5A88B)),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8C6A5F),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            if (!widget.cat.isVirtualCat) ...[
+              _infoTile(
+                '품종',
+                widget.cat.breed.isEmpty ? '미입력' : widget.cat.breed,
+              ),
+              _infoTile('성별', widget.cat.gender),
+              _infoTile('생일', getBirthDateText(widget.cat.birthDate)),
+            ],
 
             const SizedBox(height: 30),
 

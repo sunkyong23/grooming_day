@@ -33,14 +33,25 @@ class CatProfileCard extends StatelessWidget {
             CircleAvatar(
               radius: 28,
               backgroundColor: const Color(0xFFFFE2C6),
-              backgroundImage: cat.profileImageUrl.isNotEmpty
+              backgroundImage:
+                  !cat.isVirtualCat && cat.profileImageUrl.isNotEmpty
                   ? NetworkImage(cat.profileImageUrl)
                   : null,
-              child: cat.profileImageUrl.isEmpty
+              child: cat.isVirtualCat
+                  ? Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Image.asset(
+                        'assets/icons/today_cat.png',
+                        fit: BoxFit.contain,
+                      ),
+                    )
+                  : cat.profileImageUrl.isEmpty
                   ? const Icon(Icons.pets_rounded, color: Color(0xFF8A756C))
                   : null,
             ),
+
             const SizedBox(width: 14),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,10 +91,14 @@ class CatProfileCard extends StatelessWidget {
                       ],
                     ],
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     cat.introduction.isNotEmpty
                         ? cat.introduction
+                        : cat.isVirtualCat
+                        ? '고양이를 사랑하는 랜선집사예요'
                         : '오늘도 귀여움으로 하루를 채우는 고양이 🐾',
                     style: const TextStyle(
                       color: Color(0xFF8C6A5F),
@@ -93,6 +108,7 @@ class CatProfileCard extends StatelessWidget {
                 ],
               ),
             ),
+
             const Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
           ],
         ),

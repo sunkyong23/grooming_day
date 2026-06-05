@@ -132,15 +132,11 @@ class PostService {
   }
 
   static Future<List<Post>> loadPostsByCatProfile(String catProfileId) async {
-    print('조회할 catProfileId = $catProfileId');
-
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .where('catProfileId', isEqualTo: catProfileId)
         .orderBy('createdAt', descending: true)
         .get();
-
-    print('조회된 문서 수 = ${snapshot.docs.length}');
 
     return snapshot.docs.map((doc) {
       final data = doc.data();

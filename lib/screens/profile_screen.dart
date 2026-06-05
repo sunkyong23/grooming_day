@@ -13,7 +13,7 @@ import 'settings_screen.dart';
 import 'login_screen.dart';
 import 'edit_profile_screen.dart';
 import '../widgets/profile_header.dart';
-import '../widgets/profile_post_grid.dart';
+
 import '../widgets/settings_tile.dart';
 import '../widgets/cat_profile_card.dart';
 
@@ -23,6 +23,8 @@ import '../widgets/reauth_dialog.dart';
 
 import '../models/cat_profile.dart';
 import '../services/cat_service.dart';
+
+import 'create_cat_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -220,9 +222,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final myPosts = widget.posts.where((post) => !post.isAsset).toList();
-    final scrappedPosts = widget.posts
-        .where((post) => post.isScrapped)
-        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
@@ -260,9 +259,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 24),
 
-          const Text(
-            '내 고양이',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '내 고양이',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const CreateCatScreen(isFromProfile: true),
+                    ),
+                  );
+
+                  if (result == true) {
+                    loadCatProfiles();
+                  }
+                },
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('추가'),
+              ),
+            ],
           ),
 
           const SizedBox(height: 12),
@@ -284,32 +305,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }).toList(),
                 ),
 
-          const SizedBox(height: 24),
-
-          const Text(
-            '내 게시글',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-
-          const SizedBox(height: 12),
-          ProfilePostGrid(posts: myPosts),
-
-          const SizedBox(height: 28),
-
-          const Text(
-            '스크랩',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-
-          const SizedBox(height: 12),
-
-          scrappedPosts.isEmpty
-              ? const Text(
-                  '아직 스크랩한 게시글이 없어요 🐾',
-
-                  style: TextStyle(color: Color(0xFFB08678)),
-                )
-              : ProfilePostGrid(posts: scrappedPosts),
           const SizedBox(height: 40),
 
           SettingsTile(

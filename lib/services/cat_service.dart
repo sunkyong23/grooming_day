@@ -15,6 +15,10 @@ class CatService {
     required String name,
     required String breed,
     required String gender,
+    required DateTime? birthDate,
+    required String introduction,
+    required List<String> personalityTags,
+    required bool isVirtualCat,
     File? imageFile,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -43,14 +47,17 @@ class CatService {
       'name': name,
       'breed': breed,
       'gender': gender,
+      'birthDate': birthDate,
 
       'profileImageUrl': profileImageUrl,
-      'introduction': '',
+      'introduction': introduction,
+      'personalityTags': personalityTags,
 
       'isRepresentative': false,
 
       'isHidden': false,
       'isDeleted': false,
+      'isVirtualCat': isVirtualCat,
       'sortOrder': 0,
 
       'createdAt': FieldValue.serverTimestamp(),

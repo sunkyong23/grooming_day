@@ -16,6 +16,7 @@ class CatProfile {
 
   final bool isHidden;
   final bool isDeleted;
+  final bool isVirtualCat;
   final int sortOrder;
 
   final DateTime? createdAt;
@@ -36,6 +37,7 @@ class CatProfile {
 
     required this.isHidden,
     required this.isDeleted,
+    required this.isVirtualCat,
     required this.sortOrder,
 
     this.createdAt,
@@ -61,6 +63,7 @@ class CatProfile {
       isPublic: data['isPublic'] ?? true,
       isHidden: data['isHidden'] ?? false,
       isDeleted: data['isDeleted'] ?? false,
+      isVirtualCat: data['isVirtualCat'] ?? false,
       sortOrder: data['sortOrder'] ?? 0,
       createdAt: data['createdAt'] == null
           ? null
@@ -84,6 +87,7 @@ class CatProfile {
       'isPublic': isPublic,
       'isHidden': isHidden,
       'isDeleted': isDeleted,
+      'isVirtualCat': isVirtualCat,
       'sortOrder': sortOrder,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),

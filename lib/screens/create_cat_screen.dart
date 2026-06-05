@@ -11,13 +11,13 @@ import '../services/cat_service.dart';
 import 'home_screen.dart';
 
 class CreateCatScreen extends StatefulWidget {
-  const CreateCatScreen({super.key});
+  final bool isFromProfile;
+
+  const CreateCatScreen({super.key, this.isFromProfile = false});
 
   @override
   State<CreateCatScreen> createState() => _CreateCatScreenState();
 }
-
-bool isSubmitting = false;
 
 class _CreateCatScreenState extends State<CreateCatScreen> {
   final nameController = TextEditingController();
@@ -25,6 +25,8 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
   final introductionController = TextEditingController();
 
   final picker = ImagePicker();
+
+  bool isSubmitting = false;
 
   String selectedGender = '여아';
   File? selectedImage;
@@ -107,6 +109,18 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
 
   Future<void> submitCatProfile() async {
     final name = nameController.text.trim();
+    final breed = breedController.text.trim();
+
+    if (selectedImage == null) {
+      setState(() {
+        isSubmitting = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('고양이 대표 사진을 선택해주세요.')));
+      return;
+    }
 
     if (isSubmitting) return;
 
@@ -115,6 +129,10 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     });
 
     if (name.isEmpty) {
+      setState(() {
+        isSubmitting = false;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('고양이 이름을 입력해주세요.')));
@@ -122,6 +140,10 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     }
 
     if (!CatValidator.isValidKoreanName(name)) {
+      setState(() {
+        isSubmitting = false;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('고양이 이름은 한글만 입력해주세요.')));
@@ -129,13 +151,32 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     }
 
     if (selectedBirthDate == null) {
+      setState(() {
+        isSubmitting = false;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('고양이 생일을 선택해주세요.')));
       return;
     }
 
+    if (breed.isEmpty) {
+      setState(() {
+        isSubmitting = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('품종을 입력해주세요.')));
+      return;
+    }
+
     if (selectedPersonalities.isEmpty) {
+      setState(() {
+        isSubmitting = false;
+      });
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('성격을 1개 이상 선택해주세요.')));
@@ -144,21 +185,33 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
 
     await CatService.createCat(
       name: name,
-      breed: breedController.text.trim(),
+      breed: breed,
       gender: selectedGender,
+      birthDate: selectedBirthDate,
+      introduction: introductionController.text.trim(),
+      personalityTags: selectedPersonalities,
+      isVirtualCat: false,
       imageFile: selectedImage,
     );
 
     if (!mounted) return;
 
+    setState(() {
+      isSubmitting = false;
+    });
+
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('고양이 프로필이 등록되었어요 🐱')));
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
-    );
+    if (widget.isFromProfile) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
   }
 
   @override

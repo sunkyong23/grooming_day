@@ -7,7 +7,7 @@ import 'privacy_policy_screen.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
-import 'create_cat_screen.dart';
+import 'cat_profile_type_select_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -119,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const CreateCatScreen()),
+        MaterialPageRoute(builder: (_) => const CatProfileTypeSelectScreen()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
