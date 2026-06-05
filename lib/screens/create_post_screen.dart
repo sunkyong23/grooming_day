@@ -11,6 +11,8 @@ import '../services/image_service.dart';
 import '../services/post_service.dart';
 import '../services/user_service.dart';
 
+import 'cat_profile_type_select_screen.dart';
+
 class CreatePostScreen extends StatefulWidget {
   final Function(Post) onPostCreated;
   final File? initialImage;
@@ -170,12 +172,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> submitPost() async {
-    if (selectedImage == null) return;
+    if (selectedImage == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('게시할 사진을 선택해주세요.')));
+      return;
+    }
 
     if (selectedCatProfile == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('고양이 프로필을 선택해주세요.')));
+      ).showSnackBar(const SnackBar(content: Text('고양이 프로필을 먼저 등록해주세요.')));
       return;
     }
 
@@ -254,20 +261,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               if (isLoadingCats)
                 const Center(child: CircularProgressIndicator())
               else if (catProfiles.isEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Text(
-                    '게시글을 작성하려면 먼저 고양이 프로필을 등록해주세요.',
-                    style: TextStyle(color: Color(0xFF8C6A5F), fontSize: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '게시글을 작성하려면 먼저 고양이 프로필을 등록해주세요.',
+                        style: TextStyle(
+                          color: Color(0xFF8C6A5F),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const CatProfileTypeSelectScreen(),
+                              ),
+                            );
+
+                            loadMyCatProfiles();
+                          },
+                          child: const Text('고양이 프로필 등록하기'),
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else
@@ -293,7 +329,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     });
                   },
                 ),
+
               const SizedBox(height: 20),
+
               TextField(
                 controller: captionController,
                 maxLines: 3,
@@ -304,9 +342,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
               const Text('태그 선택 (최대 3개)'),
+
               const SizedBox(height: 10),
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -340,7 +382,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   );
                 }).toList(),
               ),
+
               const SizedBox(height: 40),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

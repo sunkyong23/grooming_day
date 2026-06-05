@@ -6,6 +6,10 @@ import '../services/cat_service.dart';
 import '../models/post.dart';
 import '../services/post_service.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'edit_cat_profile_screen.dart';
+
 class CatProfileDetailScreen extends StatefulWidget {
   final CatProfile cat;
 
@@ -74,44 +78,112 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isOwner =
+        FirebaseAuth.instance.currentUser?.uid == widget.cat.ownerUid;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
         title: Text(widget.cat.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.visibility_off_outlined),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text('고양이 프로필 숨기기'),
-                    content: const Text('이 고양이 프로필을 숨길까요?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('취소'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('숨기기'),
-                      ),
-                    ],
+          if (isOwner)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_horiz),
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditCatProfileScreen(cat: widget.cat),
+                    ),
                   );
-                },
-              );
 
-              if (confirm != true) return;
+                  if (result == true) {
+                    if (!context.mounted) return;
 
-              await CatService.hideCatProfile(widget.cat.id);
+                    Navigator.pop(context, true);
+                  }
+                }
 
-              if (!context.mounted) return;
+                if (value == 'hide') {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('고양이 프로필 숨기기'),
+                        content: const Text('이 고양이 프로필을 숨길까요?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('숨기기'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
 
-              Navigator.pop(context, true);
-            },
-          ),
+                  if (confirm != true) return;
+
+                  await CatService.hideCatProfile(widget.cat.id);
+
+                  if (!context.mounted) return;
+
+                  Navigator.pop(context, true);
+                }
+
+                if (value == 'delete') {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('고양이 프로필 삭제'),
+                        content: const Text(
+                          '정말 이 고양이 프로필을 삭제할까요?\n삭제된 프로필은 목록에서 보이지 않아요.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text(
+                              '삭제',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  if (confirm != true) return;
+
+                  await CatService.deleteCatProfile(widget.cat.id);
+
+                  if (!context.mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('고양이 프로필이 삭제되었어요.')),
+                  );
+
+                  Navigator.pop(context, true);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'edit', child: Text('프로필 수정')),
+                PopupMenuItem(value: 'hide', child: Text('숨기기')),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('프로필 삭제', style: TextStyle(color: Colors.red)),
+                ),
+              ],
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -141,6 +213,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     : null,
               ),
             ),
+
             const SizedBox(height: 20),
 
             Center(
@@ -193,30 +266,33 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
               ),
 
             if (widget.cat.personalityTags.isNotEmpty) ...[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: widget.cat.personalityTags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFE9DE),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFF5A88B)),
-                    ),
-                    child: Text(
-                      tag,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF8C6A5F),
+              Center(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: widget.cat.personalityTags.map((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
                       ),
-                    ),
-                  );
-                }).toList(),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE9DE),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF5A88B)),
+                      ),
+                      child: Text(
+                        tag,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF8C6A5F),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
               const SizedBox(height: 20),
             ],

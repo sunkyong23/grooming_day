@@ -112,11 +112,60 @@ class CatService {
     }
   }
 
+  static Future<void> updateCatProfile({
+    required String catId,
+    required String name,
+    required String breed,
+    required DateTime? birthDate,
+    required String introduction,
+    required List<String> personalityTags,
+    File? imageFile,
+    required String currentProfileImageUrl,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    String profileImageUrl = currentProfileImageUrl;
+
+    if (imageFile != null) {
+      profileImageUrl = await uploadCatProfileImage(
+        imageFile: imageFile,
+        ownerUid: uid,
+        catProfileId: catId,
+      );
+    }
+
+    await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .doc(catId)
+        .update({
+          'name': name,
+          'breed': breed,
+          'birthDate': birthDate,
+          'introduction': introduction,
+          'personalityTags': personalityTags,
+          'profileImageUrl': profileImageUrl,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
   static Future<void> hideCatProfile(String catId) async {
     await FirebaseFirestore.instance
         .collection('catProfiles')
         .doc(catId)
         .update({'isHidden': true, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  static Future<void> deleteCatProfile(String catId) async {
+    await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .doc(catId)
+        .update({
+          'isDeleted': true,
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 
   static Future<List<CatProfile>> loadHiddenCatProfiles() async {
