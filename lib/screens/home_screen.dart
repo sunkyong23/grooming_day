@@ -1,20 +1,16 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-
 import 'package:image_picker/image_picker.dart';
-
 import 'package:image_cropper/image_cropper.dart';
 
 import '../models/post.dart';
-
 import 'create_post_screen.dart';
 
 import '../widgets/soft_divider.dart';
 import '../widgets/cat_post_card.dart';
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
-
 import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
@@ -47,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String? selectedFeedTag = '오늘의';
 
   final List<Post> posts = [];
-
   final List<Post> myPosts = [];
 
   Future<void> loadMyScraps() async {
@@ -87,6 +82,17 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> loadPostsByTagFromFirestore(String tag) async {
+    final loadedPosts = await PostService.loadPostsByTag(tag);
+
+    if (!mounted) return;
+
+    setState(() {
+      posts.clear();
+      posts.addAll(loadedPosts);
+    });
+  }
+
   Future<void> loadMyPostsFromFirestore() async {
     final loadedMyPosts = await PostService.loadMyPosts();
 
@@ -98,13 +104,34 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> handleTagTap(String tag) async {
+    if (tag == '오늘의') {
+      selectedFeedTag = '오늘의';
+      await loadPostsFromFirestore();
+
+      if (!mounted) return;
+      setState(() {});
+      return;
+    }
+
+    if (selectedFeedTag == tag) {
+      selectedFeedTag = null;
+      await loadPostsFromFirestore();
+    } else {
+      selectedFeedTag = tag;
+      await loadPostsByTagFromFirestore(tag);
+    }
+
+    if (!mounted) return;
+    setState(() {});
+  }
+
   Future<void> toggleScrap(Post post) async {
     // 스크랩 기능은 나중에 다시 연결
   }
 
   Future<void> openCameraAndCreatePost() async {
     final picker = ImagePicker();
-
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
     if (image == null) return;
@@ -117,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          builder: (_) {
+          builder: (bottomSheetContext) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
               child: Column(
@@ -128,35 +155,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 18),
-
                   ListTile(
                     leading: const Icon(Icons.crop_landscape),
                     title: const Text('가로 4:3'),
                     onTap: () {
                       Navigator.pop(
-                        context,
+                        bottomSheetContext,
                         const CropAspectRatio(ratioX: 4, ratioY: 3),
                       );
                     },
                   ),
-
                   ListTile(
                     leading: const Icon(Icons.crop_portrait),
                     title: const Text('세로 4:5'),
                     onTap: () {
                       Navigator.pop(
-                        context,
+                        bottomSheetContext,
                         const CropAspectRatio(ratioX: 4, ratioY: 5),
                       );
                     },
                   ),
-
                   ListTile(
                     leading: const Icon(Icons.crop_square),
                     title: const Text('정사각형 1:1'),
                     onTap: () {
                       Navigator.pop(
-                        context,
+                        bottomSheetContext,
                         const CropAspectRatio(ratioX: 1, ratioY: 1),
                       );
                     },
@@ -168,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
 
     if (selectedRatio == null) return;
+
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: image.path,
       aspectRatio: selectedRatio,
@@ -189,16 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredPosts = selectedFeedTag == null
-        ? ([...posts]..sort((a, b) {
-            final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-            final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-            return bDate.compareTo(aDate);
-          }))
-        : selectedFeedTag == '오늘의'
+    final filteredPosts = selectedFeedTag == '오늘의'
         ? ([...posts]..sort((a, b) => b.scrapCount.compareTo(a.scrapCount)))
-        : posts.where((post) => post.tags.contains(selectedFeedTag)).toList();
+        : [...posts];
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
@@ -217,9 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Header(onCameraTap: openCameraAndCreatePost),
                   const SizedBox(height: 14),
-
                   const SoftDivider(),
-
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -232,12 +248,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 padding: const EdgeInsets.only(right: 14),
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.translucent,
-                                  onTap: () {
-                                    setState(() {
-                                      selectedFeedTag = selectedFeedTag == tag
-                                          ? null
-                                          : tag;
-                                    });
+                                  onTap: () async {
+                                    await handleTagTap(tag);
                                   },
                                   child: TagChip(
                                     key: ValueKey(tag),
@@ -261,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 top: Radius.circular(28),
                               ),
                             ),
-                            builder: (_) {
+                            builder: (bottomSheetContext) {
                               return Padding(
                                 padding: const EdgeInsets.fromLTRB(
                                   22,
@@ -292,14 +304,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       childAspectRatio: 2.5,
                                       children: tags.map((tag) {
                                         return GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              selectedFeedTag =
-                                                  selectedFeedTag == tag
-                                                  ? null
-                                                  : tag;
-                                            });
-                                            Navigator.pop(context);
+                                          onTap: () async {
+                                            await handleTagTap(tag);
+
+                                            if (bottomSheetContext.mounted) {
+                                              Navigator.pop(bottomSheetContext);
+                                            }
                                           },
                                           child: TagChip(
                                             key: ValueKey('sheet_$tag'),
@@ -329,15 +339,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
-
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
                 children: [
                   const SizedBox(height: 24),
-
                   ...filteredPosts.map(
                     (post) => Padding(
                       padding: const EdgeInsets.only(bottom: 18),

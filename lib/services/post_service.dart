@@ -238,4 +238,17 @@ class PostService {
 
     return posts;
   }
+
+  static Future<List<Post>> loadPostsByTag(String tag) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('visibility', isEqualTo: 'public')
+        .where('tags', arrayContains: tag)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map(_postFromDoc).toList();
+  }
 }
