@@ -15,6 +15,8 @@ import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -297,6 +299,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ? ([...posts]..sort((a, b) => b.scrapCount.compareTo(a.scrapCount)))
         : [...posts];
 
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       bottomNavigationBar: BottomNavBar(
@@ -439,6 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onScrapTap: () {
                           toggleScrap(post);
                         },
+                        showMoreButton: post.ownerUid == currentUid,
                         onMoreTap: () {
                           showPostMoreMenu(post);
                         },

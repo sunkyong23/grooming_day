@@ -43,14 +43,31 @@ class AuthService {
 
     final uid = userCredential.user!.uid;
 
-    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+    final batch = FirebaseFirestore.instance.batch();
+
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final userIdRef = FirebaseFirestore.instance
+        .collection('userIds')
+        .doc(userId);
+
+    batch.set(userRef, {
+      'uid': uid,
       'email': email,
       'userId': userId,
       'bio': '',
       'profileImageUrl': '',
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
+      'isDeleted': false,
+      'isSuspended': false,
     });
+
+    batch.set(userIdRef, {
+      'uid': uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
   }
 
   static Future<void> changePassword({

@@ -8,6 +8,7 @@ class CatPostCard extends StatelessWidget {
   final String catName;
   final String userId;
   final bool isScrapped;
+  final bool showMoreButton;
   final int scrapCount;
   final VoidCallback onScrapTap;
   final VoidCallback? onMoreTap;
@@ -22,6 +23,7 @@ class CatPostCard extends StatelessWidget {
     required this.catName,
     required this.userId,
     required this.isScrapped,
+    this.showMoreButton = false,
     required this.onScrapTap,
     this.onMoreTap,
   });
@@ -79,14 +81,15 @@ class CatPostCard extends StatelessWidget {
                   style: TextStyle(fontSize: 10, color: Color(0xFFC9AFA7)),
                 ),
                 SizedBox(width: 12),
-                GestureDetector(
-                  onTap: onMoreTap,
-                  child: const Icon(
-                    Icons.more_horiz,
-                    size: 21,
-                    color: Color(0xFF9A6B60),
+                if (showMoreButton)
+                  GestureDetector(
+                    onTap: onMoreTap,
+                    child: const Icon(
+                      Icons.more_horiz,
+                      size: 21,
+                      color: Color(0xFF9A6B60),
+                    ),
                   ),
-                ),
               ],
             ),
           ),

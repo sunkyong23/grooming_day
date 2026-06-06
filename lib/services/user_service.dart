@@ -23,11 +23,7 @@ class UserService {
 
     if (uid == null) return null;
 
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('users')
-        .child(uid)
-        .child('profile.jpg');
+    final ref = FirebaseStorage.instance.ref('users/$uid/profile.jpg');
 
     await ref.putFile(file);
 
@@ -59,21 +55,29 @@ class UserService {
 
     final uid = user.uid;
 
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    final userId = userDoc.data()?['userId'] ?? '';
+
     final postsSnapshot = await FirebaseFirestore.instance
         .collection('posts')
         .where('ownerUid', isEqualTo: uid)
         .get();
 
     for (final doc in postsSnapshot.docs) {
-      final postId = doc.id;
+      final data = doc.data();
+      final storagePath = data['storagePath'] ?? 'posts/$uid/${doc.id}.jpg';
 
       try {
-        await FirebaseStorage.instance.ref('posts/$uid/$postId.jpg').delete();
+        await FirebaseStorage.instance.ref(storagePath).delete();
       } catch (e) {
         // 이미지가 없거나 이미 삭제된 경우 무시
       }
 
-      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
+      await FirebaseFirestore.instance.collection('posts').doc(doc.id).delete();
     }
 
     try {
@@ -92,6 +96,17 @@ class UserService {
       await doc.reference.delete();
     }
 
+    if (userId.toString().isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('userIds')
+            .doc(userId)
+            .delete();
+      } catch (e) {
+        // userIds 문서가 없거나 삭제 권한이 없을 경우 무시
+      }
+    }
+
     await FirebaseFirestore.instance.collection('users').doc(uid).delete();
 
     await user.delete();
@@ -106,24 +121,38 @@ class UserService {
   }
 
   static Future<bool> isUserIdDuplicated(String userId) async {
-    final duplicateCheck = await FirebaseFirestore.instance
-        .collection('users')
-        .where('userId', isEqualTo: userId)
+    final doc = await FirebaseFirestore.instance
+        .collection('userIds')
+        .doc(userId)
         .get();
 
-    return duplicateCheck.docs.isNotEmpty;
+    return doc.exists;
   }
 
   static Future<bool> isUserIdAvailable(
     String userId,
     String currentUid,
   ) async {
-    final duplicateCheck = await FirebaseFirestore.instance
-        .collection('users')
-        .where('userId', isEqualTo: userId)
+    final doc = await FirebaseFirestore.instance
+        .collection('userIds')
+        .doc(userId)
         .get();
 
-    return duplicateCheck.docs.every((doc) => doc.id == currentUid);
+    if (!doc.exists) return true;
+
+    final data = doc.data();
+
+    return data?['uid'] == currentUid;
+  }
+
+  static Future<void> reserveUserId({
+    required String uid,
+    required String userId,
+  }) async {
+    await FirebaseFirestore.instance.collection('userIds').doc(userId).set({
+      'uid': uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   static Future<void> updateProfile({
@@ -131,10 +160,38 @@ class UserService {
     required String userId,
     required String bio,
   }) async {
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+
+    final currentUserDoc = await userRef.get();
+    final currentUserId = currentUserDoc.data()?['userId'] ?? '';
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    batch.update(userRef, {
       'userId': userId,
       'bio': bio,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    if (currentUserId != userId) {
+      if (currentUserId.toString().isNotEmpty) {
+        final oldUserIdRef = FirebaseFirestore.instance
+            .collection('userIds')
+            .doc(currentUserId);
+
+        batch.delete(oldUserIdRef);
+      }
+
+      final newUserIdRef = FirebaseFirestore.instance
+          .collection('userIds')
+          .doc(userId);
+
+      batch.set(newUserIdRef, {
+        'uid': uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
   }
 }
