@@ -26,6 +26,8 @@ import '../services/cat_service.dart';
 
 import 'create_cat_screen.dart';
 
+import 'cat_profile_type_select_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
   final VoidCallback? onRefreshPosts;
@@ -276,8 +278,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          const CreateCatScreen(isFromProfile: true),
+                      builder: (_) => catProfiles.isEmpty
+                          ? const CatProfileTypeSelectScreen()
+                          : const CreateCatScreen(isFromProfile: true),
                     ),
                   );
 

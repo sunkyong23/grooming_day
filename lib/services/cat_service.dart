@@ -97,7 +97,7 @@ class CatService {
           .where('ownerUid', isEqualTo: uid)
           .get();
 
-      return snapshot.docs
+      final cats = snapshot.docs
           .map((doc) {
             final data = doc.data();
 
@@ -107,6 +107,19 @@ class CatService {
             return cat.isDeleted == false;
           })
           .toList();
+
+      cats.sort((a, b) {
+        if (a.isHidden != b.isHidden) {
+          return a.isHidden ? 1 : -1;
+        }
+
+        final aCreatedAt = a.createdAt ?? DateTime(1970);
+        final bCreatedAt = b.createdAt ?? DateTime(1970);
+
+        return aCreatedAt.compareTo(bCreatedAt);
+      });
+
+      return cats;
     } catch (e) {
       return [];
     }
@@ -194,5 +207,12 @@ class CatService {
         .get();
 
     return snapshot.docs.map((doc) => doc.id).toSet();
+  }
+
+  static Future<void> unhideCatProfile(String catId) async {
+    await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .doc(catId)
+        .update({'isHidden': false, 'updatedAt': FieldValue.serverTimestamp()});
   }
 }

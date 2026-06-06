@@ -167,6 +167,14 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   navigator.pop(true);
                 }
 
+                if (value == 'unhide') {
+                  await CatService.unhideCatProfile(widget.cat.id);
+
+                  if (!mounted) return;
+
+                  navigator.pop(true);
+                }
+
                 if (value == 'delete') {
                   final confirm = await _showDeleteConfirmDialog();
 
@@ -180,10 +188,13 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   navigator.pop(true);
                 }
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'edit', child: Text('프로필 수정')),
-                PopupMenuItem(value: 'hide', child: Text('숨기기')),
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 'edit', child: Text('프로필 수정')),
                 PopupMenuItem(
+                  value: widget.cat.isHidden ? 'unhide' : 'hide',
+                  child: Text(widget.cat.isHidden ? '숨김 해제' : '숨기기'),
+                ),
+                const PopupMenuItem(
                   value: 'delete',
                   child: Text('프로필 삭제', style: TextStyle(color: Colors.red)),
                 ),
