@@ -132,6 +132,83 @@ class _HomeScreenState extends State<HomeScreen> {
     // 스크랩 기능은 나중에 다시 연결
   }
 
+  Future<void> showPostMoreMenu(Post post) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFFF7F1),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('삭제'),
+                  textColor: Colors.redAccent,
+                  iconColor: Colors.redAccent,
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    showDeletePostDialog(post);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> showDeletePostDialog(Post post) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('게시글 삭제'),
+          content: const Text('이 게시글을 삭제할까요? 삭제 후에는 되돌릴 수 없어요.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text(
+                '삭제',
+                style: TextStyle(color: Colors.redAccent),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) return;
+
+    try {
+      await PostService.deletePost(post);
+
+      await refreshPostLists();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('게시글이 삭제되었습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('게시글 삭제 중 오류가 발생했습니다. 다시 시도해주세요.')),
+      );
+    }
+  }
+
   Future<void> openCameraAndCreatePost() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
@@ -361,6 +438,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         isScrapped: false,
                         onScrapTap: () {
                           toggleScrap(post);
+                        },
+                        onMoreTap: () {
+                          showPostMoreMenu(post);
                         },
                       ),
                     ),

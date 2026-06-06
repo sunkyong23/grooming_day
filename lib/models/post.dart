@@ -18,6 +18,7 @@ class Post {
   final int scrapCount;
   final int commentCount;
   final String visibility;
+  final String storagePath;
 
   Post({
     required this.id,
@@ -36,6 +37,7 @@ class Post {
     this.reportCount = 0,
     this.scrapCount = 0,
     this.commentCount = 0,
+    this.storagePath = '',
     this.visibility = 'public',
   });
 
@@ -49,6 +51,7 @@ class Post {
       catProfileId: data['catProfileId'] ?? '',
       catName: data['catName'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
+      storagePath: data['storagePath'] ?? '',
       caption: data['caption'] ?? '',
       tags: List<String>.from(data['tags'] ?? []),
       aspectRatio: (data['aspectRatio'] ?? 1.0).toDouble(),

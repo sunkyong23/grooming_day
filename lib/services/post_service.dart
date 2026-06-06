@@ -28,6 +28,7 @@ class PostService {
       catProfileId: data['catProfileId'] ?? '',
       catName: data['catName'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
+      storagePath: data['storagePath'] ?? '',
       caption: data['caption'] ?? '',
       tags: List<String>.from(data['tags'] ?? []),
       aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
@@ -137,11 +138,9 @@ class PostService {
 
     final postId = FirebaseFirestore.instance.collection('posts').doc().id;
 
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child('posts')
-        .child(user.uid)
-        .child('$postId.jpg');
+    final storagePath = 'posts/${user.uid}/$postId.jpg';
+
+    final storageRef = FirebaseStorage.instance.ref().child(storagePath);
 
     await storageRef.putFile(imageFile);
 
@@ -154,6 +153,7 @@ class PostService {
       catProfileId: catProfileId,
       catName: catName,
       imageUrl: imageUrl,
+      storagePath: storagePath,
       caption: caption,
       tags: tags,
       aspectRatio: aspectRatio,
@@ -174,6 +174,7 @@ class PostService {
       'catProfileId': catProfileId,
       'catName': catName,
       'imageUrl': imageUrl,
+      'storagePath': storagePath,
       'caption': caption,
       'tags': tags,
       'aspectRatio': aspectRatio,
@@ -250,5 +251,20 @@ class PostService {
         .get();
 
     return snapshot.docs.map(_postFromDoc).toList();
+  }
+
+  static Future<void> deletePost(Post post) async {
+    try {
+      if (post.storagePath.isNotEmpty) {
+        await FirebaseStorage.instance.ref().child(post.storagePath).delete();
+      }
+
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(post.id)
+          .delete();
+    } catch (e) {
+      rethrow;
+    }
   }
 }
