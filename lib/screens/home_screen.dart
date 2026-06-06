@@ -14,6 +14,7 @@ import '../widgets/header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
+import 'album_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -52,7 +53,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void addPost(Post post) {
-    refreshPostLists();
+    if (post.tags.isEmpty) {
+      refreshPostLists();
+
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AlbumScreen()),
+        );
+      });
+    } else {
+      setState(() {
+        selectedFeedTag = null;
+      });
+
+      refreshPostLists();
+    }
   }
 
   @override
@@ -434,6 +452,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: CatPostCard(
                         imagePath: post.imageUrl,
                         caption: post.caption,
+                        catProfileImageUrl: post.catProfileImageUrl,
+                        isVirtualCat: post.isVirtualCat,
                         scrapCount: post.scrapCount,
                         tagText: post.tags.map((tag) => '#$tag').join('   '),
                         createdAt: post.createdAt ?? DateTime.now(),

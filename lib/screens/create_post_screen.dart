@@ -206,6 +206,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         catName: selectedCatProfile!.name,
         catProfileId: selectedCatProfile!.id,
         userId: currentUserId,
+        catProfileImageUrl: selectedCatProfile!.profileImageUrl,
+        isVirtualCat: selectedCatProfile!.isVirtualCat,
       );
 
       if (newPost == null) return;

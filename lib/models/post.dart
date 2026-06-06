@@ -19,6 +19,8 @@ class Post {
   final int commentCount;
   final String visibility;
   final String storagePath;
+  final String catProfileImageUrl;
+  final bool isVirtualCat;
 
   Post({
     required this.id,
@@ -31,6 +33,8 @@ class Post {
     required this.tags,
     required this.aspectRatio,
     required this.createdAt,
+    required this.catProfileImageUrl,
+    required this.isVirtualCat,
     this.updatedAt,
     this.isDeleted = false,
     this.isHidden = false,
@@ -38,6 +42,7 @@ class Post {
     this.scrapCount = 0,
     this.commentCount = 0,
     this.storagePath = '',
+
     this.visibility = 'public',
   });
 
@@ -50,6 +55,10 @@ class Post {
       userId: data['userId'] ?? '',
       catProfileId: data['catProfileId'] ?? '',
       catName: data['catName'] ?? '',
+
+      catProfileImageUrl: data['catProfileImageUrl'] ?? '',
+      isVirtualCat: data['isVirtualCat'] ?? false,
+
       imageUrl: data['imageUrl'] ?? '',
       storagePath: data['storagePath'] ?? '',
       caption: data['caption'] ?? '',

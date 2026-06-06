@@ -68,6 +68,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     tagText: post.tags.map((tag) => '#$tag').join('   '),
                     createdAt: post.createdAt ?? DateTime.now(),
                     catName: post.catName,
+                    catProfileImageUrl: post.catProfileImageUrl,
+                    isVirtualCat: post.isVirtualCat,
                     userId: post.userId,
                     isScrapped: false,
                     onScrapTap: () {},

@@ -27,6 +27,8 @@ class PostService {
       userId: data['userId'] ?? '',
       catProfileId: data['catProfileId'] ?? '',
       catName: data['catName'] ?? '',
+      catProfileImageUrl: data['catProfileImageUrl'] ?? '',
+      isVirtualCat: data['isVirtualCat'] ?? false,
       imageUrl: data['imageUrl'] ?? '',
       storagePath: data['storagePath'] ?? '',
       caption: data['caption'] ?? '',
@@ -131,6 +133,8 @@ class PostService {
     required String catName,
     required String catProfileId,
     required String userId,
+    required String catProfileImageUrl,
+    required bool isVirtualCat,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -152,6 +156,8 @@ class PostService {
       userId: userId,
       catProfileId: catProfileId,
       catName: catName,
+      catProfileImageUrl: catProfileImageUrl,
+      isVirtualCat: isVirtualCat,
       imageUrl: imageUrl,
       storagePath: storagePath,
       caption: caption,
@@ -178,6 +184,9 @@ class PostService {
       'caption': caption,
       'tags': tags,
       'aspectRatio': aspectRatio,
+
+      'catProfileImageUrl': catProfileImageUrl,
+      'isVirtualCat': isVirtualCat,
 
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': null,

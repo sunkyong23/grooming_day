@@ -89,6 +89,7 @@ class CatProfile {
       'isDeleted': isDeleted,
       'isVirtualCat': isVirtualCat,
       'sortOrder': sortOrder,
+      'isVirtualCat': isVirtualCat,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };

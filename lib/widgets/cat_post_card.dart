@@ -12,6 +12,8 @@ class CatPostCard extends StatelessWidget {
   final int scrapCount;
   final VoidCallback onScrapTap;
   final VoidCallback? onMoreTap;
+  final String catProfileImageUrl;
+  final bool isVirtualCat;
 
   const CatPostCard({
     super.key,
@@ -26,6 +28,8 @@ class CatPostCard extends StatelessWidget {
     this.showMoreButton = false,
     required this.onScrapTap,
     this.onMoreTap,
+    required this.catProfileImageUrl,
+    required this.isVirtualCat,
   });
 
   @override
@@ -51,7 +55,20 @@ class CatPostCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 17,
                   backgroundColor: const Color(0xFFFFE2C6),
-                  child: const Text('🐱', style: TextStyle(fontSize: 17)),
+                  backgroundImage: catProfileImageUrl.isNotEmpty
+                      ? NetworkImage(catProfileImageUrl)
+                      : null,
+                  child: catProfileImageUrl.isEmpty
+                      ? (isVirtualCat
+                            ? Padding(
+                                padding: const EdgeInsets.all(5),
+                                child: Image.asset(
+                                  'assets/icons/today_cat.png',
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Text('🐱', style: TextStyle(fontSize: 17)))
+                      : null,
                 ),
                 SizedBox(width: 9),
                 Expanded(
@@ -76,9 +93,14 @@ class CatPostCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text(
-                  "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')}",
-                  style: TextStyle(fontSize: 10, color: Color(0xFFC9AFA7)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "${createdAt.year}.${createdAt.month.toString().padLeft(2, '0')}.${createdAt.day.toString().padLeft(2, '0')} · ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}",
+                      style: TextStyle(fontSize: 9, color: Color(0xFFC9AFA7)),
+                    ),
+                  ],
                 ),
                 SizedBox(width: 12),
                 if (showMoreButton)
