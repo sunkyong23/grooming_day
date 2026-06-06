@@ -28,8 +28,9 @@ import 'create_cat_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
+  final VoidCallback? onRefreshPosts;
 
-  const ProfileScreen({super.key, required this.posts});
+  const ProfileScreen({super.key, required this.posts, this.onRefreshPosts});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -305,6 +306,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         cat: cat,
                         onChanged: () async {
                           await loadCatProfiles();
+                          widget.onRefreshPosts?.call();
                         },
                       ),
                     );

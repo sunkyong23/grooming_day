@@ -8,23 +8,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post.dart';
 
 class PostService {
-  static Future<Set<String>> _loadDeletedCatIds() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('catProfiles')
-        .where('isDeleted', isEqualTo: true)
-        .get();
-
-    return snapshot.docs
-        .expand((doc) {
-          final data = doc.data();
-
-          return [doc.id, data['id'] ?? ''];
-        })
-        .where((id) => id.isNotEmpty)
-        .cast<String>()
-        .toSet();
-  }
-
   static Future<Set<String>> _loadMyDeletedCatIds(String uid) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('catProfiles')
@@ -33,23 +16,6 @@ class PostService {
         .get();
 
     return snapshot.docs.map((doc) => doc.id).toSet();
-  }
-
-  static Future<Set<String>> _loadHiddenCatIds() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('catProfiles')
-        .where('isHidden', isEqualTo: true)
-        .get();
-
-    return snapshot.docs
-        .expand((doc) {
-          final data = doc.data();
-
-          return [doc.id, data['id'] ?? ''];
-        })
-        .where((id) => id.isNotEmpty)
-        .cast<String>()
-        .toSet();
   }
 
   static Post _postFromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
@@ -71,20 +37,38 @@ class PostService {
   }
 
   static Future<List<Post>> loadPosts() async {
-    final deletedCatIds = await _loadDeletedCatIds();
-    final hiddenCatIds = await _loadHiddenCatIds();
-
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .orderBy('createdAt', descending: true)
         .get();
 
-    return snapshot.docs
-        .map(_postFromDoc)
-        .where((post) => !deletedCatIds.contains(post.catProfileId))
-        .where((post) => !hiddenCatIds.contains(post.catProfileId))
-        .where((post) => post.tags.isNotEmpty)
-        .toList();
+    final posts = snapshot.docs.map(_postFromDoc).toList();
+
+    final visiblePosts = <Post>[];
+
+    for (final post in posts) {
+      if (post.tags.isEmpty) continue;
+      if (post.catProfileId.isEmpty) continue;
+
+      try {
+        final catDoc = await FirebaseFirestore.instance
+            .collection('catProfiles')
+            .doc(post.catProfileId)
+            .get();
+
+        if (!catDoc.exists) continue;
+
+        final catData = catDoc.data();
+
+        if (catData == null) continue;
+        if (catData['isDeleted'] == true) continue;
+        if (catData['isHidden'] == true) continue;
+
+        visiblePosts.add(post);
+      } catch (_) {}
+    }
+
+    return visiblePosts;
   }
 
   static Future<Set<String>> loadMyScrapIds() async {
@@ -189,10 +173,13 @@ class PostService {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .where('catProfileId', isEqualTo: catProfileId)
-        .orderBy('createdAt', descending: true)
         .get();
 
-    return snapshot.docs.map(_postFromDoc).toList();
+    final posts = snapshot.docs.map(_postFromDoc).toList();
+
+    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return posts;
   }
 
   static Future<List<Post>> loadMyPosts() async {

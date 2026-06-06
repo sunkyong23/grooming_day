@@ -60,7 +60,12 @@ class BottomNavBar extends StatelessWidget {
             onTap: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ProfileScreen(posts: posts)),
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(
+                    posts: posts,
+                    onRefreshPosts: onRefreshPosts,
+                  ),
+                ),
               );
 
               if (result == true) {

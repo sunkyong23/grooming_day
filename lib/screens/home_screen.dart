@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   ? null
                                                   : tag;
                                             });
-                                            Navigator.pop(context, true);
+                                            Navigator.pop(context);
                                           },
                                           child: TagChip(
                                             key: ValueKey('sheet_$tag'),
