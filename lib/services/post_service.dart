@@ -45,6 +45,9 @@ class PostService {
   static Future<List<Post>> loadPosts() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('visibility', isEqualTo: 'public')
         .orderBy('createdAt', descending: true)
         .get();
 
@@ -161,7 +164,7 @@ class PostService {
       reportCount: 0,
       scrapCount: 0,
       commentCount: 0,
-      visibility: 'public',
+      visibility: tags.isEmpty ? 'private' : 'public',
     );
 
     await FirebaseFirestore.instance.collection('posts').doc(postId).set({
@@ -185,7 +188,7 @@ class PostService {
       'scrapCount': 0,
       'commentCount': 0,
 
-      'visibility': 'public',
+      'visibility': tags.isEmpty ? 'private' : 'public',
     });
 
     return newPost;
