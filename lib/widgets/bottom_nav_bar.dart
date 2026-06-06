@@ -9,11 +9,13 @@ import '../screens/profile_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final Function(Post) onPostCreated;
+  final VoidCallback onRefreshPosts;
   final List<Post> posts;
 
   const BottomNavBar({
     super.key,
     required this.onPostCreated,
+    required this.onRefreshPosts,
     required this.posts,
   });
 
@@ -46,7 +48,7 @@ class BottomNavBar extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => AlbumScreen(posts: posts)),
+                MaterialPageRoute(builder: (_) => const AlbumScreen()),
               );
             },
             child: const NavItem(
@@ -55,11 +57,15 @@ class BottomNavBar extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => ProfileScreen(posts: posts)),
               );
+
+              if (result == true) {
+                onRefreshPosts();
+              }
             },
             child: const NavItem(icon: Icons.pets_rounded, label: '프로필'),
           ),

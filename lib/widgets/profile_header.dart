@@ -5,7 +5,6 @@ class ProfileHeader extends StatelessWidget {
   final String bio;
   final String profileImageUrl;
   final int postCount;
-  final VoidCallback onProfileImageTap;
   final VoidCallback onEditTap;
 
   const ProfileHeader({
@@ -14,7 +13,6 @@ class ProfileHeader extends StatelessWidget {
     required this.bio,
     required this.profileImageUrl,
     required this.postCount,
-    required this.onProfileImageTap,
     required this.onEditTap,
   });
 
@@ -22,22 +20,15 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        GestureDetector(
-          onTap: onProfileImageTap,
-          child: CircleAvatar(
-            radius: 38,
-            backgroundColor: const Color(0xFFFFE2C6),
-            backgroundImage: profileImageUrl.isNotEmpty
-                ? NetworkImage(profileImageUrl)
-                : null,
-            child: profileImageUrl.isEmpty
-                ? const Icon(
-                    Icons.camera_alt,
-                    color: Color(0xFF8A756C),
-                    size: 30,
-                  )
-                : null,
-          ),
+        CircleAvatar(
+          radius: 38,
+          backgroundColor: const Color(0xFFFFF2C6),
+          backgroundImage: profileImageUrl.isNotEmpty
+              ? NetworkImage(profileImageUrl)
+              : null,
+          child: profileImageUrl.isEmpty
+              ? const Icon(Icons.camera_alt, color: Color(0xFFFFA756), size: 30)
+              : null,
         ),
         const SizedBox(width: 16),
         Expanded(

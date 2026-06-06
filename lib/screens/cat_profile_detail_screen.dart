@@ -76,6 +76,54 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
     return '${birthDate.year}.${birthDate.month.toString().padLeft(2, '0')}.${birthDate.day.toString().padLeft(2, '0')}';
   }
 
+  Future<bool> _showHideConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('고양이 프로필 숨기기'),
+          content: const Text('이 고양이 프로필을 숨길까요?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('숨기기'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result == true;
+  }
+
+  Future<bool> _showDeleteConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('고양이 프로필 삭제'),
+          content: const Text('정말 이 고양이 프로필을 삭제할까요?\n삭제된 프로필은 목록에서 보이지 않아요.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('삭제', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result == true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOwner =
@@ -91,88 +139,45 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_horiz),
               onSelected: (value) async {
+                final navigator = Navigator.of(context);
+
                 if (value == 'edit') {
-                  final result = await Navigator.push(
-                    context,
+                  final result = await navigator.push(
                     MaterialPageRoute(
                       builder: (_) => EditCatProfileScreen(cat: widget.cat),
                     ),
                   );
 
                   if (result == true) {
-                    if (!context.mounted) return;
+                    if (!mounted) return;
 
-                    Navigator.pop(context, true);
+                    navigator.pop(true);
                   }
                 }
 
                 if (value == 'hide') {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('고양이 프로필 숨기기'),
-                        content: const Text('이 고양이 프로필을 숨길까요?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('취소'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('숨기기'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  final confirm = await _showHideConfirmDialog();
 
-                  if (confirm != true) return;
+                  if (!confirm) return;
 
                   await CatService.hideCatProfile(widget.cat.id);
 
-                  if (!context.mounted) return;
+                  if (!mounted) return;
 
-                  Navigator.pop(context, true);
+                  navigator.pop(true);
                 }
 
                 if (value == 'delete') {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: const Text('고양이 프로필 삭제'),
-                        content: const Text(
-                          '정말 이 고양이 프로필을 삭제할까요?\n삭제된 프로필은 목록에서 보이지 않아요.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('취소'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text(
-                              '삭제',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  final confirm = await _showDeleteConfirmDialog();
 
-                  if (confirm != true) return;
+                  if (!confirm) return;
 
                   await CatService.deleteCatProfile(widget.cat.id);
 
-                  if (!context.mounted) return;
+                  if (!mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('고양이 프로필이 삭제되었어요.')),
-                  );
-
-                  Navigator.pop(context, true);
+                  // delete 안
+                  navigator.pop(true);
                 }
               },
               itemBuilder: (context) => const [

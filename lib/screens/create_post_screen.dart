@@ -6,10 +6,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../models/cat_profile.dart';
 import '../models/post.dart';
-import '../services/cat_service.dart';
 import '../services/image_service.dart';
 import '../services/post_service.dart';
 import '../services/user_service.dart';
+import '../services/cat_service.dart';
 
 import 'cat_profile_type_select_screen.dart';
 
@@ -38,6 +38,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   List<CatProfile> catProfiles = [];
   CatProfile? selectedCatProfile;
   bool isLoadingCats = true;
+  bool isSubmitting = false;
 
   final List<String> tags = [
     '아깽이',
@@ -88,12 +89,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<void> loadMyCatProfiles() async {
     try {
       final loadedCats = await CatService.loadMyCatProfiles();
+      final visibleCats = loadedCats.where((cat) => !cat.isHidden).toList();
 
       if (!mounted) return;
 
       setState(() {
-        catProfiles = loadedCats;
-        selectedCatProfile = loadedCats.isNotEmpty ? loadedCats.first : null;
+        catProfiles = visibleCats;
+        selectedCatProfile = visibleCats.isNotEmpty ? visibleCats.first : null;
         isLoadingCats = false;
       });
     } catch (e) {
@@ -172,39 +174,53 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> submitPost() async {
-    if (selectedImage == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('게시할 사진을 선택해주세요.')));
-      return;
-    }
+    if (isSubmitting) return;
 
-    if (selectedCatProfile == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('고양이 프로필을 먼저 등록해주세요.')));
-      return;
-    }
+    setState(() {
+      isSubmitting = true;
+    });
 
-    final compressedImage = await ImageService.compressImage(selectedImage!);
-    final uploadFile = compressedImage ?? selectedImage!;
+    try {
+      if (selectedImage == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('게시할 사진을 선택해주세요.')));
+        return;
+      }
 
-    final newPost = await PostService.createPost(
-      imageFile: uploadFile,
-      caption: captionController.text,
-      tags: selectedTags,
-      aspectRatio: selectedAspectRatio,
-      catName: selectedCatProfile!.name,
-      catProfileId: selectedCatProfile!.id,
-      userId: currentUserId,
-    );
+      if (selectedCatProfile == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('고양이 프로필을 먼저 등록해주세요.')));
+        return;
+      }
 
-    if (newPost == null) return;
+      final compressedImage = await ImageService.compressImage(selectedImage!);
+      final uploadFile = compressedImage ?? selectedImage!;
 
-    widget.onPostCreated(newPost);
+      final newPost = await PostService.createPost(
+        imageFile: uploadFile,
+        caption: captionController.text,
+        tags: selectedTags,
+        aspectRatio: selectedAspectRatio,
+        catName: selectedCatProfile!.name,
+        catProfileId: selectedCatProfile!.id,
+        userId: currentUserId,
+      );
 
-    if (mounted) {
-      Navigator.pop(context);
+      if (newPost == null) return;
+
+      widget.onPostCreated(newPost);
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -388,8 +404,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: submitPost,
-                  child: const Text('게시하기'),
+                  onPressed: isSubmitting ? null : submitPost,
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('게시하기'),
                 ),
               ),
             ],

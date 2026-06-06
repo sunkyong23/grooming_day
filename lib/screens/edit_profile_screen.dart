@@ -6,11 +6,15 @@ import '../services/user_service.dart';
 class EditProfileScreen extends StatefulWidget {
   final String currentUserId;
   final String currentBio;
+  final String currentProfileImageUrl;
+  final Future<String?> Function() onProfileImageTap;
 
   const EditProfileScreen({
     super.key,
     required this.currentUserId,
     required this.currentBio,
+    required this.currentProfileImageUrl,
+    required this.onProfileImageTap,
   });
 
   @override
@@ -20,12 +24,14 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController userIdController;
   late TextEditingController bioController;
+  late String profileImageUrl;
 
   @override
   void initState() {
     super.initState();
     userIdController = TextEditingController(text: widget.currentUserId);
     bioController = TextEditingController(text: widget.currentBio);
+    profileImageUrl = widget.currentProfileImageUrl;
   }
 
   Future<void> saveProfile() async {
@@ -71,8 +77,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
+
         child: Column(
           children: [
+            GestureDetector(
+              onTap: () async {
+                final imageUrl = await widget.onProfileImageTap();
+
+                if (imageUrl == null) return;
+
+                setState(() {
+                  profileImageUrl = imageUrl;
+                });
+              },
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 44,
+                    backgroundColor: const Color(0xFFFFF2C6),
+                    backgroundImage: profileImageUrl.isNotEmpty
+                        ? NetworkImage(profileImageUrl)
+                        : null,
+                    child: profileImageUrl.isEmpty
+                        ? const Icon(
+                            Icons.camera_alt,
+                            color: Color(0xFFFFA756),
+                            size: 32,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '프로필 사진 변경',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF7A6A5B)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
             TextField(
               controller: userIdController,
               decoration: const InputDecoration(

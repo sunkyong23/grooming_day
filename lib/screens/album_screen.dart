@@ -1,24 +1,60 @@
 import 'package:flutter/material.dart';
 
 import '../models/post.dart';
+import '../services/post_service.dart';
 import '../widgets/cat_post_card.dart';
 
-class AlbumScreen extends StatelessWidget {
-  final List<Post> posts;
+class AlbumScreen extends StatefulWidget {
+  const AlbumScreen({super.key});
 
-  const AlbumScreen({super.key, required this.posts});
+  @override
+  State<AlbumScreen> createState() => _AlbumScreenState();
+}
+
+class _AlbumScreenState extends State<AlbumScreen> {
+  List<Post> myPosts = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadMyPosts();
+  }
+
+  Future<void> loadMyPosts() async {
+    try {
+      final loadedPosts = await PostService.loadMyPosts();
+
+      if (!mounted) return;
+
+      setState(() {
+        myPosts = loadedPosts;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('앨범을 불러오지 못했어요: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final myPosts = posts.where((post) => !post.isAsset).toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
         title: const Text('나의 앨범'),
       ),
-      body: myPosts.isEmpty
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : myPosts.isEmpty
           ? const Center(child: Text('아직 앨범에 담긴 게시글이 없어요 🐾'))
           : ListView(
               padding: const EdgeInsets.all(20),

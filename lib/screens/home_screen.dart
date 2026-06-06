@@ -18,7 +18,6 @@ import '../widgets/header.dart';
 import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
-import '../services/cat_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,18 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String? selectedFeedTag = '오늘의';
-
-  Set<String> hiddenCatIds = {};
-
-  Future<void> loadHiddenCats() async {
-    final loadedHiddenCatIds = await CatService.loadHiddenCatIds();
-
-    if (!mounted) return;
-
-    setState(() {
-      hiddenCatIds = loadedHiddenCatIds;
-    });
-  }
 
   final List<Post> posts = [
     Post(
@@ -101,6 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  final List<Post> myPosts = [];
+
   Future<void> loadMyScraps() async {
     final scrappedPostIds = await PostService.loadMyScrapIds();
 
@@ -112,9 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void addPost(Post post) {
-    setState(() {
-      posts.insert(0, post);
-    });
+    refreshPostLists();
   }
 
   @override
@@ -125,16 +112,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> loadInitialData() async {
     await loadPostsFromFirestore();
-    await loadHiddenCats();
+    await loadMyPostsFromFirestore();
+    await loadMyScraps();
+  }
+
+  Future<void> refreshPostLists() async {
+    await loadPostsFromFirestore();
+    await loadMyPostsFromFirestore();
     await loadMyScraps();
   }
 
   Future<void> loadPostsFromFirestore() async {
     final loadedPosts = await PostService.loadPosts();
 
+    if (!mounted) return;
+
     setState(() {
       posts.removeWhere((post) => !post.isAsset);
       posts.insertAll(0, loadedPosts);
+    });
+  }
+
+  Future<void> loadMyPostsFromFirestore() async {
+    final loadedMyPosts = await PostService.loadMyPosts();
+
+    if (!mounted) return;
+
+    setState(() {
+      myPosts.clear();
+      myPosts.addAll(loadedMyPosts);
     });
   }
 
@@ -235,21 +241,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final visiblePosts = posts.where((post) {
-      return !hiddenCatIds.contains(post.catProfileId);
-    }).toList();
-
     final filteredPosts = selectedFeedTag == null
-        ? ([...visiblePosts]
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+        ? ([...posts]..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
         : selectedFeedTag == '오늘의'
-        ? ([...visiblePosts]..sort((a, b) => b.likes.compareTo(a.likes)))
-        : visiblePosts
-              .where((post) => post.tags.contains(selectedFeedTag))
-              .toList();
+        ? ([...posts]..sort((a, b) => b.likes.compareTo(a.likes)))
+        : posts.where((post) => post.tags.contains(selectedFeedTag)).toList();
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
-      bottomNavigationBar: BottomNavBar(onPostCreated: addPost, posts: posts),
+      bottomNavigationBar: BottomNavBar(
+        onPostCreated: addPost,
+        onRefreshPosts: refreshPostLists,
+        posts: myPosts,
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -342,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   ? null
                                                   : tag;
                                             });
-                                            Navigator.pop(context);
+                                            Navigator.pop(context, true);
                                           },
                                           child: TagChip(
                                             key: ValueKey('sheet_$tag'),

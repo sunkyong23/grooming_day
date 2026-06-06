@@ -63,12 +63,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Future<void> uploadProfileImage() async {
+  Future<String?> uploadProfileImage() async {
     final picker = ImagePicker();
 
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
-    if (pickedFile == null) return;
+    if (pickedFile == null) return null;
 
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
@@ -82,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
 
-    if (croppedFile == null) return;
+    if (croppedFile == null) return null;
 
     final tempDir = await getTemporaryDirectory();
     final targetPath =
@@ -96,17 +96,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       minHeight: 800,
     );
 
-    if (compressedFile == null) return;
+    if (compressedFile == null) return null;
 
     final file = File(compressedFile.path);
     final imageUrl = await UserService.updateProfileImage(file);
 
-    if (imageUrl == null) return;
+    if (imageUrl == null) return null;
 
     setState(() {
       selectedProfileImage = file;
       profileImageUrl = imageUrl;
     });
+    return imageUrl;
   }
 
   Future<void> editBio() async {
@@ -238,13 +239,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             bio: bio,
             profileImageUrl: profileImageUrl,
             postCount: myPosts.length,
-            onProfileImageTap: uploadProfileImage,
             onEditTap: () async {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      EditProfileScreen(currentUserId: userId, currentBio: bio),
+                  builder: (_) => EditProfileScreen(
+                    currentUserId: userId,
+                    currentBio: bio,
+                    currentProfileImageUrl: profileImageUrl,
+                    onProfileImageTap: uploadProfileImage,
+                  ),
                 ),
               );
 
@@ -299,7 +303,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: CatProfileCard(
                         cat: cat,
-                        onChanged: loadCatProfiles,
+                        onChanged: () async {
+                          await loadCatProfiles();
+                        },
                       ),
                     );
                   }).toList(),
