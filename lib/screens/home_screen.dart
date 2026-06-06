@@ -105,25 +105,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> handleTagTap(String tag) async {
-    if (tag == '오늘의') {
-      selectedFeedTag = '오늘의';
-      await loadPostsFromFirestore();
-
-      if (!mounted) return;
-      setState(() {});
-      return;
-    }
-
-    if (selectedFeedTag == tag) {
-      selectedFeedTag = null;
-      await loadPostsFromFirestore();
-    } else {
-      selectedFeedTag = tag;
-      await loadPostsByTagFromFirestore(tag);
-    }
-
     if (!mounted) return;
-    setState(() {});
+
+    setState(() {
+      if (tag == '오늘의') {
+        selectedFeedTag = '오늘의';
+      } else if (selectedFeedTag == tag) {
+        selectedFeedTag = null;
+      } else {
+        selectedFeedTag = tag;
+      }
+    });
+
+    try {
+      if (tag == '오늘의' || selectedFeedTag == null) {
+        await loadPostsFromFirestore();
+      } else {
+        await loadPostsByTagFromFirestore(tag);
+      }
+    } catch (e) {
+      debugPrint('태그 피드 로딩 오류: $e');
+    }
   }
 
   Future<void> toggleScrap(Post post) async {

@@ -242,10 +242,10 @@ class PostService {
   static Future<List<Post>> loadPostsByTag(String tag) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
+        .where('tags', arrayContains: tag)
         .where('isDeleted', isEqualTo: false)
         .where('isHidden', isEqualTo: false)
         .where('visibility', isEqualTo: 'public')
-        .where('tags', arrayContains: tag)
         .orderBy('createdAt', descending: true)
         .get();
 
