@@ -23,16 +23,22 @@ class PostService {
 
     return Post(
       id: data['id'] ?? doc.id,
+      ownerUid: data['ownerUid'] ?? '',
+      userId: data['userId'] ?? '',
+      catProfileId: data['catProfileId'] ?? '',
+      catName: data['catName'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
       caption: data['caption'] ?? '',
-      likes: data['likes'] ?? 0,
       tags: List<String>.from(data['tags'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
       aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
-      catName: data['catName'] ?? '',
-      catProfileId: data['catProfileId'] ?? '',
-      userId: data['userId'] ?? '',
-      isAsset: false,
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      isDeleted: data['isDeleted'] ?? false,
+      isHidden: data['isHidden'] ?? false,
+      reportCount: data['reportCount'] ?? 0,
+      scrapCount: data['scrapCount'] ?? 0,
+      commentCount: data['commentCount'] ?? 0,
+      visibility: data['visibility'] ?? 'public',
     );
   }
 
@@ -140,30 +146,46 @@ class PostService {
 
     final newPost = Post(
       id: postId,
-      imageUrl: imageUrl,
-      caption: caption,
-      likes: 0,
-      tags: tags,
-      createdAt: DateTime.now(),
-      aspectRatio: aspectRatio,
-      catName: catName,
+      ownerUid: user.uid,
       userId: userId,
       catProfileId: catProfileId,
-      isAsset: false,
+      catName: catName,
+      imageUrl: imageUrl,
+      caption: caption,
+      tags: tags,
+      aspectRatio: aspectRatio,
+      createdAt: DateTime.now(),
+      updatedAt: null,
+      isDeleted: false,
+      isHidden: false,
+      reportCount: 0,
+      scrapCount: 0,
+      commentCount: 0,
+      visibility: 'public',
     );
 
     await FirebaseFirestore.instance.collection('posts').doc(postId).set({
       'id': postId,
+      'ownerUid': user.uid,
+      'userId': userId,
+      'catProfileId': catProfileId,
+      'catName': catName,
       'imageUrl': imageUrl,
       'caption': caption,
-      'likes': 0,
       'tags': tags,
-      'createdAt': Timestamp.now(),
       'aspectRatio': aspectRatio,
-      'catName': catName,
-      'catProfileId': catProfileId,
-      'userId': userId,
-      'ownerUid': user.uid,
+
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': null,
+
+      'isDeleted': false,
+      'isHidden': false,
+
+      'reportCount': 0,
+      'scrapCount': 0,
+      'commentCount': 0,
+
+      'visibility': 'public',
     });
 
     return newPost;
@@ -177,7 +199,12 @@ class PostService {
 
     final posts = snapshot.docs.map(_postFromDoc).toList();
 
-    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    posts.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+      return bDate.compareTo(aDate);
+    });
 
     return posts;
   }
@@ -199,7 +226,12 @@ class PostService {
         .where((post) => !deletedCatIds.contains(post.catProfileId))
         .toList();
 
-    posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    posts.sort((a, b) {
+      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+      return bDate.compareTo(aDate);
+    });
 
     return posts;
   }

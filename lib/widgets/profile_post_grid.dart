@@ -23,9 +23,7 @@ class ProfilePostGrid extends StatelessWidget {
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: post.isAsset
-              ? Image.asset(post.imageUrl, fit: BoxFit.cover)
-              : Image.network(post.imageUrl, fit: BoxFit.cover),
+          child: Image.network(post.imageUrl, fit: BoxFit.cover),
         );
       },
     );

@@ -3,22 +3,20 @@ import 'package:flutter/material.dart';
 class CatPostCard extends StatelessWidget {
   final String imagePath;
   final String caption;
-  final int likes;
   final String tagText;
-  final bool isAsset;
   final DateTime createdAt;
   final String catName;
   final String userId;
   final bool isScrapped;
+  final int scrapCount;
   final VoidCallback onScrapTap;
 
   const CatPostCard({
     super.key,
     required this.imagePath,
     required this.caption,
-    required this.likes,
     required this.tagText,
-    required this.isAsset,
+    required this.scrapCount,
     required this.createdAt,
     required this.catName,
     required this.userId,
@@ -95,9 +93,7 @@ class CatPostCard extends StatelessWidget {
                     child: InteractiveViewer(
                       minScale: 1.0,
                       maxScale: 4.0,
-                      child: isAsset
-                          ? Image.asset(imagePath)
-                          : Image.network(imagePath),
+                      child: Image.network(imagePath),
                     ),
                   ),
                 ),
@@ -105,17 +101,11 @@ class CatPostCard extends StatelessWidget {
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: isAsset
-                  ? Image.asset(
-                      imagePath,
-                      width: double.infinity,
-                      fit: BoxFit.fitWidth,
-                    )
-                  : Image.network(
-                      imagePath,
-                      width: double.infinity,
-                      fit: BoxFit.fitWidth,
-                    ),
+              child: Image.network(
+                imagePath,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
+              ),
             ),
           ),
           Padding(
@@ -155,7 +145,7 @@ class CatPostCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '감상평  $likes',
+                      '꾹꾹  $scrapCount',
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFFC0A39A),

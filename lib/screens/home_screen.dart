@@ -46,58 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String? selectedFeedTag = '오늘의';
 
-  final List<Post> posts = [
-    Post(
-      id: 'sample1',
-      imageUrl: 'assets/images/cat1.png',
-      caption: '크아아아앙!!!! 내 하품을 받아라 ♡',
-      likes: 72,
-      tags: ['귀여워', '일상', '평온한하루'],
-      createdAt: DateTime.now(),
-      aspectRatio: 4 / 5,
-      catName: '가을이',
-      userId: 'groomingday23',
-      isAsset: true,
-      catProfileId: '',
-    ),
-    Post(
-      id: 'sample2',
-      imageUrl: 'assets/images/cat2.png',
-      caption: '노곤하당',
-      likes: 25,
-      tags: ['귀여워', '일상'],
-      createdAt: DateTime.now(),
-      aspectRatio: 4 / 5,
-      catName: '모노',
-      userId: 'monocat01',
-      isAsset: true,
-      catProfileId: '',
-    ),
-    Post(
-      id: 'sample3',
-      imageUrl: 'assets/images/cat1.png',
-      caption: '오늘도 우다다다다다 🐱',
-      likes: 99,
-      tags: ['장난꾸러기', '귀여워'],
-      createdAt: DateTime.now(),
-      aspectRatio: 4 / 5,
-      catName: '누렁',
-      userId: 'cat22',
-      isAsset: true,
-      catProfileId: '',
-    ),
-  ];
+  final List<Post> posts = [];
 
   final List<Post> myPosts = [];
 
   Future<void> loadMyScraps() async {
-    final scrappedPostIds = await PostService.loadMyScrapIds();
-
-    setState(() {
-      for (final post in posts) {
-        post.isScrapped = scrappedPostIds.contains(post.id);
-      }
-    });
+    // 스크랩 기능은 나중에 다시 연결
   }
 
   void addPost(Post post) {
@@ -128,8 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     setState(() {
-      posts.removeWhere((post) => !post.isAsset);
-      posts.insertAll(0, loadedPosts);
+      posts.clear();
+      posts.addAll(loadedPosts);
     });
   }
 
@@ -145,13 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> toggleScrap(Post post) async {
-    final newValue = !post.isScrapped;
-
-    setState(() {
-      post.isScrapped = newValue;
-    });
-
-    await PostService.setScrap(post: post, isScrapped: newValue);
+    // 스크랩 기능은 나중에 다시 연결
   }
 
   Future<void> openCameraAndCreatePost() async {
@@ -242,10 +190,16 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredPosts = selectedFeedTag == null
-        ? ([...posts]..sort((a, b) => b.createdAt.compareTo(a.createdAt)))
+        ? ([...posts]..sort((a, b) {
+            final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+            return bDate.compareTo(aDate);
+          }))
         : selectedFeedTag == '오늘의'
-        ? ([...posts]..sort((a, b) => b.likes.compareTo(a.likes)))
+        ? ([...posts]..sort((a, b) => b.scrapCount.compareTo(a.scrapCount)))
         : posts.where((post) => post.tags.contains(selectedFeedTag)).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       bottomNavigationBar: BottomNavBar(
@@ -390,13 +344,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: CatPostCard(
                         imagePath: post.imageUrl,
                         caption: post.caption,
-                        likes: post.likes,
+                        scrapCount: post.scrapCount,
                         tagText: post.tags.map((tag) => '#$tag').join('   '),
-                        isAsset: post.isAsset,
-                        createdAt: post.createdAt,
+                        createdAt: post.createdAt ?? DateTime.now(),
                         catName: post.catName,
                         userId: post.userId,
-                        isScrapped: post.isScrapped,
+                        isScrapped: false,
                         onScrapTap: () {
                           toggleScrap(post);
                         },

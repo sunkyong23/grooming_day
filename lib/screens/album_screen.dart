@@ -64,13 +64,12 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   child: CatPostCard(
                     imagePath: post.imageUrl,
                     caption: post.caption,
-                    likes: post.likes,
+                    scrapCount: post.scrapCount,
                     tagText: post.tags.map((tag) => '#$tag').join('   '),
-                    isAsset: post.isAsset,
-                    createdAt: post.createdAt,
+                    createdAt: post.createdAt ?? DateTime.now(),
                     catName: post.catName,
                     userId: post.userId,
-                    isScrapped: post.isScrapped,
+                    isScrapped: false,
                     onScrapTap: () {},
                   ),
                 );

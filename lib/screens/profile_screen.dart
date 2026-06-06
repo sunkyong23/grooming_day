@@ -225,7 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myPosts = widget.posts.where((post) => !post.isAsset).toList();
+    final myPosts = widget.posts;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
