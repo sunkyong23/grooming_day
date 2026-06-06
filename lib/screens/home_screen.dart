@@ -18,6 +18,8 @@ import 'album_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'edit_post_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -166,6 +168,39 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('수정'),
+                  textColor: const Color(0xFF5A372F),
+                  iconColor: const Color(0xFF9A6B60),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditPostScreen(post: post),
+                      ),
+                    );
+
+                    if (result == 'album') {
+                      await refreshPostLists();
+
+                      if (!mounted) return;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const AlbumScreen()),
+                      );
+                    } else if (result == 'home') {
+                      setState(() {
+                        selectedFeedTag = null;
+                      });
+
+                      await refreshPostLists();
+                    }
+                  },
+                ),
                 ListTile(
                   leading: const Icon(Icons.delete_outline),
                   title: const Text('삭제'),
@@ -459,6 +494,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         createdAt: post.createdAt ?? DateTime.now(),
                         catName: post.catName,
                         userId: post.userId,
+                        commentCount: post.commentCount,
+                        postId: post.id,
                         isScrapped: false,
                         onScrapTap: () {
                           toggleScrap(post);

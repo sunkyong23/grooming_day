@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../services/post_service.dart';
 import '../widgets/cat_post_card.dart';
+import 'edit_post_screen.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -44,6 +45,66 @@ class _AlbumScreenState extends State<AlbumScreen> {
     }
   }
 
+  Future<void> showPostMoreMenu(Post post) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFFF7F1),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('수정'),
+                  textColor: const Color(0xFF5A372F),
+                  iconColor: const Color(0xFF9A6B60),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditPostScreen(post: post),
+                      ),
+                    );
+
+                    if (result == 'album' || result == 'home') {
+                      await loadMyPosts();
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('삭제'),
+                  textColor: Colors.redAccent,
+                  iconColor: Colors.redAccent,
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+
+                    await PostService.deletePost(post);
+                    await loadMyPosts();
+
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('게시글이 삭제되었습니다.')),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,9 +131,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     catName: post.catName,
                     catProfileImageUrl: post.catProfileImageUrl,
                     isVirtualCat: post.isVirtualCat,
+                    commentCount: post.commentCount,
+                    postId: post.id,
                     userId: post.userId,
                     isScrapped: false,
                     onScrapTap: () {},
+                    showMoreButton: true,
+                    onMoreTap: () {
+                      showPostMoreMenu(post);
+                    },
                   ),
                 );
               }).toList(),

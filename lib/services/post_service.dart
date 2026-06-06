@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/post.dart';
+import '../services/image_service.dart';
 
 class PostService {
   static Future<Set<String>> _loadMyDeletedCatIds(String uid) async {
@@ -262,6 +263,61 @@ class PostService {
     return snapshot.docs.map(_postFromDoc).toList();
   }
 
+  static Future<void> updatePost({
+    required Post post,
+    required String caption,
+    required List<String> tags,
+    required String catProfileId,
+    required String catName,
+    required String catProfileImageUrl,
+    required bool isVirtualCat,
+    File? newImageFile,
+    double? newAspectRatio,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+    if (post.ownerUid != uid) return;
+
+    String imageUrl = post.imageUrl;
+    String storagePath = post.storagePath;
+    double aspectRatio = post.aspectRatio;
+
+    if (newImageFile != null) {
+      if (post.storagePath.isNotEmpty) {
+        await FirebaseStorage.instance.ref().child(post.storagePath).delete();
+      }
+
+      storagePath = 'posts/$uid/${post.id}.jpg';
+      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+
+      final compressedImage = await ImageService.compressImage(newImageFile);
+      final uploadFile = compressedImage ?? newImageFile;
+
+      await storageRef.putFile(uploadFile);
+      imageUrl = await storageRef.getDownloadURL();
+      aspectRatio = newAspectRatio ?? post.aspectRatio;
+    }
+
+    await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
+      'caption': caption,
+      'tags': tags,
+
+      'catProfileId': catProfileId,
+      'catName': catName,
+      'catProfileImageUrl': catProfileImageUrl,
+      'isVirtualCat': isVirtualCat,
+
+      'imageUrl': imageUrl,
+      'storagePath': storagePath,
+      'aspectRatio': aspectRatio,
+
+      'visibility': tags.isEmpty ? 'private' : 'public',
+      'updatedAt': FieldValue.serverTimestamp(),
+      'isUpdated': true,
+    });
+  }
+
   static Future<void> deletePost(Post post) async {
     try {
       if (post.storagePath.isNotEmpty) {
@@ -275,5 +331,42 @@ class PostService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  static Future<void> createReview({
+    required Post post,
+    required String content,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) return;
+    if (content.trim().isEmpty) return;
+
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final reviewerUserId = userDoc.data()?['userId'] ?? '';
+
+    final reviewRef = FirebaseFirestore.instance
+        .collection('posts')
+        .doc(post.id)
+        .collection('reviews')
+        .doc();
+
+    await reviewRef.set({
+      'id': reviewRef.id,
+      'postId': post.id,
+      'reviewerUid': user.uid,
+      'reviewerUserId': reviewerUserId,
+      'content': content.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'isDeleted': false,
+    });
+
+    await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
+      'commentCount': FieldValue.increment(1),
+    });
   }
 }

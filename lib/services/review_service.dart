@@ -57,4 +57,17 @@ class ReviewService {
       reportCount: 0,
     );
   }
+
+  static Future<List<Review>> loadReviews(String postId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('reviews')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .orderBy('createdAt', descending: false)
+        .get();
+
+    return snapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
+  }
 }
