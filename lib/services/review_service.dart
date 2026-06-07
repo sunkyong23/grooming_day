@@ -65,9 +65,39 @@ class ReviewService {
         .collection('reviews')
         .where('isDeleted', isEqualTo: false)
         .where('isHidden', isEqualTo: false)
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
         .get();
 
     return snapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
+  }
+
+  Future<void> updateReview({
+    required String postId,
+    required String reviewId,
+    required String content,
+  }) async {
+    await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .collection('reviews')
+        .doc(reviewId)
+        .update({
+          'content': content,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  Future<void> deleteReview({
+    required String postId,
+    required String reviewId,
+  }) async {
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(postId);
+    final reviewRef = postRef.collection('reviews').doc(reviewId);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      transaction.delete(reviewRef);
+
+      transaction.update(postRef, {'commentCount': FieldValue.increment(-1)});
+    });
   }
 }

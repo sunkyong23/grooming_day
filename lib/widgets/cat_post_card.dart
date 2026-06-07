@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/review.dart';
 import '../services/review_service.dart';
 
@@ -45,10 +47,10 @@ class CatPostCard extends StatefulWidget {
 class _CatPostCardState extends State<CatPostCard> {
   bool isReviewExpanded = false;
   bool isSubmittingReview = false;
-  List<Review> reviews = [];
   bool isLoadingReviews = false;
   late int currentCommentCount;
 
+  List<Review> reviews = [];
   final TextEditingController reviewController = TextEditingController();
 
   @override
@@ -61,6 +63,10 @@ class _CatPostCardState extends State<CatPostCard> {
   void dispose() {
     reviewController.dispose();
     super.dispose();
+  }
+
+  String formatReviewDate(DateTime date) {
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> loadReviews() async {
@@ -76,6 +82,112 @@ class _CatPostCardState extends State<CatPostCard> {
       reviews = loadedReviews;
       currentCommentCount = loadedReviews.length;
       isLoadingReviews = false;
+    });
+  }
+
+  Future<void> showEditReviewDialog(Review review) async {
+    final controller = TextEditingController(text: review.content);
+
+    final editedContent = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('감상평 수정'),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            maxLength: 200,
+            decoration: const InputDecoration(hintText: '감상평을 수정해 주세요.'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                final content = controller.text.trim();
+
+                if (content.isEmpty) return;
+
+                Navigator.pop(dialogContext, content);
+              },
+              child: const Text('수정'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (editedContent == null) return;
+
+    await ReviewService().updateReview(
+      postId: widget.postId,
+      reviewId: review.id,
+      content: editedContent,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      final index = reviews.indexWhere((item) => item.id == review.id);
+
+      if (index != -1) {
+        reviews[index] = Review(
+          id: review.id,
+          postId: review.postId,
+          writerUid: review.writerUid,
+          writerUserId: review.writerUserId,
+          content: editedContent,
+          createdAt: review.createdAt,
+          updatedAt: DateTime.now(),
+          isDeleted: review.isDeleted,
+        );
+      }
+    });
+  }
+
+  Future<void> deleteReview(Review review) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('감상평 삭제'),
+          content: const Text('감상평을 삭제할까요?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    await ReviewService().deleteReview(
+      postId: widget.postId,
+      reviewId: review.id,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      reviews.removeWhere((item) => item.id == review.id);
+      currentCommentCount = currentCommentCount > 0
+          ? currentCommentCount - 1
+          : 0;
     });
   }
 
@@ -174,7 +286,6 @@ class _CatPostCardState extends State<CatPostCard> {
                         widget.imagePath,
                         loadingBuilder: (context, child, loadingProgress) {
                           if (loadingProgress == null) return child;
-
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
@@ -201,7 +312,6 @@ class _CatPostCardState extends State<CatPostCard> {
                 fit: BoxFit.fitWidth,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
-
                   return Container(
                     height: 260,
                     alignment: Alignment.center,
@@ -408,35 +518,119 @@ class _CatPostCardState extends State<CatPostCard> {
                         else
                           Column(
                             children: reviews.map((review) {
+                              final currentUid =
+                                  FirebaseAuth.instance.currentUser?.uid;
+                              final isMyReview = review.writerUid == currentUid;
+
                               return Column(
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
+                                      vertical: 5,
                                     ),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: RichText(
-                                        text: TextSpan(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            TextSpan(
-                                              text: review.content,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Color(0xFF5A372F),
+                                            Expanded(
+                                              child: RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    TextSpan(
+                                                      text: review.content,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Color(
+                                                          0xFF5A372F,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    TextSpan(
+                                                      text:
+                                                          '  -${review.writerUserId}-',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Color(
+                                                          0xFFBFA79F,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ),
-                                            TextSpan(
-                                              text:
-                                                  '  -${review.writerUserId}-',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                color: Color(0xFFBFA79F),
+
+                                            if (isMyReview)
+                                              SizedBox(
+                                                width: 24,
+                                                height: 22,
+                                                child: PopupMenuButton<String>(
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(
+                                                        minWidth: 28,
+                                                        minHeight: 28,
+                                                      ),
+                                                  iconSize: 14,
+                                                  icon: const Icon(
+                                                    Icons.more_vert,
+                                                    size: 14,
+                                                    color: Color(0xFFC0A39A),
+                                                  ),
+                                                  onSelected: (value) async {
+                                                    await Future.delayed(
+                                                      const Duration(
+                                                        milliseconds: 150,
+                                                      ),
+                                                    );
+
+                                                    if (!mounted) return;
+
+                                                    if (value == 'edit') {
+                                                      showEditReviewDialog(
+                                                        review,
+                                                      );
+                                                    } else if (value ==
+                                                        'delete') {
+                                                      deleteReview(review);
+                                                    }
+                                                  },
+                                                  itemBuilder: (context) =>
+                                                      const [
+                                                        PopupMenuItem(
+                                                          value: 'edit',
+                                                          child: Text('수정'),
+                                                        ),
+                                                        PopupMenuItem(
+                                                          value: 'delete',
+                                                          child: Text('삭제'),
+                                                        ),
+                                                      ],
+                                                ),
                                               ),
-                                            ),
                                           ],
                                         ),
-                                      ),
+
+                                        const SizedBox(height: 3),
+
+                                        Text(
+                                          review.createdAt == null
+                                              ? ''
+                                              : review.updatedAt != null
+                                              ? '${formatReviewDate(review.createdAt!)} · 수정됨'
+                                              : formatReviewDate(
+                                                  review.createdAt!,
+                                                ),
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFFC8B7AF),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
 
