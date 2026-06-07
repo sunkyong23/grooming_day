@@ -19,6 +19,8 @@ class CatProfile {
   final bool isVirtualCat;
   final int sortOrder;
 
+  final String ownerUserId;
+
   final DateTime? createdAt;
 
   CatProfile({
@@ -41,6 +43,7 @@ class CatProfile {
     required this.sortOrder,
 
     this.createdAt,
+    required this.ownerUserId,
   });
 
   factory CatProfile.fromMap(Map<String, dynamic> data) {
@@ -65,6 +68,7 @@ class CatProfile {
       isDeleted: data['isDeleted'] ?? false,
       isVirtualCat: data['isVirtualCat'] ?? false,
       sortOrder: data['sortOrder'] ?? 0,
+      ownerUserId: data['ownerUserId'] ?? '',
       createdAt: data['createdAt'] == null
           ? null
           : (data['createdAt'] as Timestamp).toDate(),
@@ -89,6 +93,7 @@ class CatProfile {
       'isDeleted': isDeleted,
       'isVirtualCat': isVirtualCat,
       'sortOrder': sortOrder,
+      'ownerUserId': ownerUserId,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };

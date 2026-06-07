@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'edit_cat_profile_screen.dart';
 
 import '../services/favorite_cat_service.dart';
+import '../widgets/post_detail_dialog.dart';
 
 class CatProfileDetailScreen extends StatefulWidget {
   final CatProfile cat;
@@ -49,6 +50,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
           ownerUid: widget.cat.ownerUid,
           catName: widget.cat.name,
           catProfileImageUrl: widget.cat.profileImageUrl,
+          ownerUserId: widget.cat.ownerUserId,
         );
       }
 
@@ -183,7 +185,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: Text(widget.cat.name),
+        elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
           if (canFavorite)
             GestureDetector(
@@ -194,8 +197,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   isFavoriteCat
                       ? 'assets/icons/paw_fill.png'
                       : 'assets/icons/paw_outline.png',
-                  width: 26,
-                  height: 26,
+                  width: 34,
+                  height: 34,
                 ),
               ),
             ),
@@ -306,6 +309,20 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 ),
               ),
             ),
+
+            if (widget.cat.ownerUserId.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Center(
+                child: Text(
+                  '@${widget.cat.ownerUserId}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFB08678),
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
 
             if (!widget.cat.isVirtualCat) ...[
@@ -418,9 +435,29 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     itemBuilder: (context, index) {
                       final post = catPosts[index];
 
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(post.imageUrl, fit: BoxFit.cover),
+                      return GestureDetector(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => PostDetailDialog(
+                              imageUrl: post.imageUrl,
+                              catName: post.catName,
+                              caption: post.caption,
+                              postId: post.id,
+                              createdAt: post.createdAt ?? DateTime.now(),
+                              tagText: post.tags
+                                  .map((tag) => '#$tag')
+                                  .join(' '),
+                            ),
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            post.imageUrl,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       );
                     },
                   ),

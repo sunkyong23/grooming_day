@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 
 class SettingsTile extends StatelessWidget {
   final VoidCallback onTap;
+  final String title;
+  final IconData icon;
 
-  const SettingsTile({super.key, required this.onTap});
+  const SettingsTile({
+    super.key,
+    required this.onTap,
+    required this.title,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -11,21 +18,21 @@ class SettingsTile extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.settings_rounded, color: Color(0xFF8A756C)),
-            SizedBox(width: 12),
+            Icon(icon, color: const Color(0xFF8A756C)),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '설정',
-                style: TextStyle(
+                title,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF3D241E),
                 ),
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
           ],
         ),
       ),

@@ -27,6 +27,7 @@ import '../services/cat_service.dart';
 import 'create_cat_screen.dart';
 
 import 'cat_profile_type_select_screen.dart';
+import 'favorite_cats_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -322,9 +323,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }).toList(),
                 ),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
+
+          const SizedBox(height: 20),
+
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FavoriteCatsScreen()),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.pets_rounded,
+                    color: Color(0xFF8A756C),
+                    size: 24,
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  const Expanded(
+                    child: Text(
+                      '꾹꾹 고양이',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D241E),
+                      ),
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFFB08678),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
 
           SettingsTile(
+            icon: Icons.settings_rounded,
+            title: '설정',
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(

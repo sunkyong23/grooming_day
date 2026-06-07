@@ -7,6 +7,8 @@ import 'nav_item.dart';
 import '../screens/album_screen.dart';
 import '../screens/profile_screen.dart';
 
+import '../screens/search_screen.dart';
+
 class BottomNavBar extends StatelessWidget {
   final Function(Post) onPostCreated;
   final VoidCallback onRefreshPosts;
@@ -42,7 +44,15 @@ class BottomNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           const NavItem(icon: Icons.home_rounded, label: '홈', active: true),
-          const NavItem(icon: Icons.search_rounded, label: '탐색'),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              );
+            },
+            child: const NavItem(icon: Icons.search_rounded, label: '탐색'),
+          ),
           AddButton(onPostCreated: onPostCreated),
           GestureDetector(
             onTap: () {

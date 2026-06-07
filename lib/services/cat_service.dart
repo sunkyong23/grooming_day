@@ -215,4 +215,58 @@ class CatService {
         .doc(catId)
         .update({'isHidden': false, 'updatedAt': FieldValue.serverTimestamp()});
   }
+
+  static Future<CatProfile?> loadCatProfileById(String catProfileId) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .doc(catProfileId)
+        .get();
+
+    if (!doc.exists) return null;
+
+    final data = doc.data();
+
+    if (data == null) return null;
+
+    return CatProfile.fromMap(data);
+  }
+
+  static Future<List<CatProfile>> searchCatsByName(String keyword) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final trimmedKeyword = keyword.trim();
+
+    if (trimmedKeyword.isEmpty) return [];
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('name', isGreaterThanOrEqualTo: trimmedKeyword)
+        .where('name', isLessThan: '$trimmedKeyword\uf8ff')
+        .limit(20)
+        .get();
+
+    return snapshot.docs
+        .where((doc) => doc.data()['ownerUid'] != user?.uid)
+        .map((doc) {
+          return CatProfile.fromMap(doc.data());
+        })
+        .toList();
+  }
+
+  static Future<List<CatProfile>> loadPublicCatsByOwnerUid(
+    String ownerUid,
+  ) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('catProfiles')
+        .where('ownerUid', isEqualTo: ownerUid)
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .orderBy('createdAt')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return CatProfile.fromMap(doc.data());
+    }).toList();
+  }
 }

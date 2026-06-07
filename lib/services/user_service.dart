@@ -198,4 +198,24 @@ class UserService {
 
     await batch.commit();
   }
+
+  static Future<List<Map<String, dynamic>>> searchUsers(String keyword) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final trimmedKeyword = keyword.trim();
+
+    if (trimmedKeyword.isEmpty) return [];
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('isDeleted', isEqualTo: false)
+        .where('userId', isGreaterThanOrEqualTo: trimmedKeyword)
+        .where('userId', isLessThan: '$trimmedKeyword\uf8ff')
+        .limit(20)
+        .get();
+
+    return snapshot.docs.where((doc) => doc.id != currentUser?.uid).map((doc) {
+      final data = doc.data();
+      return {...data, 'uid': doc.id};
+    }).toList();
+  }
 }
