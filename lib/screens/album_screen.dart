@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/cat_profile.dart';
 import '../models/post.dart';
+import '../services/cat_service.dart';
 import '../services/post_service.dart';
 import '../widgets/cat_post_card.dart';
 import 'edit_post_screen.dart';
+import '../widgets/post_detail_dialog.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -14,12 +17,21 @@ class AlbumScreen extends StatefulWidget {
 
 class _AlbumScreenState extends State<AlbumScreen> {
   List<Post> myPosts = [];
+  List<CatProfile> catProfiles = [];
+
   bool isLoading = true;
+  bool isLoadingCats = true;
+
+  String? selectedCatProfileId;
+
+  int selectedAlbumTab = 0; // 0: 내 앨범, 1: 꾹꾹 앨범
+  bool isGridView = true; // true: 그리드, false: 피드
 
   @override
   void initState() {
     super.initState();
     loadMyPosts();
+    loadCatProfiles();
   }
 
   Future<void> loadMyPosts() async {
@@ -43,6 +55,44 @@ class _AlbumScreenState extends State<AlbumScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('앨범을 불러오지 못했어요: $e')));
     }
+  }
+
+  Future<void> loadCatProfiles() async {
+    try {
+      final loadedCats = await CatService.loadMyCatProfiles();
+
+      if (!mounted) return;
+
+      setState(() {
+        catProfiles = loadedCats;
+
+        if (loadedCats.isNotEmpty && selectedCatProfileId == null) {
+          selectedCatProfileId = loadedCats.first.id;
+        }
+
+        isLoadingCats = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingCats = false;
+      });
+    }
+  }
+
+  List<Post> get filteredPosts {
+    if (selectedAlbumTab == 1) {
+      return [];
+    }
+
+    if (selectedCatProfileId == null) {
+      return myPosts;
+    }
+
+    return myPosts
+        .where((post) => post.catProfileId == selectedCatProfileId)
+        .toList();
   }
 
   Future<void> showPostMoreMenu(Post post) async {
@@ -105,6 +155,303 @@ class _AlbumScreenState extends State<AlbumScreen> {
     );
   }
 
+  Widget buildAlbumTab({required String label, required int index}) {
+    final isSelected = selectedAlbumTab == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedAlbumTab = index;
+          });
+        },
+        child: Container(
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFFFD7B8) : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+              color: isSelected
+                  ? const Color(0xFF6F3F2E)
+                  : const Color(0xFFB08678),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildAlbumTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SizedBox(
+        width: double.infinity,
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFEFE6),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Row(
+            children: [
+              buildAlbumTab(label: '내 앨범', index: 0),
+              const SizedBox(width: 4),
+              buildAlbumTab(label: '꾹꾹 앨범', index: 1),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildCatFilterChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        padding: isSelected
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 7)
+            : EdgeInsets.zero,
+        decoration: isSelected
+            ? BoxDecoration(
+                color: const Color(0xFFFFEFEA),
+                borderRadius: BorderRadius.circular(999),
+              )
+            : null,
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+            color: isSelected
+                ? const Color(0xFF6F3F2E)
+                : const Color(0xFFC0A39A),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildCatFilterArea() {
+    if (isLoadingCats) {
+      return const SizedBox(
+        height: 38,
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 38,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            buildCatFilterChip(
+              label: '전체',
+              isSelected: selectedCatProfileId == null,
+              onTap: () {
+                setState(() {
+                  selectedCatProfileId = null;
+                });
+              },
+            ),
+            ...catProfiles.map((cat) {
+              return buildCatFilterChip(
+                label: cat.name,
+                isSelected: selectedCatProfileId == cat.id,
+                onTap: () {
+                  setState(() {
+                    selectedCatProfileId = cat.id;
+                  });
+                },
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildViewToggle() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Row(
+        children: [
+          const Spacer(),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isGridView = true;
+              });
+            },
+            child: Icon(
+              Icons.grid_view_rounded,
+              size: 22,
+              color: isGridView
+                  ? const Color(0xFF8A5A44)
+                  : const Color(0xFFC9B8AF),
+            ),
+          ),
+          const SizedBox(width: 14),
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                isGridView = false;
+              });
+            },
+            child: Icon(
+              Icons.view_agenda_outlined,
+              size: 22,
+              color: !isGridView
+                  ? const Color(0xFF8A5A44)
+                  : const Color(0xFFC9B8AF),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildGridView(List<Post> posts) {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      itemCount: posts.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 6,
+        mainAxisSpacing: 6,
+        childAspectRatio: 1,
+      ),
+      itemBuilder: (context, index) {
+        final post = posts[index];
+
+        return GestureDetector(
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (_) => PostDetailDialog(
+                imageUrl: post.imageUrl,
+                catName: post.catName,
+                caption: post.caption,
+                postId: post.id,
+                createdAt: post.createdAt ?? DateTime.now(),
+                tagText: post.tags.map((tag) => '#$tag').join(' '),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              post.imageUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+
+                return Container(
+                  color: const Color(0xFFFFEFE6),
+                  alignment: Alignment.center,
+                  child: const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFFFEFE6),
+                  alignment: Alignment.center,
+                  child: const Text('🐾', style: TextStyle(fontSize: 18)),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildFeedView(List<Post> posts) {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: posts.map((post) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: CatPostCard(
+            imagePath: post.imageUrl,
+            caption: post.caption,
+            scrapCount: post.scrapCount,
+            tagText: post.tags.map((tag) => '#$tag').join('   '),
+            createdAt: post.createdAt ?? DateTime.now(),
+            catName: post.catName,
+            catProfileImageUrl: post.catProfileImageUrl,
+            isVirtualCat: post.isVirtualCat,
+            commentCount: post.commentCount,
+            postId: post.id,
+            userId: post.userId,
+            isScrapped: false,
+            onScrapTap: () {},
+            showMoreButton: true,
+            onMoreTap: () {
+              showPostMoreMenu(post);
+            },
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget buildAlbumContent(List<Post> posts) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (selectedAlbumTab == 1) {
+      return const Center(
+        child: Text(
+          '꾹꾹 앨범은 곧 연결할게요 🐾',
+          style: TextStyle(fontSize: 13, color: Color(0xFFB08678)),
+        ),
+      );
+    }
+
+    final visiblePosts = selectedCatProfileId == null
+        ? posts
+        : posts
+              .where((post) => post.catProfileId == selectedCatProfileId)
+              .toList();
+
+    if (visiblePosts.isEmpty) {
+      return const Center(
+        child: Text(
+          '아직 앨범에 담긴 게시글이 없어요 🐾',
+          style: TextStyle(fontSize: 13, color: Color(0xFFB08678)),
+        ),
+      );
+    }
+
+    return isGridView
+        ? buildGridView(visiblePosts)
+        : buildFeedView(visiblePosts);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,37 +460,25 @@ class _AlbumScreenState extends State<AlbumScreen> {
         backgroundColor: const Color(0xFFFFF7F1),
         title: const Text('나의 앨범'),
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : myPosts.isEmpty
-          ? const Center(child: Text('아직 앨범에 담긴 게시글이 없어요 🐾'))
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: myPosts.map((post) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  child: CatPostCard(
-                    imagePath: post.imageUrl,
-                    caption: post.caption,
-                    scrapCount: post.scrapCount,
-                    tagText: post.tags.map((tag) => '#$tag').join('   '),
-                    createdAt: post.createdAt ?? DateTime.now(),
-                    catName: post.catName,
-                    catProfileImageUrl: post.catProfileImageUrl,
-                    isVirtualCat: post.isVirtualCat,
-                    commentCount: post.commentCount,
-                    postId: post.id,
-                    userId: post.userId,
-                    isScrapped: false,
-                    onScrapTap: () {},
-                    showMoreButton: true,
-                    onMoreTap: () {
-                      showPostMoreMenu(post);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
+      body: Column(
+        children: [
+          const SizedBox(height: 12),
+
+          buildAlbumTabs(),
+
+          const SizedBox(height: 14),
+
+          buildCatFilterArea(),
+
+          const SizedBox(height: 6),
+
+          buildViewToggle(),
+
+          const SizedBox(height: 4),
+
+          Expanded(child: buildAlbumContent(myPosts)),
+        ],
+      ),
     );
   }
 }
