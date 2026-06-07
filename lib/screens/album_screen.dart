@@ -203,7 +203,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () {
+        onTap: () async {
           setState(() {
             selectedAlbumTab = index;
           });
@@ -313,7 +313,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
             buildCatFilterChip(
               label: '전체',
               isSelected: selectedCatProfileId == null,
-              onTap: () {
+              onTap: () async {
                 setState(() {
                   selectedCatProfileId = null;
                 });
@@ -323,7 +323,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
               return buildCatFilterChip(
                 label: cat.name,
                 isSelected: selectedCatProfileId == cat.id,
-                onTap: () {
+                onTap: () async {
                   setState(() {
                     selectedCatProfileId = cat.id;
                   });
@@ -354,7 +354,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
           const Spacer(),
 
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               setState(() {
                 isGridView = true;
               });
@@ -369,7 +369,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
           ),
           const SizedBox(width: 14),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               setState(() {
                 isGridView = false;
               });
@@ -389,7 +389,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   Widget buildSortButton() {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         showModalBottomSheet(
           context: context,
           backgroundColor: const Color(0xFFFFF7F1),
@@ -471,7 +471,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
       trailing: isSelected
           ? const Icon(Icons.check_rounded, color: Color(0xFFFF8A7A))
           : null,
-      onTap: () {
+      onTap: () async {
         setState(() {
           selectedSort = value;
         });
@@ -495,7 +495,15 @@ class _AlbumScreenState extends State<AlbumScreen> {
         final post = posts[index];
 
         return GestureDetector(
-          onTap: () {
+          onTap: () async {
+            if (post.unreadReviewCount > 0) {
+              await PostService.clearUnreadReviewCount(post.id);
+
+              await loadMyPosts();
+            }
+
+            if (!context.mounted) return;
+
             showDialog(
               context: context,
               builder: (_) => PostDetailDialog(
@@ -508,32 +516,52 @@ class _AlbumScreenState extends State<AlbumScreen> {
               ),
             );
           },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              post.imageUrl,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    post.imageUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
 
-                return Container(
-                  color: const Color(0xFFFFEFE6),
-                  alignment: Alignment.center,
-                  child: const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                      return Container(
+                        color: const Color(0xFFFFEFE6),
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: const Color(0xFFFFEFE6),
+                        alignment: Alignment.center,
+                        child: const Text('🐾', style: TextStyle(fontSize: 18)),
+                      );
+                    },
                   ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFFFFEFE6),
-                  alignment: Alignment.center,
-                  child: const Text('🐾', style: TextStyle(fontSize: 18)),
-                );
-              },
-            ),
+                ),
+              ),
+
+              if (post.unreadReviewCount > 0 && post.commentCount > 0)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF7F7F),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },

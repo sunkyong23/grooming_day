@@ -10,6 +10,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'edit_cat_profile_screen.dart';
 
+import '../services/favorite_cat_service.dart';
+
 class CatProfileDetailScreen extends StatefulWidget {
   final CatProfile cat;
 
@@ -21,11 +23,57 @@ class CatProfileDetailScreen extends StatefulWidget {
 
 class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
   List<Post> catPosts = [];
+  bool isFavoriteCat = false;
+  bool isFavoriteLoading = false;
 
   @override
   void initState() {
     super.initState();
     loadCatPosts();
+    loadFavoriteState();
+  }
+
+  Future<void> toggleFavoriteCat() async {
+    if (isFavoriteLoading) return;
+
+    setState(() {
+      isFavoriteLoading = true;
+    });
+
+    try {
+      if (isFavoriteCat) {
+        await FavoriteCatService.removeFavoriteCat(widget.cat.id);
+      } else {
+        await FavoriteCatService.addFavoriteCat(
+          catProfileId: widget.cat.id,
+          ownerUid: widget.cat.ownerUid,
+          catName: widget.cat.name,
+          catProfileImageUrl: widget.cat.profileImageUrl,
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        isFavoriteCat = !isFavoriteCat;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isFavoriteLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> loadFavoriteState() async {
+    final result = await FavoriteCatService.isFavoriteCat(widget.cat.id);
+
+    if (!mounted) return;
+
+    setState(() {
+      isFavoriteCat = result;
+    });
   }
 
   Future<void> loadCatPosts() async {
@@ -129,12 +177,29 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
     final isOwner =
         FirebaseAuth.instance.currentUser?.uid == widget.cat.ownerUid;
 
+    final canFavorite = !isOwner;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
         title: Text(widget.cat.name),
         actions: [
+          if (canFavorite)
+            GestureDetector(
+              onTap: toggleFavoriteCat,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Image.asset(
+                  isFavoriteCat
+                      ? 'assets/icons/paw_fill.png'
+                      : 'assets/icons/paw_outline.png',
+                  width: 26,
+                  height: 26,
+                ),
+              ),
+            ),
+
           if (isOwner)
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_horiz),
@@ -241,7 +306,6 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 8),
 
             if (!widget.cat.isVirtualCat) ...[

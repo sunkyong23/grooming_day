@@ -174,6 +174,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> submitPost() async {
+    FocusScope.of(context).unfocus();
     if (isSubmitting) return;
 
     setState(() {
@@ -406,7 +407,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isSubmitting ? null : submitPost,
+                  onPressed: isSubmitting
+                      ? null
+                      : () {
+                          FocusScope.of(context).unfocus();
+                          submitPost();
+                        },
                   child: isSubmitting
                       ? const SizedBox(
                           width: 20,

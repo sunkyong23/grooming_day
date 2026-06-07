@@ -21,6 +21,7 @@ class Post {
   final String storagePath;
   final String catProfileImageUrl;
   final bool isVirtualCat;
+  final int unreadReviewCount;
 
   Post({
     required this.id,
@@ -42,6 +43,7 @@ class Post {
     this.scrapCount = 0,
     this.commentCount = 0,
     this.storagePath = '',
+    this.unreadReviewCount = 0,
 
     this.visibility = 'public',
   });
@@ -72,6 +74,7 @@ class Post {
       scrapCount: data['scrapCount'] ?? 0,
       commentCount: data['commentCount'] ?? 0,
       visibility: data['visibility'] ?? 'public',
+      unreadReviewCount: data['unreadReviewCount'] ?? 0,
     );
   }
 }

@@ -62,6 +62,15 @@ class _CatPostCardState extends State<CatPostCard> {
   }
 
   @override
+  void didUpdateWidget(covariant CatPostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.commentCount != widget.commentCount) {
+      currentCommentCount = widget.commentCount;
+    }
+  }
+
+  @override
   void dispose() {
     reviewController.dispose();
     super.dispose();
@@ -481,13 +490,17 @@ class _CatPostCardState extends State<CatPostCard> {
 
                                           if (newReview == null) return;
 
+                                          if (!context.mounted) return;
+
                                           reviewController.clear();
 
-                                          FocusScope.of(context).unfocus();
+                                          FocusManager.instance.primaryFocus
+                                              ?.unfocus();
 
                                           setState(() {
                                             currentCommentCount += 1;
                                             reviews.insert(0, newReview);
+                                            isReviewExpanded = false;
                                           });
 
                                           ScaffoldMessenger.of(
@@ -550,7 +563,7 @@ class _CatPostCardState extends State<CatPostCard> {
                               vertical: 12,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFFF),
+                              color: const Color(0xFFFFFFFF),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Text(

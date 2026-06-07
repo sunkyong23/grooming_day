@@ -27,21 +27,26 @@ class ReviewService {
 
     final reviewId = reviewRef.id;
 
-    await reviewRef.set({
-      'id': reviewId,
-      'postId': postId,
-      'writerUid': user.uid,
-      'writerUserId': writerUserId,
-      'content': trimmedContent,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': null,
-      'isDeleted': false,
-      'isHidden': false,
-      'reportCount': 0,
-    });
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(postId);
 
-    await FirebaseFirestore.instance.collection('posts').doc(postId).update({
-      'commentCount': FieldValue.increment(1),
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      transaction.set(reviewRef, {
+        'id': reviewId,
+        'postId': postId,
+        'writerUid': user.uid,
+        'writerUserId': writerUserId,
+        'content': trimmedContent,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': null,
+        'isDeleted': false,
+        'isHidden': false,
+        'reportCount': 0,
+      });
+
+      transaction.update(postRef, {
+        'commentCount': FieldValue.increment(1),
+        'unreadReviewCount': FieldValue.increment(1),
+      });
     });
 
     return Review(
@@ -95,9 +100,16 @@ class ReviewService {
     final reviewRef = postRef.collection('reviews').doc(reviewId);
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final postSnapshot = await transaction.get(postRef);
+
+      final currentCommentCount =
+          (postSnapshot.data()?['commentCount'] ?? 0) as int;
+
       transaction.delete(reviewRef);
 
-      transaction.update(postRef, {'commentCount': FieldValue.increment(-1)});
+      transaction.update(postRef, {
+        'commentCount': currentCommentCount > 0 ? currentCommentCount - 1 : 0,
+      });
     });
   }
 }

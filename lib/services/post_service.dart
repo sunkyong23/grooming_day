@@ -43,6 +43,7 @@ class PostService {
       scrapCount: data['scrapCount'] ?? 0,
       commentCount: data['commentCount'] ?? 0,
       visibility: data['visibility'] ?? 'public',
+      unreadReviewCount: data['unreadReviewCount'] ?? 0,
     );
   }
 
@@ -274,6 +275,7 @@ class PostService {
       'reportCount': 0,
       'scrapCount': 0,
       'commentCount': 0,
+      'unreadReviewCount': 0,
 
       'visibility': tags.isEmpty ? 'private' : 'public',
     });
@@ -443,6 +445,12 @@ class PostService {
 
     await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
       'commentCount': FieldValue.increment(1),
+    });
+  }
+
+  static Future<void> clearUnreadReviewCount(String postId) async {
+    await FirebaseFirestore.instance.collection('posts').doc(postId).update({
+      'unreadReviewCount': 0,
     });
   }
 }
