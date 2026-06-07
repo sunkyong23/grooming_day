@@ -23,6 +23,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
   bool isLoadingCats = true;
 
   String? selectedCatProfileId;
+  String selectedSort = 'latest';
 
   int selectedAlbumTab = 0; // 0: 내 앨범, 1: 꾹꾹 앨범
   bool isGridView = true; // true: 그리드, false: 피드
@@ -93,6 +94,28 @@ class _AlbumScreenState extends State<AlbumScreen> {
     return myPosts
         .where((post) => post.catProfileId == selectedCatProfileId)
         .toList();
+  }
+
+  List<Post> get sortedPosts {
+    final posts = [...filteredPosts];
+
+    if (selectedSort == 'latest') {
+      posts.sort(
+        (a, b) =>
+            (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
+      );
+    } else if (selectedSort == 'oldest') {
+      posts.sort(
+        (a, b) =>
+            (a.createdAt ?? DateTime(0)).compareTo(b.createdAt ?? DateTime(0)),
+      );
+    } else if (selectedSort == 'scrap') {
+      posts.sort((a, b) => b.scrapCount.compareTo(a.scrapCount));
+    } else if (selectedSort == 'review') {
+      posts.sort((a, b) => b.commentCount.compareTo(a.commentCount));
+    }
+
+    return posts;
   }
 
   Future<void> showPostMoreMenu(Post post) async {
@@ -289,12 +312,23 @@ class _AlbumScreenState extends State<AlbumScreen> {
     );
   }
 
+  String get selectedSortLabel {
+    if (selectedSort == 'latest') return '최신순';
+    if (selectedSort == 'oldest') return '오래된 순';
+    if (selectedSort == 'scrap') return '스크랩 많은 순';
+    if (selectedSort == 'review') return '감상평 많은 순';
+    return '최신순';
+  }
+
   Widget buildViewToggle() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: Row(
         children: [
+          buildSortButton(),
+
           const Spacer(),
+
           GestureDetector(
             onTap: () {
               setState(() {
@@ -326,6 +360,100 @@ class _AlbumScreenState extends State<AlbumScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildSortButton() {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: const Color(0xFFFFF7F1),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (bottomSheetContext) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    buildSortOption(
+                      label: '최신순',
+                      value: 'latest',
+                      bottomSheetContext: bottomSheetContext,
+                    ),
+                    buildSortOption(
+                      label: '오래된 순',
+                      value: 'oldest',
+                      bottomSheetContext: bottomSheetContext,
+                    ),
+                    buildSortOption(
+                      label: '스크랩 많은 순',
+                      value: 'scrap',
+                      bottomSheetContext: bottomSheetContext,
+                    ),
+                    buildSortOption(
+                      label: '감상평 많은 순',
+                      value: 'review',
+                      bottomSheetContext: bottomSheetContext,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            selectedSortLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF9A6B60),
+            ),
+          ),
+          const SizedBox(width: 3),
+          const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            size: 18,
+            color: Color(0xFF9A6B60),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSortOption({
+    required String label,
+    required String value,
+    required BuildContext bottomSheetContext,
+  }) {
+    final isSelected = selectedSort == value;
+
+    return ListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+          color: isSelected ? const Color(0xFF6F3F2E) : const Color(0xFF8A5A44),
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_rounded, color: Color(0xFFFF8A7A))
+          : null,
+      onTap: () {
+        setState(() {
+          selectedSort = value;
+        });
+
+        Navigator.pop(bottomSheetContext);
+      },
     );
   }
 
@@ -454,6 +582,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final posts = sortedPosts;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
@@ -476,7 +606,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
           const SizedBox(height: 4),
 
-          Expanded(child: buildAlbumContent(myPosts)),
+          Expanded(child: buildAlbumContent(posts)),
         ],
       ),
     );
