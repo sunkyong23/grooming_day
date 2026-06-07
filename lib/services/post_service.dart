@@ -112,18 +112,94 @@ class PostService {
         .collection('scraps')
         .doc(post.id);
 
-    if (isScrapped) {
-      await scrapRef.set({
-        'postId': post.id,
-        'imageUrl': post.imageUrl,
-        'caption': post.caption,
-        'catName': post.catName,
-        'userId': post.userId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      await scrapRef.delete();
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(post.id);
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final scrapSnapshot = await transaction.get(scrapRef);
+
+      if (isScrapped) {
+        if (scrapSnapshot.exists) return;
+
+        transaction.set(scrapRef, {
+          'postId': post.id,
+          'ownerUid': post.ownerUid,
+          'imageUrl': post.imageUrl,
+          'caption': post.caption,
+          'catName': post.catName,
+          'userId': post.userId,
+          'catProfileId': post.catProfileId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        transaction.update(postRef, {'scrapCount': FieldValue.increment(1)});
+      } else {
+        if (!scrapSnapshot.exists) return;
+
+        transaction.delete(scrapRef);
+
+        transaction.update(postRef, {'scrapCount': FieldValue.increment(-1)});
+      }
+    });
+  }
+
+  static Future<List<Post>> loadMyScrappedPosts() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return [];
+
+    final scrapSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('scraps')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    final posts = <Post>[];
+
+    for (final scrapDoc in scrapSnapshot.docs) {
+      final postId = scrapDoc.id;
+
+      final postDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(postId)
+          .get();
+
+      if (!postDoc.exists) continue;
+
+      final data = postDoc.data();
+
+      if (data == null) continue;
+      if (data['isDeleted'] == true) continue;
+      if (data['isHidden'] == true) continue;
+      if (data['visibility'] != 'public') continue;
+
+      posts.add(
+        Post(
+          id: data['id'] ?? postDoc.id,
+          ownerUid: data['ownerUid'] ?? '',
+          userId: data['userId'] ?? '',
+          catProfileId: data['catProfileId'] ?? '',
+          catName: data['catName'] ?? '',
+          catProfileImageUrl: data['catProfileImageUrl'] ?? '',
+          isVirtualCat: data['isVirtualCat'] ?? false,
+          imageUrl: data['imageUrl'] ?? '',
+          storagePath: data['storagePath'] ?? '',
+          caption: data['caption'] ?? '',
+          tags: List<String>.from(data['tags'] ?? []),
+          aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
+          createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+          isDeleted: data['isDeleted'] ?? false,
+          isHidden: data['isHidden'] ?? false,
+          reportCount: data['reportCount'] ?? 0,
+          scrapCount: data['scrapCount'] ?? 0,
+          commentCount: data['commentCount'] ?? 0,
+          visibility: data['visibility'] ?? 'public',
+        ),
+      );
     }
+
+    return posts;
   }
 
   static Future<Post?> createPost({

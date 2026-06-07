@@ -219,7 +219,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         (route) => false,
       );
     } catch (e) {
-      // print('계정 탈퇴 오류: $e');
+      debugPrint('계정 탈퇴 오류: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('계정 탈퇴 중 오류가 발생했어요: $e')));
     }
   }
 

@@ -7,7 +7,6 @@ import 'package:image_cropper/image_cropper.dart';
 import '../models/post.dart';
 import 'create_post_screen.dart';
 
-import '../widgets/soft_divider.dart';
 import '../widgets/cat_post_card.dart';
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
@@ -19,6 +18,8 @@ import 'album_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'edit_post_screen.dart';
+
+Set<String> scrappedPostIds = {};
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -51,7 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Post> myPosts = [];
 
   Future<void> loadMyScraps() async {
-    // 스크랩 기능은 나중에 다시 연결
+    final loadedScrapIds = await PostService.loadMyScrapIds();
+
+    if (!mounted) return;
+
+    setState(() {
+      scrappedPostIds = loadedScrapIds;
+    });
   }
 
   void addPost(Post post) {
@@ -151,7 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> toggleScrap(Post post) async {
-    // 스크랩 기능은 나중에 다시 연결
+    final isScrapped = scrappedPostIds.contains(post.id);
+
+    await PostService.setScrap(post: post, isScrapped: !isScrapped);
+
+    if (!mounted) return;
+
+    setState(() {
+      if (isScrapped) {
+        scrappedPostIds.remove(post.id);
+      } else {
+        scrappedPostIds.add(post.id);
+      }
+    });
   }
 
   Future<void> showPostMoreMenu(Post post) async {
@@ -371,7 +390,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Header(onCameraTap: openCameraAndCreatePost),
                   const SizedBox(height: 14),
-                  const SoftDivider(),
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: Color(0xFFF0E3DC),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -496,10 +519,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         userId: post.userId,
                         commentCount: post.commentCount,
                         postId: post.id,
-                        isScrapped: false,
-                        onScrapTap: () {
-                          toggleScrap(post);
-                        },
+
+                        canWriteReview: post.ownerUid != currentUid,
+
+                        isScrapped: scrappedPostIds.contains(post.id),
+                        onScrapTap: post.ownerUid == currentUid
+                            ? null
+                            : () {
+                                toggleScrap(post);
+                              },
                         showMoreButton: post.ownerUid == currentUid,
                         onMoreTap: () {
                           showPostMoreMenu(post);

@@ -28,6 +28,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
   int selectedAlbumTab = 0; // 0: 내 앨범, 1: 꾹꾹 앨범
   bool isGridView = true; // true: 그리드, false: 피드
 
+  List<Post> scrappedPosts = [];
+  bool isLoadingScraps = false;
+  bool hasLoadedScraps = false;
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +62,22 @@ class _AlbumScreenState extends State<AlbumScreen> {
     }
   }
 
+  Future<void> loadMyScrappedPosts() async {
+    setState(() {
+      isLoadingScraps = true;
+    });
+
+    final loadedPosts = await PostService.loadMyScrappedPosts();
+
+    if (!mounted) return;
+
+    setState(() {
+      scrappedPosts = loadedPosts;
+      isLoadingScraps = false;
+      hasLoadedScraps = true;
+    });
+  }
+
   Future<void> loadCatProfiles() async {
     try {
       final loadedCats = await CatService.loadMyCatProfiles();
@@ -84,7 +104,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
   List<Post> get filteredPosts {
     if (selectedAlbumTab == 1) {
-      return [];
+      return scrappedPosts;
     }
 
     if (selectedCatProfileId == null) {
@@ -187,6 +207,10 @@ class _AlbumScreenState extends State<AlbumScreen> {
           setState(() {
             selectedAlbumTab = index;
           });
+
+          if (index == 1 && !hasLoadedScraps) {
+            loadMyScrappedPosts();
+          }
         },
         child: Container(
           height: 38,
@@ -551,26 +575,27 @@ class _AlbumScreenState extends State<AlbumScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (selectedAlbumTab == 1) {
-      return const Center(
-        child: Text(
-          '꾹꾹 앨범은 곧 연결할게요 🐾',
-          style: TextStyle(fontSize: 13, color: Color(0xFFB08678)),
-        ),
-      );
+    if (selectedAlbumTab == 1 && isLoadingScraps) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final visiblePosts = selectedCatProfileId == null
+    final visiblePosts = selectedAlbumTab == 1
+        ? posts
+        : selectedCatProfileId == null
         ? posts
         : posts
               .where((post) => post.catProfileId == selectedCatProfileId)
               .toList();
 
     if (visiblePosts.isEmpty) {
-      return const Center(
+      final emptyText = selectedAlbumTab == 0
+          ? '아직 앨범에 담긴 게시글이 없어요 🐾'
+          : '아직 꾹꾹한 게시글이 없어요 🐾';
+
+      return Center(
         child: Text(
-          '아직 앨범에 담긴 게시글이 없어요 🐾',
-          style: TextStyle(fontSize: 13, color: Color(0xFFB08678)),
+          emptyText,
+          style: const TextStyle(fontSize: 13, color: Color(0xFFB08678)),
         ),
       );
     }
@@ -598,9 +623,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
           const SizedBox(height: 14),
 
-          buildCatFilterArea(),
+          if (selectedAlbumTab == 0) buildCatFilterArea(),
 
-          const SizedBox(height: 6),
+          if (selectedAlbumTab == 0) const SizedBox(height: 6),
 
           buildViewToggle(),
 

@@ -106,9 +106,13 @@ class UserService {
         // userIds 문서가 없거나 삭제 권한이 없을 경우 무시
       }
     }
-
-    await FirebaseFirestore.instance.collection('users').doc(uid).delete();
-
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'isDeleted': true,
+      'deletedAt': FieldValue.serverTimestamp(),
+      'userId': '',
+      'bio': '',
+      'profileImageUrl': '',
+    });
     await user.delete();
   }
 
