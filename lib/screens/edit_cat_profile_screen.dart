@@ -377,7 +377,7 @@ class _EditCatProfileScreenState extends State<EditCatProfileScreen> {
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: '소개',
-                hintText: '우리 아이를 소개해주세요 🐾',
+                hintText: '우리 고양이를 소개해주세요 🐾',
               ),
             ),
 

@@ -17,10 +17,9 @@ class GroomingDayApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'SUIT'),
-      home: const SplashScreen(),
+      home: SplashScreen(),
     );
   }
 }

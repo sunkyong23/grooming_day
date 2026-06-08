@@ -358,7 +358,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 controller: captionController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: '우리 냥이를 소개해 주세요 🐱',
+                  hintText: '소중한 순간을 남겨보아요 🐱',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
