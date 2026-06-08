@@ -12,10 +12,10 @@ class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
 
   @override
-  State<AlbumScreen> createState() => _AlbumScreenState();
+  State<AlbumScreen> createState() => AlbumScreenState();
 }
 
-class _AlbumScreenState extends State<AlbumScreen> {
+class AlbumScreenState extends State<AlbumScreen> {
   List<Post> myPosts = [];
   List<CatProfile> catProfiles = [];
 
@@ -25,8 +25,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
   String? selectedCatProfileId;
   String selectedSort = 'latest';
 
-  int selectedAlbumTab = 0; // 0: 내 앨범, 1: 꾹꾹 앨범
-  bool isGridView = true; // true: 그리드, false: 피드
+  int selectedAlbumTab = 0;
+  bool isGridView = true;
 
   List<Post> scrappedPosts = [];
   bool isLoadingScraps = false;
@@ -350,9 +350,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
       child: Row(
         children: [
           buildSortButton(),
-
           const Spacer(),
-
           GestureDetector(
             onTap: () async {
               setState(() {
@@ -498,7 +496,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
           onTap: () async {
             if (post.unreadReviewCount > 0) {
               await PostService.clearUnreadReviewCount(post.id);
-
               await loadMyPosts();
             }
 
@@ -547,7 +544,6 @@ class _AlbumScreenState extends State<AlbumScreen> {
                   ),
                 ),
               ),
-
               if (post.unreadReviewCount > 0 && post.commentCount > 0)
                 Positioned(
                   top: 6,
@@ -646,19 +642,12 @@ class _AlbumScreenState extends State<AlbumScreen> {
       body: Column(
         children: [
           const SizedBox(height: 12),
-
           buildAlbumTabs(),
-
           const SizedBox(height: 14),
-
           if (selectedAlbumTab == 0) buildCatFilterArea(),
-
           if (selectedAlbumTab == 0) const SizedBox(height: 6),
-
           buildViewToggle(),
-
           const SizedBox(height: 4),
-
           Expanded(child: buildAlbumContent(posts)),
         ],
       ),

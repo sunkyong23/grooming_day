@@ -14,7 +14,7 @@ import '../services/cat_service.dart';
 import 'cat_profile_type_select_screen.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  final Function(Post) onPostCreated;
+  final Function(Post, bool) onPostCreated;
   final File? initialImage;
 
   const CreatePostScreen({
@@ -175,6 +175,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> submitPost() async {
     FocusScope.of(context).unfocus();
+
     if (isSubmitting) return;
 
     setState(() {
@@ -196,6 +197,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         return;
       }
 
+      final isAlbumOnlyPost = selectedTags.isEmpty;
+
       final compressedImage = await ImageService.compressImage(selectedImage!);
       final uploadFile = compressedImage ?? selectedImage!;
 
@@ -213,7 +216,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       if (newPost == null) return;
 
-      widget.onPostCreated(newPost);
+      widget.onPostCreated(newPost, isAlbumOnlyPost);
 
       if (mounted) {
         Navigator.pop(context);

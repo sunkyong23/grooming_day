@@ -4,21 +4,16 @@ import '../models/post.dart';
 import 'add_button.dart';
 import 'nav_item.dart';
 
-import '../screens/album_screen.dart';
-import '../screens/profile_screen.dart';
-
-import '../screens/search_screen.dart';
-
 class BottomNavBar extends StatelessWidget {
-  final Function(Post) onPostCreated;
-  final VoidCallback onRefreshPosts;
-  final List<Post> posts;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  final Function(Post, bool) onPostCreated;
 
   const BottomNavBar({
     super.key,
+    required this.currentIndex,
+    required this.onTap,
     required this.onPostCreated,
-    required this.onRefreshPosts,
-    required this.posts,
   });
 
   @override
@@ -43,46 +38,38 @@ class BottomNavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const NavItem(icon: Icons.home_rounded, label: '홈', active: true),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SearchScreen()),
-              );
-            },
-            child: const NavItem(icon: Icons.search_rounded, label: '탐색'),
-          ),
-          AddButton(onPostCreated: onPostCreated),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AlbumScreen()),
-              );
-            },
-            child: const NavItem(
-              icon: Icons.photo_library_rounded,
-              label: '앨범',
+            onTap: () => onTap(0),
+            child: NavItem(
+              icon: Icons.home_rounded,
+              label: '홈',
+              active: currentIndex == 0,
             ),
           ),
           GestureDetector(
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfileScreen(
-                    posts: posts,
-                    onRefreshPosts: onRefreshPosts,
-                  ),
-                ),
-              );
-
-              if (result == true) {
-                onRefreshPosts();
-              }
-            },
-            child: const NavItem(icon: Icons.pets_rounded, label: '프로필'),
+            onTap: () => onTap(1),
+            child: NavItem(
+              icon: Icons.search_rounded,
+              label: '탐색',
+              active: currentIndex == 1,
+            ),
+          ),
+          AddButton(onPostCreated: onPostCreated),
+          GestureDetector(
+            onTap: () => onTap(2),
+            child: NavItem(
+              icon: Icons.photo_library_rounded,
+              label: '앨범',
+              active: currentIndex == 2,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => onTap(3),
+            child: NavItem(
+              icon: Icons.pets_rounded,
+              label: '프로필',
+              active: currentIndex == 3,
+            ),
           ),
         ],
       ),

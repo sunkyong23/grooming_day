@@ -4,7 +4,7 @@ import '../models/post.dart';
 import '../screens/create_post_screen.dart';
 
 class AddButton extends StatelessWidget {
-  final Function(Post) onPostCreated;
+  final Function(Post, bool) onPostCreated;
 
   const AddButton({super.key, required this.onPostCreated});
 
@@ -19,7 +19,6 @@ class AddButton extends StatelessWidget {
           ),
         );
       },
-
       child: Container(
         width: 54,
         height: 54,

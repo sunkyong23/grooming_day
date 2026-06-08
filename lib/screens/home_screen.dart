@@ -3,32 +3,30 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/post.dart';
 import 'create_post_screen.dart';
+import 'edit_post_screen.dart';
 
 import '../widgets/cat_post_card.dart';
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
-import '../widgets/bottom_nav_bar.dart';
 
 import '../services/post_service.dart';
-import 'album_screen.dart';
-
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'edit_post_screen.dart';
 
 Set<String> scrappedPostIds = {};
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(Post, bool)? onPostCreatedFromHome;
+
+  const HomeScreen({super.key, this.onPostCreatedFromHome});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   final List<String> tags = const [
     '오늘의',
     '아깽이',
@@ -51,41 +49,28 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Post> posts = [];
   final List<Post> myPosts = [];
 
-  Future<void> loadMyScraps() async {
-    final loadedScrapIds = await PostService.loadMyScrapIds();
+  final ScrollController feedScrollController = ScrollController();
 
-    if (!mounted) return;
+  void scrollFeedToTop() {
+    if (!feedScrollController.hasClients) return;
 
-    setState(() {
-      scrappedPostIds = loadedScrapIds;
-    });
-  }
-
-  void addPost(Post post) {
-    if (post.tags.isEmpty) {
-      refreshPostLists();
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (!mounted) return;
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AlbumScreen()),
-        );
-      });
-    } else {
-      setState(() {
-        selectedFeedTag = null;
-      });
-
-      refreshPostLists();
-    }
+    feedScrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   void initState() {
     super.initState();
     loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    feedScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> loadInitialData() async {
@@ -98,6 +83,26 @@ class _HomeScreenState extends State<HomeScreen> {
     await loadPostsFromFirestore();
     await loadMyPostsFromFirestore();
     await loadMyScraps();
+  }
+
+  Future<void> loadMyScraps() async {
+    final loadedScrapIds = await PostService.loadMyScrapIds();
+
+    if (!mounted) return;
+
+    setState(() {
+      scrappedPostIds = loadedScrapIds;
+    });
+  }
+
+  void addPost(Post post) {
+    if (post.tags.isNotEmpty) {
+      setState(() {
+        selectedFeedTag = null;
+      });
+    }
+
+    refreshPostLists();
   }
 
   Future<void> loadPostsFromFirestore() async {
@@ -204,13 +209,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     if (result == 'album') {
                       await refreshPostLists();
-
-                      if (!mounted) return;
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const AlbumScreen()),
-                      );
                     } else if (result == 'home') {
                       setState(() {
                         selectedFeedTag = null;
@@ -358,7 +356,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => CreatePostScreen(
-          onPostCreated: addPost,
+          onPostCreated: (post, isAlbumOnlyPost) {
+            widget.onPostCreatedFromHome?.call(post, isAlbumOnlyPost);
+          },
           initialImage: File(croppedFile.path),
         ),
       ),
@@ -375,11 +375,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
-      bottomNavigationBar: BottomNavBar(
-        onPostCreated: addPost,
-        onRefreshPosts: refreshPostLists,
-        posts: myPosts,
-      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -501,6 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
+                controller: feedScrollController,
                 padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
                 children: [
                   const SizedBox(height: 24),
@@ -519,9 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         userId: post.userId,
                         commentCount: post.commentCount,
                         postId: post.id,
-
                         canWriteReview: post.ownerUid != currentUid,
-
                         isScrapped: scrappedPostIds.contains(post.id),
                         onScrapTap: post.ownerUid == currentUid
                             ? null
