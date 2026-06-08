@@ -500,7 +500,6 @@ class _CatPostCardState extends State<CatPostCard> {
                                           setState(() {
                                             currentCommentCount += 1;
                                             reviews.insert(0, newReview);
-                                            isReviewExpanded = false;
                                           });
 
                                           ScaffoldMessenger.of(
