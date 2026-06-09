@@ -29,6 +29,8 @@ import 'create_cat_screen.dart';
 import 'cat_profile_type_select_screen.dart';
 import 'favorite_cats_screen.dart';
 
+import 'rainbow_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
   final VoidCallback? onRefreshPosts;
@@ -366,6 +368,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+
+          const SizedBox(height: 8),
+
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const RainbowScreen()),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Color(0xFF7E6BC4),
+                    size: 24,
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  const Expanded(
+                    child: Text(
+                      '무지개별',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF3D241E),
+                      ),
+                    ),
+                  ),
+
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFFB08678),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
 
           const SizedBox(height: 20),
 
