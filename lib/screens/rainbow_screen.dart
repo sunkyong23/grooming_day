@@ -44,7 +44,6 @@ class _RainbowScreenState extends State<RainbowScreen> {
     super.initState();
 
     final today = DateTime.now();
-
     final index =
         (today.year + today.month + today.day) % comfortMessages.length;
 
@@ -104,10 +103,15 @@ class _RainbowScreenState extends State<RainbowScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 100),
+      padding: const EdgeInsets.fromLTRB(18, 24, 22, 110),
       itemCount: letters.length,
       itemBuilder: (context, index) {
         final letter = letters[index];
+
+        final showDate =
+            index == 0 ||
+            _dateKey(letters[index - 1].createdAt) !=
+                _dateKey(letter.createdAt);
 
         return GestureDetector(
           onTap: () async {
@@ -123,7 +127,10 @@ class _RainbowScreenState extends State<RainbowScreen> {
             }
           },
           child: _RainbowLetterPreviewCard(
+            showDate: showDate,
             date: _formatDate(letter.createdAt),
+            year: letter.createdAt.year.toString(),
+            weekday: _weekday(letter.createdAt),
             title: letter.title,
             preview: letter.content,
             todakCount: letter.todakCount,
@@ -148,10 +155,15 @@ class _RainbowScreenState extends State<RainbowScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 100),
+      padding: const EdgeInsets.fromLTRB(18, 24, 22, 110),
       itemCount: myLetters.length,
       itemBuilder: (context, index) {
         final letter = myLetters[index];
+
+        final showDate =
+            index == 0 ||
+            _dateKey(myLetters[index - 1].createdAt) !=
+                _dateKey(letter.createdAt);
 
         return GestureDetector(
           onTap: () async {
@@ -167,7 +179,10 @@ class _RainbowScreenState extends State<RainbowScreen> {
             }
           },
           child: _RainbowLetterPreviewCard(
+            showDate: showDate,
             date: _formatDate(letter.createdAt),
+            year: letter.createdAt.year.toString(),
+            weekday: _weekday(letter.createdAt),
             title: letter.title,
             preview: letter.content,
             todakCount: letter.todakCount,
@@ -177,10 +192,23 @@ class _RainbowScreenState extends State<RainbowScreen> {
     );
   }
 
+  String _dateKey(DateTime date) {
+    final year = date.year.toString();
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
   String _formatDate(DateTime date) {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$month.$day';
+  }
+
+  String _weekday(DateTime date) {
+    const weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+
+    return weekdays[date.weekday - 1];
   }
 
   @override
@@ -309,13 +337,19 @@ class _EmptyRainbowTab extends StatelessWidget {
 }
 
 class _RainbowLetterPreviewCard extends StatelessWidget {
+  final bool showDate;
   final String date;
+  final String year;
+  final String weekday;
   final String title;
   final String preview;
   final int todakCount;
 
   const _RainbowLetterPreviewCard({
+    required this.showDate,
     required this.date,
+    required this.year,
+    required this.weekday,
     required this.title,
     required this.preview,
     required this.todakCount,
@@ -327,65 +361,123 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 54,
+          width: 46,
+          child: showDate
+              ? Column(
+                  children: [
+                    Text(
+                      date,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        color: Color(0xFFE8C99C),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      year,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        color: Color(0xFFB8A98D),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      weekday,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        color: Color(0xFFB8A98D),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                )
+              : const SizedBox(),
+        ),
+
+        SizedBox(
+          width: 30,
           child: Column(
             children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  color: Color(0xFFFFDCA8),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text('⭐', style: TextStyle(fontSize: 18)),
+              const SizedBox(height: 12),
+              const Text('⭐', style: TextStyle(fontSize: 21)),
               Container(
                 width: 1,
-                height: 92,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                color: Colors.white24,
+                height: 76,
+                margin: const EdgeInsets.only(top: 4),
+                color: Colors.white.withValues(alpha: 0.22),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 10),
+
+        const SizedBox(width: 8),
+
         Expanded(
           child: Container(
-            margin: const EdgeInsets.only(bottom: 18),
-            padding: const EdgeInsets.all(18),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+              color: const Color(0xFFFFF4F7),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.16),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.mail_outline_rounded,
+                      size: 20,
+                      color: Color(0xFF8D6DA8),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: Color(0xFF252245),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.more_vert_rounded,
+                      size: 22,
+                      color: Color(0xFF9B83B5),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   preview,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xFFB8BDD8),
+                    color: Color(0xFF302D50),
                     fontSize: 14,
-                    height: 1.4,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '🤗 토닥토닥 $todakCount',
+                  '토닥토닥 $todakCount',
                   style: const TextStyle(
-                    color: Color(0xFFFFDCA8),
+                    color: Color(0xFF7D5FA0),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
