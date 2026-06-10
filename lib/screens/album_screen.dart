@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/cat_profile.dart';
 import '../models/post.dart';
@@ -7,6 +8,8 @@ import '../services/post_service.dart';
 import '../widgets/cat_post_card.dart';
 import 'edit_post_screen.dart';
 import '../widgets/post_detail_dialog.dart';
+
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -32,21 +35,55 @@ class AlbumScreenState extends State<AlbumScreen> {
   bool isLoadingScraps = false;
   bool hasLoadedScraps = false;
 
+  final ScrollController albumScrollController = ScrollController();
+
+  DocumentSnapshot? lastMyPostDocument;
+  bool isLoadingMoreMyPosts = false;
+  bool hasMoreMyPosts = true;
+
+  static const int albumPageLimit = 20;
+
   @override
   void initState() {
     super.initState();
+
     loadMyPosts();
     loadCatProfiles();
+
+    albumScrollController.addListener(() {
+      if (!albumScrollController.hasClients) return;
+      if (selectedAlbumTab != 0) return;
+
+      if (albumScrollController.position.pixels >=
+          albumScrollController.position.maxScrollExtent - 300) {
+        loadMoreMyPosts();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    albumScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> loadMyPosts() async {
     try {
-      final loadedPosts = await PostService.loadMyPosts();
+      setState(() {
+        isLoading = true;
+        myPosts.clear();
+        lastMyPostDocument = null;
+        hasMoreMyPosts = true;
+      });
+
+      final page = await PostService.loadMyPostsPage(limit: albumPageLimit);
 
       if (!mounted) return;
 
       setState(() {
-        myPosts = loadedPosts;
+        myPosts = page.posts;
+        lastMyPostDocument = page.lastDocument;
+        hasMoreMyPosts = page.hasMore;
         isLoading = false;
       });
     } catch (e) {
@@ -59,6 +96,40 @@ class AlbumScreenState extends State<AlbumScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('앨범을 불러오지 못했어요: $e')));
+    }
+  }
+
+  Future<void> loadMoreMyPosts() async {
+    if (isLoadingMoreMyPosts || !hasMoreMyPosts || lastMyPostDocument == null) {
+      return;
+    }
+
+    setState(() {
+      isLoadingMoreMyPosts = true;
+    });
+
+    try {
+      final page = await PostService.loadMyPostsPage(
+        lastDocument: lastMyPostDocument,
+        limit: albumPageLimit,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        myPosts.addAll(page.posts);
+        lastMyPostDocument = page.lastDocument;
+        hasMoreMyPosts = page.hasMore;
+        isLoadingMoreMyPosts = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingMoreMyPosts = false;
+      });
+
+      debugPrint('앨범 추가 로딩 오류: $e');
     }
   }
 
@@ -100,6 +171,16 @@ class AlbumScreenState extends State<AlbumScreen> {
         isLoadingCats = false;
       });
     }
+  }
+
+  void scrollAlbumToTop() {
+    if (!albumScrollController.hasClients) return;
+
+    albumScrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
   }
 
   List<Post> get filteredPosts {
@@ -208,8 +289,10 @@ class AlbumScreenState extends State<AlbumScreen> {
             selectedAlbumTab = index;
           });
 
-          if (index == 1 && !hasLoadedScraps) {
-            loadMyScrappedPosts();
+          scrollAlbumToTop();
+
+          if (index == 1) {
+            await loadMyScrappedPosts();
           }
         },
         child: Container(
@@ -317,6 +400,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                 setState(() {
                   selectedCatProfileId = null;
                 });
+                scrollAlbumToTop();
               },
             ),
             ...catProfiles.map((cat) {
@@ -327,6 +411,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                   setState(() {
                     selectedCatProfileId = cat.id;
                   });
+                  scrollAlbumToTop();
                 },
               );
             }),
@@ -475,14 +560,19 @@ class AlbumScreenState extends State<AlbumScreen> {
         });
 
         Navigator.pop(bottomSheetContext);
+        scrollAlbumToTop();
       },
     );
   }
 
   Widget buildGridView(List<Post> posts) {
+    final shouldShowLoadingFooter =
+        selectedAlbumTab == 0 && hasMoreMyPosts && selectedCatProfileId == null;
+
     return GridView.builder(
+      controller: albumScrollController,
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      itemCount: posts.length,
+      itemCount: posts.length + (shouldShowLoadingFooter ? 1 : 0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         crossAxisSpacing: 6,
@@ -490,11 +580,21 @@ class AlbumScreenState extends State<AlbumScreen> {
         childAspectRatio: 1,
       ),
       itemBuilder: (context, index) {
+        if (index >= posts.length) {
+          return const Center(
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+
         final post = posts[index];
 
         return GestureDetector(
           onTap: () async {
-            if (post.unreadReviewCount > 0) {
+            if (selectedAlbumTab == 0 && post.unreadReviewCount > 0) {
               await PostService.clearUnreadReviewCount(post.id);
               await loadMyPosts();
             }
@@ -518,12 +618,10 @@ class AlbumScreenState extends State<AlbumScreen> {
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    post.imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: post.imageUrl,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-
+                    placeholder: (context, url) {
                       return Container(
                         color: const Color(0xFFFFEFE6),
                         alignment: Alignment.center,
@@ -534,7 +632,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                         ),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) {
+                    errorWidget: (context, url, error) {
                       return Container(
                         color: const Color(0xFFFFEFE6),
                         alignment: Alignment.center,
@@ -544,7 +642,9 @@ class AlbumScreenState extends State<AlbumScreen> {
                   ),
                 ),
               ),
-              if (post.unreadReviewCount > 0 && post.commentCount > 0)
+              if (selectedAlbumTab == 0 &&
+                  post.unreadReviewCount > 0 &&
+                  post.commentCount > 0)
                 Positioned(
                   top: 6,
                   right: 6,
@@ -565,9 +665,23 @@ class AlbumScreenState extends State<AlbumScreen> {
   }
 
   Widget buildFeedView(List<Post> posts) {
-    return ListView(
+    final shouldShowLoadingFooter =
+        selectedAlbumTab == 0 && hasMoreMyPosts && selectedCatProfileId == null;
+
+    return ListView.builder(
+      controller: albumScrollController,
       padding: const EdgeInsets.all(20),
-      children: posts.map((post) {
+      itemCount: posts.length + (shouldShowLoadingFooter ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index >= posts.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+
+        final post = posts[index];
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 18),
           child: CatPostCard(
@@ -590,7 +704,7 @@ class AlbumScreenState extends State<AlbumScreen> {
             },
           ),
         );
-      }).toList(),
+      },
     );
   }
 

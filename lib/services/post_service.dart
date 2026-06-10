@@ -1,12 +1,23 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/post.dart';
 import '../services/image_service.dart';
+
+class PostPage {
+  final List<Post> posts;
+  final DocumentSnapshot? lastDocument;
+  final bool hasMore;
+
+  PostPage({
+    required this.posts,
+    required this.lastDocument,
+    required this.hasMore,
+  });
+}
 
 class PostService {
   static Future<Set<String>> _loadMyDeletedCatIds(String uid) async {
@@ -47,6 +58,115 @@ class PostService {
     );
   }
 
+  static Future<bool> _isVisibleCatProfile(String catProfileId) async {
+    if (catProfileId.isEmpty) return false;
+
+    try {
+      final catDoc = await FirebaseFirestore.instance
+          .collection('catProfiles')
+          .doc(catProfileId)
+          .get();
+
+      if (!catDoc.exists) return false;
+
+      final catData = catDoc.data();
+
+      if (catData == null) return false;
+      if (catData['isDeleted'] == true) return false;
+      if (catData['isHidden'] == true) return false;
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<PostPage> loadPostsPage({
+    String? tag,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('posts')
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('visibility', isEqualTo: 'public');
+
+    if (tag != null && tag != '오늘의') {
+      query = query.where('tags', arrayContains: tag);
+    }
+
+    if (tag == '오늘의') {
+      query = query
+          .orderBy('scrapCount', descending: true)
+          .orderBy('createdAt', descending: true);
+    } else {
+      query = query.orderBy('createdAt', descending: true);
+    }
+
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+
+    final snapshot = await query.limit(limit).get();
+
+    final pagePosts = snapshot.docs.map(_postFromDoc).toList();
+    final visiblePosts = <Post>[];
+
+    for (final post in pagePosts) {
+      if (post.tags.isEmpty) continue;
+
+      if (await _isVisibleCatProfile(post.catProfileId)) {
+        visiblePosts.add(post);
+      }
+    }
+
+    return PostPage(
+      posts: visiblePosts,
+      lastDocument: snapshot.docs.isNotEmpty
+          ? snapshot.docs.last
+          : lastDocument,
+      hasMore: snapshot.docs.length == limit,
+    );
+  }
+
+  static Future<PostPage> loadMyPostsPage({
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      return PostPage(posts: [], lastDocument: null, hasMore: false);
+    }
+
+    final deletedCatIds = await _loadMyDeletedCatIds(uid);
+
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('posts')
+        .where('ownerUid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true);
+
+    if (lastDocument != null) {
+      query = query.startAfterDocument(lastDocument);
+    }
+
+    final snapshot = await query.limit(limit).get();
+
+    final posts = snapshot.docs
+        .map(_postFromDoc)
+        .where((post) => !deletedCatIds.contains(post.catProfileId))
+        .toList();
+
+    return PostPage(
+      posts: posts,
+      lastDocument: snapshot.docs.isNotEmpty
+          ? snapshot.docs.last
+          : lastDocument,
+      hasMore: snapshot.docs.length == limit,
+    );
+  }
+
   static Future<List<Post>> loadPosts() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
@@ -62,24 +182,10 @@ class PostService {
 
     for (final post in posts) {
       if (post.tags.isEmpty) continue;
-      if (post.catProfileId.isEmpty) continue;
 
-      try {
-        final catDoc = await FirebaseFirestore.instance
-            .collection('catProfiles')
-            .doc(post.catProfileId)
-            .get();
-
-        if (!catDoc.exists) continue;
-
-        final catData = catDoc.data();
-
-        if (catData == null) continue;
-        if (catData['isDeleted'] == true) continue;
-        if (catData['isHidden'] == true) continue;
-
+      if (await _isVisibleCatProfile(post.catProfileId)) {
         visiblePosts.add(post);
-      } catch (_) {}
+      }
     }
 
     return visiblePosts;
@@ -137,7 +243,6 @@ class PostService {
         if (!scrapSnapshot.exists) return;
 
         transaction.delete(scrapRef);
-
         transaction.update(postRef, {'scrapCount': FieldValue.increment(-1)});
       }
     });
@@ -196,6 +301,7 @@ class PostService {
           scrapCount: data['scrapCount'] ?? 0,
           commentCount: data['commentCount'] ?? 0,
           visibility: data['visibility'] ?? 'public',
+          unreadReviewCount: data['unreadReviewCount'] ?? 0,
         ),
       );
     }
@@ -219,9 +325,7 @@ class PostService {
     if (user == null) return null;
 
     final postId = FirebaseFirestore.instance.collection('posts').doc().id;
-
     final storagePath = 'posts/${user.uid}/$postId.jpg';
-
     final storageRef = FirebaseStorage.instance.ref().child(storagePath);
 
     await storageRef.putFile(imageFile);
@@ -249,6 +353,7 @@ class PostService {
       scrapCount: 0,
       commentCount: 0,
       visibility: tags.isEmpty ? 'private' : 'public',
+      unreadReviewCount: 0,
     );
 
     await FirebaseFirestore.instance.collection('posts').doc(postId).set({
@@ -262,21 +367,16 @@ class PostService {
       'caption': caption,
       'tags': tags,
       'aspectRatio': aspectRatio,
-
       'catProfileImageUrl': catProfileImageUrl,
       'isVirtualCat': isVirtualCat,
-
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': null,
-
       'isDeleted': false,
       'isHidden': false,
-
       'reportCount': 0,
       'scrapCount': 0,
       'commentCount': 0,
       'unreadReviewCount': 0,
-
       'visibility': tags.isEmpty ? 'private' : 'public',
     });
 
@@ -287,58 +387,20 @@ class PostService {
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .where('catProfileId', isEqualTo: catProfileId)
-        .get();
-
-    final posts = snapshot.docs.map(_postFromDoc).toList();
-
-    posts.sort((a, b) {
-      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-      return bDate.compareTo(aDate);
-    });
-
-    return posts;
-  }
-
-  static Future<List<Post>> loadMyPosts() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-
-    if (uid == null) return [];
-
-    final deletedCatIds = await _loadMyDeletedCatIds(uid);
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .where('ownerUid', isEqualTo: uid)
-        .get();
-
-    final posts = snapshot.docs
-        .map(_postFromDoc)
-        .where((post) => !deletedCatIds.contains(post.catProfileId))
-        .toList();
-
-    posts.sort((a, b) {
-      final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-
-      return bDate.compareTo(aDate);
-    });
-
-    return posts;
-  }
-
-  static Future<List<Post>> loadPostsByTag(String tag) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('posts')
-        .where('tags', arrayContains: tag)
-        .where('isDeleted', isEqualTo: false)
-        .where('isHidden', isEqualTo: false)
-        .where('visibility', isEqualTo: 'public')
         .orderBy('createdAt', descending: true)
         .get();
 
     return snapshot.docs.map(_postFromDoc).toList();
+  }
+
+  static Future<List<Post>> loadMyPosts() async {
+    final page = await loadMyPostsPage(limit: 1000);
+    return page.posts;
+  }
+
+  static Future<List<Post>> loadPostsByTag(String tag) async {
+    final page = await loadPostsPage(tag: tag, limit: 50);
+    return page.posts;
   }
 
   static Future<void> updatePost({
@@ -380,16 +442,13 @@ class PostService {
     await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
       'caption': caption,
       'tags': tags,
-
       'catProfileId': catProfileId,
       'catName': catName,
       'catProfileImageUrl': catProfileImageUrl,
       'isVirtualCat': isVirtualCat,
-
       'imageUrl': imageUrl,
       'storagePath': storagePath,
       'aspectRatio': aspectRatio,
-
       'visibility': tags.isEmpty ? 'private' : 'public',
       'updatedAt': FieldValue.serverTimestamp(),
       'isUpdated': true,
@@ -443,9 +502,18 @@ class PostService {
       'isDeleted': false,
     });
 
-    await FirebaseFirestore.instance.collection('posts').doc(post.id).update({
+    final updateData = <String, dynamic>{
       'commentCount': FieldValue.increment(1),
-    });
+    };
+
+    if (post.ownerUid != user.uid) {
+      updateData['unreadReviewCount'] = FieldValue.increment(1);
+    }
+
+    await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(post.id)
+        .update(updateData);
   }
 
   static Future<void> clearUnreadReviewCount(String postId) async {

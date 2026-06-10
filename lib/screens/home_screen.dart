@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/post.dart';
 import 'create_post_screen.dart';
@@ -51,6 +52,12 @@ class HomeScreenState extends State<HomeScreen> {
 
   final ScrollController feedScrollController = ScrollController();
 
+  DocumentSnapshot? _lastPostDocument;
+  bool _isLoadingPosts = false;
+  bool _hasMorePosts = true;
+
+  static const int _postPageLimit = 20;
+
   void scrollFeedToTop() {
     if (!feedScrollController.hasClients) return;
 
@@ -64,7 +71,17 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+
     loadInitialData();
+
+    feedScrollController.addListener(() {
+      if (!feedScrollController.hasClients) return;
+
+      if (feedScrollController.position.pixels >=
+          feedScrollController.position.maxScrollExtent - 400) {
+        loadMorePostsFromFirestore();
+      }
+    });
   }
 
   @override
@@ -106,25 +123,110 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> loadPostsFromFirestore() async {
-    final loadedPosts = await PostService.loadPosts();
+    if (_isLoadingPosts) return;
 
-    if (!mounted) return;
+    if (mounted) {
+      setState(() {
+        _isLoadingPosts = true;
+        _hasMorePosts = true;
+        _lastPostDocument = null;
+        posts.clear();
+      });
+    }
 
-    setState(() {
-      posts.clear();
-      posts.addAll(loadedPosts);
-    });
+    try {
+      final page = await PostService.loadPostsPage(
+        tag: selectedFeedTag,
+        limit: _postPageLimit,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        posts.addAll(page.posts);
+        _lastPostDocument = page.lastDocument;
+        _hasMorePosts = page.hasMore;
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      debugPrint('홈 피드 로딩 오류: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingPosts = false;
+      });
+    }
   }
 
   Future<void> loadPostsByTagFromFirestore(String tag) async {
-    final loadedPosts = await PostService.loadPostsByTag(tag);
+    if (_isLoadingPosts) return;
 
-    if (!mounted) return;
+    if (mounted) {
+      setState(() {
+        _isLoadingPosts = true;
+        _hasMorePosts = true;
+        _lastPostDocument = null;
+        posts.clear();
+      });
+    }
+
+    try {
+      final page = await PostService.loadPostsPage(
+        tag: tag,
+        limit: _postPageLimit,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        posts.addAll(page.posts);
+        _lastPostDocument = page.lastDocument;
+        _hasMorePosts = page.hasMore;
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      debugPrint('태그 피드 로딩 오류: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingPosts = false;
+      });
+    }
+  }
+
+  Future<void> loadMorePostsFromFirestore() async {
+    if (_isLoadingPosts || !_hasMorePosts || _lastPostDocument == null) return;
 
     setState(() {
-      posts.clear();
-      posts.addAll(loadedPosts);
+      _isLoadingPosts = true;
     });
+
+    try {
+      final page = await PostService.loadPostsPage(
+        tag: selectedFeedTag,
+        lastDocument: _lastPostDocument,
+        limit: _postPageLimit,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        posts.addAll(page.posts);
+        _lastPostDocument = page.lastDocument;
+        _hasMorePosts = page.hasMore;
+        _isLoadingPosts = false;
+      });
+    } catch (e) {
+      debugPrint('추가 피드 로딩 오류: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingPosts = false;
+      });
+    }
   }
 
   Future<void> loadMyPostsFromFirestore() async {
@@ -157,6 +259,8 @@ class HomeScreenState extends State<HomeScreen> {
       } else {
         await loadPostsByTagFromFirestore(tag);
       }
+
+      scrollFeedToTop();
     } catch (e) {
       debugPrint('태그 피드 로딩 오류: $e');
     }
@@ -495,41 +599,56 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView(
+              child: ListView.builder(
                 controller: feedScrollController,
                 padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
-                children: [
-                  const SizedBox(height: 24),
-                  ...filteredPosts.map(
-                    (post) => Padding(
-                      padding: const EdgeInsets.only(bottom: 18),
-                      child: CatPostCard(
-                        imagePath: post.imageUrl,
-                        caption: post.caption,
-                        catProfileImageUrl: post.catProfileImageUrl,
-                        isVirtualCat: post.isVirtualCat,
-                        scrapCount: post.scrapCount,
-                        tagText: post.tags.map((tag) => '#$tag').join('   '),
-                        createdAt: post.createdAt ?? DateTime.now(),
-                        catName: post.catName,
-                        userId: post.userId,
-                        commentCount: post.commentCount,
-                        postId: post.id,
-                        canWriteReview: post.ownerUid != currentUid,
-                        isScrapped: scrappedPostIds.contains(post.id),
-                        onScrapTap: post.ownerUid == currentUid
-                            ? null
-                            : () {
-                                toggleScrap(post);
-                              },
-                        showMoreButton: post.ownerUid == currentUid,
-                        onMoreTap: () {
-                          showPostMoreMenu(post);
-                        },
+                itemCount: filteredPosts.length + 1 + (_hasMorePosts ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return const SizedBox(height: 24);
+                  }
+
+                  final postIndex = index - 1;
+
+                  if (postIndex >= filteredPosts.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
+                    );
+                  }
+
+                  final post = filteredPosts[postIndex];
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: CatPostCard(
+                      imagePath: post.imageUrl,
+                      caption: post.caption,
+                      catProfileImageUrl: post.catProfileImageUrl,
+                      isVirtualCat: post.isVirtualCat,
+                      scrapCount: post.scrapCount,
+                      tagText: post.tags.map((tag) => '#$tag').join('   '),
+                      createdAt: post.createdAt ?? DateTime.now(),
+                      catName: post.catName,
+                      userId: post.userId,
+                      commentCount: post.commentCount,
+                      postId: post.id,
+                      canWriteReview: post.ownerUid != currentUid,
+                      isScrapped: scrappedPostIds.contains(post.id),
+                      onScrapTap: post.ownerUid == currentUid
+                          ? null
+                          : () {
+                              toggleScrap(post);
+                            },
+                      showMoreButton: post.ownerUid == currentUid,
+                      onMoreTap: () {
+                        showPostMoreMenu(post);
+                      },
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],

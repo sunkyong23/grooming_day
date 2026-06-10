@@ -18,6 +18,7 @@ import '../widgets/settings_tile.dart';
 import '../widgets/cat_profile_card.dart';
 
 import '../services/user_service.dart';
+import '../services/post_service.dart';
 import '../widgets/delete_account_dialog.dart';
 import '../widgets/reauth_dialog.dart';
 
@@ -51,12 +52,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String email = '';
 
   List<CatProfile> catProfiles = [];
+  int postCount = 0;
 
   @override
   void initState() {
     super.initState();
     loadUser();
     loadCatProfiles();
+    loadMyPostCount();
   }
 
   Future<void> loadCatProfiles() async {
@@ -66,6 +69,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() {
       catProfiles = cats;
+    });
+  }
+
+  Future<void> loadMyPostCount() async {
+    final myPosts = await PostService.loadMyPosts();
+
+    if (!mounted) return;
+
+    setState(() {
+      postCount = myPosts.length;
     });
   }
 
@@ -113,6 +126,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       selectedProfileImage = file;
       profileImageUrl = imageUrl;
     });
+
     return imageUrl;
   }
 
@@ -160,6 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final data = await UserService.loadCurrentUser();
 
     if (data == null) return;
+    if (!mounted) return;
 
     setState(() {
       userId = data['userId'] ?? '';
@@ -234,8 +249,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final myPosts = widget.posts;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
@@ -250,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             userId: userId,
             bio: bio,
             profileImageUrl: profileImageUrl,
-            postCount: myPosts.length,
+            postCount: postCount,
             onEditTap: () async {
               final result = await Navigator.push(
                 context,
@@ -294,7 +307,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
 
                   if (result == true) {
-                    loadCatProfiles();
+                    await loadCatProfiles();
+                    await loadMyPostCount();
                   }
                 },
                 icon: const Icon(Icons.add, size: 18),
@@ -318,6 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         cat: cat,
                         onChanged: () async {
                           await loadCatProfiles();
+                          await loadMyPostCount();
                           widget.onRefreshPosts?.call();
                         },
                       ),
