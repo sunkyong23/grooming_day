@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../models/review.dart';
 import '../services/review_service.dart';
 
@@ -9,6 +11,11 @@ class PostDetailDialog extends StatefulWidget {
   final String tagText;
   final String postId;
   final DateTime createdAt;
+  final bool canWriteReview;
+
+  final bool showScrapButton;
+  final bool isScrapped;
+  final Future<void> Function()? onScrapTap;
 
   const PostDetailDialog({
     super.key,
@@ -18,6 +25,10 @@ class PostDetailDialog extends StatefulWidget {
     required this.tagText,
     required this.postId,
     required this.createdAt,
+    this.canWriteReview = false,
+    this.showScrapButton = false,
+    this.isScrapped = false,
+    this.onScrapTap,
   });
 
   @override
@@ -25,13 +36,23 @@ class PostDetailDialog extends StatefulWidget {
 }
 
 class _PostDetailDialogState extends State<PostDetailDialog> {
+  final TextEditingController reviewController = TextEditingController();
+
   List<Review> reviews = [];
   bool isLoadingReviews = true;
+  bool isSubmittingReview = false;
+  bool isHandlingScrap = false;
 
   @override
   void initState() {
     super.initState();
     loadReviews();
+  }
+
+  @override
+  void dispose() {
+    reviewController.dispose();
+    super.dispose();
   }
 
   Future<void> loadReviews() async {
@@ -45,12 +66,224 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
     });
   }
 
+  Future<void> submitReview() async {
+    final content = reviewController.text.trim();
+
+    if (content.isEmpty) return;
+    if (isSubmittingReview) return;
+
+    setState(() {
+      isSubmittingReview = true;
+    });
+
+    try {
+      await ReviewService.createReview(postId: widget.postId, content: content);
+
+      FocusScope.of(context).unfocus();
+
+      reviewController.clear();
+      await loadReviews();
+
+      if (!mounted) return;
+
+      setState(() {
+        isSubmittingReview = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        isSubmittingReview = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('감상평 등록 중 오류가 발생했어요.')));
+    }
+  }
+
+  Future<void> handleScrapTap() async {
+    if (isHandlingScrap) return;
+    if (widget.onScrapTap == null) return;
+
+    setState(() {
+      isHandlingScrap = true;
+    });
+
+    await widget.onScrapTap!();
+
+    if (!mounted) return;
+
+    setState(() {
+      isHandlingScrap = false;
+    });
+  }
+
   String formatDate(DateTime dateTime) {
     return '${dateTime.year}.'
         '${dateTime.month.toString().padLeft(2, '0')}.'
         '${dateTime.day.toString().padLeft(2, '0')} '
         '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget buildReviewInput() {
+    if (!widget.canWriteReview) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: reviewController,
+              minLines: 1,
+              maxLines: 3,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF5A372F)),
+              decoration: InputDecoration(
+                hintText: '감상평을 남겨보세요',
+                hintStyle: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFC7ADA4),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFFF7F1),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: isSubmittingReview ? null : submitReview,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: isSubmittingReview
+                    ? const Color(0xFFE7D4CB)
+                    : const Color(0xFFFFB199),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: isSubmittingReview
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text(
+                      '등록',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildReviewList() {
+    if (isLoadingReviews) {
+      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    }
+
+    if (reviews.isEmpty) {
+      return const Text(
+        '아직 감상평이 없어요 🐾',
+        style: TextStyle(fontSize: 12, color: Color(0xFFBFA79F)),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: reviews.map((review) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: review.content,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF5A372F),
+                        ),
+                      ),
+                      TextSpan(
+                        text: '  -${review.writerUserId}-',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFBFA79F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  review.updatedAt != null
+                      ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
+                      : formatDate(review.createdAt ?? DateTime.now()),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFBFA79F),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget buildScrapButton() {
+    if (!widget.showScrapButton) {
+      return const SizedBox.shrink();
+    }
+
+    return GestureDetector(
+      onTap: isHandlingScrap ? null : handleScrapTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7F1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: isHandlingScrap
+            ? const Padding(
+                padding: EdgeInsets.all(9),
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Icon(
+                widget.isScrapped
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
+                size: 22,
+                color: widget.isScrapped
+                    ? const Color(0xFFFF8A7A)
+                    : const Color(0xFFB08678),
+              ),
+      ),
+    );
   }
 
   @override
@@ -69,10 +302,22 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(20),
                 ),
-                child: Image.network(
-                  widget.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrl,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 260,
+                    alignment: Alignment.center,
+                    color: const Color(0xFFFFF3E7),
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 260,
+                    alignment: Alignment.center,
+                    color: const Color(0xFFFFF3E7),
+                    child: const Icon(Icons.broken_image),
+                  ),
                 ),
               ),
 
@@ -94,15 +339,21 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                             ),
                           ),
                         ),
-                        Text(
-                          formatDate(widget.createdAt),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFFBFA79F),
-                          ),
-                        ),
+                        const SizedBox(width: 8),
+                        buildScrapButton(),
                       ],
                     ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      formatDate(widget.createdAt),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFBFA79F),
+                      ),
+                    ),
+
                     const SizedBox(height: 10),
 
                     Text(
@@ -141,69 +392,9 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
 
                     const SizedBox(height: 10),
 
-                    if (isLoadingReviews)
-                      const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    else if (reviews.isEmpty)
-                      const Text(
-                        '아직 감상평이 없어요 🐾',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFBFA79F),
-                        ),
-                      )
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: reviews.map((review) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: review.content,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Color(0xFF5A372F),
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: '  -${review.writerUserId}-',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Color(0xFFBFA79F),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                    buildReviewInput(),
 
-                                  const SizedBox(height: 4),
-
-                                  Text(
-                                    review.updatedAt != null
-                                        ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
-                                        : formatDate(
-                                            review.createdAt ?? DateTime.now(),
-                                          ),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Color(0xFFBFA79F),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                    buildReviewList(),
                   ],
                 ),
               ),

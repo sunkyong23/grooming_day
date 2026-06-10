@@ -106,88 +106,94 @@ class _SearchScreenState extends State<SearchScreen> {
       onPopInvokedWithResult: (didPop, result) {
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFF7F1),
-        appBar: AppBar(
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Scaffold(
           backgroundColor: const Color(0xFFFFF7F1),
-          title: const Text('검색'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              TextField(
-                controller: searchController,
-                onChanged: onSearchChanged,
-                decoration: InputDecoration(
-                  hintText: isCatTab ? '고양이 이름을 검색해 보세요' : '집사 아이디를 검색해 보세요',
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      searchController.clear();
-                      setState(() {
-                        searchedCats = [];
-                        searchedUsers = [];
-                      });
-                    },
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(18),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    _SearchTabButton(
-                      title: '고양이',
-                      isSelected: selectedTabIndex == 0,
-                      onTap: () => changeTab(0),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFFFFF7F1),
+            title: const Text('검색'),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                TextField(
+                  controller: searchController,
+                  onChanged: onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: isCatTab ? '고양이 이름을 검색해 보세요' : '집사 아이디를 검색해 보세요',
+                    filled: true,
+                    fillColor: Colors.white,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        searchController.clear();
+                        setState(() {
+                          searchedCats = [];
+                          searchedUsers = [];
+                        });
+                      },
                     ),
-                    _SearchTabButton(
-                      title: '집사',
-                      isSelected: selectedTabIndex == 1,
-                      onTap: () => changeTab(1),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              if (isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(top: 40),
-                  child: CircularProgressIndicator(),
-                )
-              else if (!hasResult)
-                const Padding(
-                  padding: EdgeInsets.only(top: 60),
-                  child: Text(
-                    '검색 결과가 없어요 🐾',
-                    style: TextStyle(
-                      color: Color(0xFF8C6A5F),
-                      fontWeight: FontWeight.w600,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
                     ),
                   ),
-                )
-              else if (isCatTab)
-                Expanded(child: _buildCatList())
-              else
-                Expanded(child: _buildUserList()),
-            ],
+                ),
+
+                const SizedBox(height: 16),
+
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      _SearchTabButton(
+                        title: '고양이',
+                        isSelected: selectedTabIndex == 0,
+                        onTap: () => changeTab(0),
+                      ),
+                      _SearchTabButton(
+                        title: '집사',
+                        isSelected: selectedTabIndex == 1,
+                        onTap: () => changeTab(1),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: CircularProgressIndicator(),
+                  )
+                else if (!hasResult)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 60),
+                    child: Text(
+                      '검색 결과가 없어요 🐾',
+                      style: TextStyle(
+                        color: Color(0xFF8C6A5F),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                else if (isCatTab)
+                  Expanded(child: _buildCatList())
+                else
+                  Expanded(child: _buildUserList()),
+              ],
+            ),
           ),
         ),
       ),

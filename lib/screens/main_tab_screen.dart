@@ -39,8 +39,13 @@ class _MainTabScreenState extends State<MainTabScreen> {
       currentIndex = index;
     });
 
+    if (index == 0) {
+      homeKey.currentState?.refreshPostLists();
+    }
+
     if (index == 2) {
       albumKey.currentState?.loadMyPosts();
+      albumKey.currentState?.loadMyScrappedPosts();
     }
   }
 

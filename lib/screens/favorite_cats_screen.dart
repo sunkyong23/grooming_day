@@ -35,6 +35,24 @@ class _FavoriteCatsScreenState extends State<FavoriteCatsScreen> {
     });
   }
 
+  Future<void> openCatDetail(FavoriteCat cat) async {
+    final catProfile = await CatService.loadCatProfileById(cat.catProfileId);
+
+    if (catProfile == null) return;
+    if (!mounted) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CatProfileDetailScreen(cat: catProfile),
+      ),
+    );
+
+    if (!mounted) return;
+
+    await loadFavoriteCats();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,20 +75,7 @@ class _FavoriteCatsScreenState extends State<FavoriteCatsScreen> {
 
                 return GestureDetector(
                   onTap: () async {
-                    final catProfile = await CatService.loadCatProfileById(
-                      cat.catProfileId,
-                    );
-
-                    if (catProfile == null) return;
-
-                    if (!context.mounted) return;
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CatProfileDetailScreen(cat: catProfile),
-                      ),
-                    );
+                    await openCatDetail(cat);
                   },
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),

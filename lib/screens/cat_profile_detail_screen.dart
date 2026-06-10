@@ -79,7 +79,13 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
   }
 
   Future<void> loadCatPosts() async {
-    final posts = await PostService.loadPostsByCatProfile(widget.cat.id);
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isMyCat = widget.cat.ownerUid == currentUid;
+
+    final posts = await PostService.loadPostsByCatProfile(
+      widget.cat.id,
+      includePrivate: isMyCat,
+    );
 
     if (!mounted) return;
 
@@ -448,6 +454,9 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                               tagText: post.tags
                                   .map((tag) => '#$tag')
                                   .join(' '),
+                              canWriteReview:
+                                  post.ownerUid !=
+                                  FirebaseAuth.instance.currentUser?.uid,
                             ),
                           );
                         },

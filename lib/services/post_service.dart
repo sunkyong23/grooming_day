@@ -383,12 +383,21 @@ class PostService {
     return newPost;
   }
 
-  static Future<List<Post>> loadPostsByCatProfile(String catProfileId) async {
-    final snapshot = await FirebaseFirestore.instance
+  static Future<List<Post>> loadPostsByCatProfile(
+    String catProfileId, {
+    bool includePrivate = false,
+  }) async {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
         .collection('posts')
         .where('catProfileId', isEqualTo: catProfileId)
-        .orderBy('createdAt', descending: true)
-        .get();
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false);
+
+    if (!includePrivate) {
+      query = query.where('visibility', isEqualTo: 'public');
+    }
+
+    final snapshot = await query.orderBy('createdAt', descending: true).get();
 
     return snapshot.docs.map(_postFromDoc).toList();
   }

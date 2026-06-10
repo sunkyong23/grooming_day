@@ -207,15 +207,25 @@ class UserService {
 
     final snapshot = await FirebaseFirestore.instance
         .collection('users')
-        .where('isDeleted', isEqualTo: false)
         .where('userId', isGreaterThanOrEqualTo: trimmedKeyword)
         .where('userId', isLessThan: '$trimmedKeyword\uf8ff')
         .limit(20)
         .get();
 
-    return snapshot.docs.where((doc) => doc.id != currentUser?.uid).map((doc) {
-      final data = doc.data();
-      return {...data, 'uid': doc.id};
-    }).toList();
+    return snapshot.docs
+        .where((doc) {
+          final data = doc.data();
+
+          if (doc.id == currentUser?.uid) return false;
+          if (data['isDeleted'] == true) return false;
+          if ((data['userId'] ?? '').toString().isEmpty) return false;
+
+          return true;
+        })
+        .map((doc) {
+          final data = doc.data();
+          return {...data, 'uid': doc.id};
+        })
+        .toList();
   }
 }

@@ -10,6 +10,9 @@ import 'edit_post_screen.dart';
 import '../widgets/post_detail_dialog.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'home_screen.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -610,6 +613,31 @@ class AlbumScreenState extends State<AlbumScreen> {
                 postId: post.id,
                 createdAt: post.createdAt ?? DateTime.now(),
                 tagText: post.tags.map((tag) => '#$tag').join(' '),
+                canWriteReview:
+                    post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
+
+                showScrapButton: selectedAlbumTab == 1,
+                isScrapped: selectedAlbumTab == 1,
+                onScrapTap: selectedAlbumTab == 1
+                    ? () async {
+                        await PostService.setScrap(
+                          post: post,
+                          isScrapped: false,
+                        );
+
+                        scrappedPostIds.remove(post.id);
+
+                        if (!mounted) return;
+
+                        setState(() {
+                          scrappedPosts.removeWhere(
+                            (item) => item.id == post.id,
+                          );
+                        });
+
+                        Navigator.pop(context);
+                      }
+                    : null,
               ),
             );
           },
@@ -642,6 +670,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                   ),
                 ),
               ),
+
               if (selectedAlbumTab == 0 &&
                   post.unreadReviewCount > 0 &&
                   post.commentCount > 0)
@@ -696,8 +725,20 @@ class AlbumScreenState extends State<AlbumScreen> {
             commentCount: post.commentCount,
             postId: post.id,
             userId: post.userId,
-            isScrapped: false,
-            onScrapTap: () {},
+            isScrapped: selectedAlbumTab == 1,
+            onScrapTap: selectedAlbumTab == 1
+                ? () async {
+                    await PostService.setScrap(post: post, isScrapped: false);
+
+                    scrappedPostIds.remove(post.id);
+
+                    if (!mounted) return;
+
+                    setState(() {
+                      scrappedPosts.removeWhere((item) => item.id == post.id);
+                    });
+                  }
+                : null,
             showMoreButton: true,
             onMoreTap: () {
               showPostMoreMenu(post);
