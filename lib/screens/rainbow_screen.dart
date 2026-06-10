@@ -16,6 +16,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
   List<RainbowLetter> letters = [];
   List<RainbowLetter> myLetters = [];
   bool isLoading = true;
+  bool showMessage = false;
   late String selectedMessage;
 
   final List<String> comfortMessages = [
@@ -48,6 +49,13 @@ class _RainbowScreenState extends State<RainbowScreen> {
         (today.year + today.month + today.day) % comfortMessages.length;
 
     selectedMessage = comfortMessages[index];
+
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      setState(() {
+        showMessage = true;
+      });
+    });
 
     loadLetters();
   }
@@ -207,8 +215,63 @@ class _RainbowScreenState extends State<RainbowScreen> {
 
   String _weekday(DateTime date) {
     const weekdays = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
-
     return weekdays[date.weekday - 1];
+  }
+
+  Widget _buildHeader() {
+    return SizedBox(
+      height: 250,
+      width: double.infinity,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/rainbow_header_bg.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFF071128).withValues(alpha: 0.14),
+            ),
+          ),
+          const Positioned(
+            left: 24,
+            top: 58,
+            child: Text(
+              '🌈 무지개별',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 45,
+            top: 160,
+            width: 230,
+            child: AnimatedOpacity(
+              opacity: showMessage ? 1 : 0,
+              duration: const Duration(milliseconds: 5000),
+              curve: Curves.easeOut,
+              child: Text(
+                selectedMessage,
+                maxLines: 3,
+                overflow: TextOverflow.visible,
+                softWrap: true,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFFE1A8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -216,7 +279,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFF10172A),
+        backgroundColor: const Color(0xFF071128),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: const Color(0xFFFFDCA8),
           foregroundColor: const Color(0xFF3D241E),
@@ -228,72 +291,29 @@ class _RainbowScreenState extends State<RainbowScreen> {
           ),
           onPressed: openCreateLetterScreen,
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              const Text(
-                '🌈 무지개별',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+        body: Column(
+          children: [
+            _buildHeader(),
+            const TabBar(
+              indicatorColor: Color(0xFFFFB6D5),
+              labelColor: Color(0xFFFFB6D5),
+              unselectedLabelColor: Color(0xFF9EA3C7),
+              labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                '우리 아이들이 쉬고 있는 곳',
-                style: TextStyle(fontSize: 15, color: Color(0xFFC7CBEA)),
+              tabs: [
+                Tab(text: '무지개별'),
+                Tab(text: '내 편지'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [_buildPublicLetters(), _buildMyLetters()],
               ),
-              const SizedBox(height: 28),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
-                  ),
-                ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    selectedMessage,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      height: 1.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFFFDCA8),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const TabBar(
-                indicatorColor: Color(0xFFFFB6D5),
-                labelColor: Color(0xFFFFB6D5),
-                unselectedLabelColor: Color(0xFF9EA3C7),
-                labelStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                unselectedLabelStyle: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-                tabs: [
-                  Tab(text: '무지개별'),
-                  Tab(text: '내 편지'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
-                  children: [_buildPublicLetters(), _buildMyLetters()],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -364,6 +384,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
           width: 46,
           child: showDate
               ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       date,
@@ -399,7 +420,6 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                 )
               : const SizedBox(),
         ),
-
         SizedBox(
           width: 30,
           child: Column(
@@ -415,9 +435,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
             ],
           ),
         ),
-
         const SizedBox(width: 8),
-
         Expanded(
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
