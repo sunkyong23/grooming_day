@@ -232,7 +232,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
           ),
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF071128).withValues(alpha: 0.14),
+              color: const Color(0xFF0B113A).withValues(alpha: 0.14),
             ),
           ),
           const Positioned(
@@ -279,7 +279,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFF071128),
+        backgroundColor: const Color(0xFF0B113A),
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: const Color(0xFFFFDCA8),
           foregroundColor: const Color(0xFF3D241E),

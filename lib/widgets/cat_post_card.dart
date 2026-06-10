@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/review.dart';
 import '../services/review_service.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 class CatPostCard extends StatefulWidget {
   final String imagePath;
   final String caption;
@@ -315,30 +317,28 @@ class _CatPostCardState extends State<CatPostCard> {
                 ),
               );
             },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.network(
-                widget.imagePath,
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 260,
-                    alignment: Alignment.center,
-                    color: const Color(0xFFFFF3E7),
-                    child: const CircularProgressIndicator(),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 260,
-                    alignment: Alignment.center,
-                    color: const Color(0xFFFFF3E7),
-                    child: const Text('이미지를 불러오지 못했어요 🐾'),
-                  );
-                },
-              ),
+            child: CachedNetworkImage(
+              imageUrl: widget.imagePath,
+              width: double.infinity,
+              fit: BoxFit.fitWidth,
+
+              placeholder: (context, url) {
+                return Container(
+                  height: 260,
+                  alignment: Alignment.center,
+                  color: const Color(0xFFFFF3E7),
+                  child: const CircularProgressIndicator(),
+                );
+              },
+
+              errorWidget: (context, url, error) {
+                return Container(
+                  height: 260,
+                  alignment: Alignment.center,
+                  color: const Color(0xFFFFF3E7),
+                  child: const Icon(Icons.broken_image),
+                );
+              },
             ),
           ),
 
