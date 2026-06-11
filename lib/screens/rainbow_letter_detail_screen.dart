@@ -50,6 +50,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
 
     setState(() {
       comments = loadedComments;
+      currentTodakCount = loadedComments.length;
       isLoadingComments = false;
     });
   }
@@ -89,10 +90,6 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
       if (!mounted) return;
 
       FocusScope.of(context).unfocus();
-
-      setState(() {
-        currentTodakCount += 1;
-      });
 
       await loadComments();
     } catch (e) {

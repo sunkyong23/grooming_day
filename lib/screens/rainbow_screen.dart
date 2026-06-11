@@ -96,6 +96,19 @@ class _RainbowScreenState extends State<RainbowScreen> {
     }
   }
 
+  Future<void> openLetterDetail(RainbowLetter letter) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RainbowLetterDetailScreen(letter: letter),
+      ),
+    );
+
+    if (!mounted) return;
+
+    await loadLetters();
+  }
+
   Widget _buildPublicLetters() {
     if (isLoading) {
       return const Center(
@@ -123,16 +136,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
 
         return GestureDetector(
           onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => RainbowLetterDetailScreen(letter: letter),
-              ),
-            );
-
-            if (result == true) {
-              await loadLetters();
-            }
+            await openLetterDetail(letter);
           },
           child: _RainbowLetterPreviewCard(
             showDate: showDate,
@@ -175,16 +179,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
 
         return GestureDetector(
           onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => RainbowLetterDetailScreen(letter: letter),
-              ),
-            );
-
-            if (result == true) {
-              await loadLetters();
-            }
+            await openLetterDetail(letter);
           },
           child: _RainbowLetterPreviewCard(
             showDate: showDate,

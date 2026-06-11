@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/rainbow_service.dart';
@@ -35,9 +36,97 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image == null) return;
+    if (!mounted) return;
+
+    final CropAspectRatio? selectedRatio =
+        await showModalBottomSheet<CropAspectRatio>(
+          context: context,
+          backgroundColor: const Color(0xFF10172A),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (bottomSheetContext) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '사진 비율 선택',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.crop_landscape_rounded,
+                        color: Color(0xFFFFDCA8),
+                      ),
+                      title: const Text(
+                        '가로형 4:3',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        Navigator.pop(
+                          bottomSheetContext,
+                          const CropAspectRatio(ratioX: 4, ratioY: 3),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.crop_portrait_rounded,
+                        color: Color(0xFFFFDCA8),
+                      ),
+                      title: const Text(
+                        '세로형 4:5',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        Navigator.pop(
+                          bottomSheetContext,
+                          const CropAspectRatio(ratioX: 4, ratioY: 5),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.crop_square_rounded,
+                        color: Color(0xFFFFDCA8),
+                      ),
+                      title: const Text(
+                        '정사각형 1:1',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onTap: () {
+                        Navigator.pop(
+                          bottomSheetContext,
+                          const CropAspectRatio(ratioX: 1, ratioY: 1),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+
+    if (selectedRatio == null) return;
+
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: image.path,
+      aspectRatio: selectedRatio,
+    );
+
+    if (croppedFile == null) return;
 
     setState(() {
-      selectedImage = File(image.path);
+      selectedImage = File(croppedFile.path);
     });
   }
 
