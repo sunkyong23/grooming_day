@@ -22,6 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
 
   Future<void> login() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+
     if (isLoading) return;
 
     setState(() {
@@ -61,6 +63,13 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -139,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Text(
                         isLoading ? '입장 중...' : '집사 입장하기',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
                         ),
@@ -153,6 +162,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -172,6 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(

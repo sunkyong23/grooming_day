@@ -19,17 +19,20 @@ class ReviewService {
 
     final writerUserId = await UserService.loadCurrentUserId();
 
-    final reviewRef = FirebaseFirestore.instance
-        .collection('posts')
-        .doc(postId)
-        .collection('reviews')
-        .doc();
-
-    final reviewId = reviewRef.id;
-
     final postRef = FirebaseFirestore.instance.collection('posts').doc(postId);
 
+    final reviewRef = postRef.collection('reviews').doc();
+    final reviewId = reviewRef.id;
+
     await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final postSnapshot = await transaction.get(postRef);
+      final postData = postSnapshot.data();
+
+      if (postData == null) return;
+
+      final ownerUid = postData['ownerUid'] ?? '';
+      final postImageUrl = postData['imageUrl'] ?? '';
+
       transaction.set(reviewRef, {
         'id': reviewId,
         'postId': postId,
@@ -43,10 +46,32 @@ class ReviewService {
         'reportCount': 0,
       });
 
-      transaction.update(postRef, {
+      final Map<String, Object> postUpdateData = {
         'commentCount': FieldValue.increment(1),
-        'unreadReviewCount': FieldValue.increment(1),
-      });
+      };
+
+      if (ownerUid != user.uid) {
+        postUpdateData['unreadReviewCount'] = FieldValue.increment(1);
+
+        final notificationRef = FirebaseFirestore.instance
+            .collection('notifications')
+            .doc();
+
+        transaction.set(notificationRef, {
+          'receiverUid': ownerUid,
+          'senderUid': user.uid,
+          'senderUserId': writerUserId,
+          'type': 'review',
+          'targetPostId': postId,
+          'targetImageUrl': postImageUrl,
+          'title': '새 감상평이 도착했어요',
+          'body': '@$writerUserId 님이 내 게시글에 감상평을 남겼어요.',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      transaction.update(postRef, postUpdateData);
     });
 
     return Review(

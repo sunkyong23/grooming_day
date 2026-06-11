@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/post.dart';
 
@@ -23,7 +24,28 @@ class ProfilePostGrid extends StatelessWidget {
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.network(post.imageUrl, fit: BoxFit.cover),
+          child: CachedNetworkImage(
+            imageUrl: post.imageUrl,
+            fit: BoxFit.cover,
+            placeholder: (context, url) {
+              return Container(
+                color: const Color(0xFFFFEFE6),
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+            errorWidget: (context, url, error) {
+              return Container(
+                color: const Color(0xFFFFEFE6),
+                alignment: Alignment.center,
+                child: const Text('🐾'),
+              );
+            },
+          ),
         );
       },
     );

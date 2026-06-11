@@ -599,7 +599,42 @@ class AlbumScreenState extends State<AlbumScreen> {
           onTap: () async {
             if (selectedAlbumTab == 0 && post.unreadReviewCount > 0) {
               await PostService.clearUnreadReviewCount(post.id);
-              await loadMyPosts();
+
+              if (mounted) {
+                setState(() {
+                  final targetIndex = myPosts.indexWhere(
+                    (item) => item.id == post.id,
+                  );
+
+                  if (targetIndex != -1) {
+                    final oldPost = myPosts[targetIndex];
+
+                    myPosts[targetIndex] = Post(
+                      id: oldPost.id,
+                      ownerUid: oldPost.ownerUid,
+                      userId: oldPost.userId,
+                      catProfileId: oldPost.catProfileId,
+                      catName: oldPost.catName,
+                      imageUrl: oldPost.imageUrl,
+                      caption: oldPost.caption,
+                      tags: oldPost.tags,
+                      aspectRatio: oldPost.aspectRatio,
+                      createdAt: oldPost.createdAt,
+                      updatedAt: oldPost.updatedAt,
+                      isDeleted: oldPost.isDeleted,
+                      isHidden: oldPost.isHidden,
+                      reportCount: oldPost.reportCount,
+                      scrapCount: oldPost.scrapCount,
+                      commentCount: oldPost.commentCount,
+                      visibility: oldPost.visibility,
+                      storagePath: oldPost.storagePath,
+                      catProfileImageUrl: oldPost.catProfileImageUrl,
+                      isVirtualCat: oldPost.isVirtualCat,
+                      unreadReviewCount: 0,
+                    );
+                  }
+                });
+              }
             }
 
             if (!context.mounted) return;

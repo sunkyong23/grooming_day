@@ -228,7 +228,7 @@ class _CatPostCardState extends State<CatPostCard> {
                   radius: 17,
                   backgroundColor: const Color(0xFFFFE2C6),
                   backgroundImage: widget.catProfileImageUrl.isNotEmpty
-                      ? NetworkImage(widget.catProfileImageUrl)
+                      ? CachedNetworkImageProvider(widget.catProfileImageUrl)
                       : null,
                   child: widget.catProfileImageUrl.isEmpty
                       ? (widget.isVirtualCat
@@ -295,15 +295,17 @@ class _CatPostCardState extends State<CatPostCard> {
                     child: InteractiveViewer(
                       minScale: 1.0,
                       maxScale: 4.0,
-                      child: Image.network(
-                        widget.imagePath,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
+                      child: CachedNetworkImage(
+                        imageUrl: widget.imagePath,
+                        fit: BoxFit.contain,
+
+                        placeholder: (context, url) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         },
-                        errorBuilder: (context, error, stackTrace) {
+
+                        errorWidget: (context, url, error) {
                           return const Center(
                             child: Text(
                               '이미지를 불러오지 못했어요 🐾',

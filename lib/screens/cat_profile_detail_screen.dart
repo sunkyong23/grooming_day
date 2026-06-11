@@ -13,6 +13,8 @@ import 'edit_cat_profile_screen.dart';
 import '../services/favorite_cat_service.dart';
 import '../widgets/post_detail_dialog.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 class CatProfileDetailScreen extends StatefulWidget {
   final CatProfile cat;
 
@@ -288,7 +290,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 backgroundImage:
                     !widget.cat.isVirtualCat &&
                         widget.cat.profileImageUrl.isNotEmpty
-                    ? NetworkImage(widget.cat.profileImageUrl)
+                    ? CachedNetworkImageProvider(widget.cat.profileImageUrl)
                     : null,
                 child: widget.cat.isVirtualCat
                     ? Padding(
@@ -462,9 +464,29 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            post.imageUrl,
+                          child: CachedNetworkImage(
+                            imageUrl: post.imageUrl,
                             fit: BoxFit.cover,
+                            placeholder: (context, url) {
+                              return Container(
+                                color: const Color(0xFFFFEFE6),
+                                alignment: Alignment.center,
+                                child: const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorWidget: (context, url, error) {
+                              return Container(
+                                color: const Color(0xFFFFEFE6),
+                                alignment: Alignment.center,
+                                child: const Text('🐾'),
+                              );
+                            },
                           ),
                         ),
                       );

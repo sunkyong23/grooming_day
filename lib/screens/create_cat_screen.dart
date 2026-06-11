@@ -8,7 +8,7 @@ import '../utils/cat_validator.dart';
 
 import '../services/cat_service.dart';
 
-import 'home_screen.dart';
+import 'main_tab_screen.dart';
 
 class CreateCatScreen extends StatefulWidget {
   final bool isFromProfile;
@@ -207,9 +207,10 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     if (widget.isFromProfile) {
       Navigator.pop(context, true);
     } else {
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => const MainTabScreen()),
+        (route) => false,
       );
     }
   }

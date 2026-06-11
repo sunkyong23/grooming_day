@@ -11,6 +11,7 @@ import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class EditPostScreen extends StatefulWidget {
   final Post post;
@@ -217,10 +218,28 @@ class _EditPostScreenState extends State<EditPostScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(18),
               child: selectedImage == null
-                  ? Image.network(
-                      widget.post.imageUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: widget.post.imageUrl,
                       width: double.infinity,
                       fit: BoxFit.fitWidth,
+                      placeholder: (context, url) {
+                        return Container(
+                          height: 260,
+                          alignment: Alignment.center,
+                          color: const Color(0xFFFFEFE6),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        );
+                      },
+                      errorWidget: (context, url, error) {
+                        return Container(
+                          height: 260,
+                          alignment: Alignment.center,
+                          color: const Color(0xFFFFEFE6),
+                          child: const Icon(Icons.broken_image),
+                        );
+                      },
                     )
                   : Image.file(
                       selectedImage!,
