@@ -16,6 +16,8 @@ class PostDetailDialog extends StatefulWidget {
   final bool showScrapButton;
   final bool isScrapped;
   final Future<void> Function()? onScrapTap;
+  final bool showMoreButton;
+  final VoidCallback? onMoreTap;
 
   const PostDetailDialog({
     super.key,
@@ -29,6 +31,8 @@ class PostDetailDialog extends StatefulWidget {
     this.showScrapButton = false,
     this.isScrapped = false,
     this.onScrapTap,
+    this.showMoreButton = false,
+    this.onMoreTap,
   });
 
   @override
@@ -78,6 +82,8 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
 
     try {
       await ReviewService.createReview(postId: widget.postId, content: content);
+
+      if (!mounted) return;
 
       FocusScope.of(context).unfocus();
 
@@ -340,6 +346,28 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                           ),
                         ),
                         const SizedBox(width: 8),
+
+                        if (widget.showMoreButton)
+                          GestureDetector(
+                            onTap: widget.onMoreTap,
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF7F1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.more_horiz,
+                                size: 22,
+                                color: Color(0xFFB08678),
+                              ),
+                            ),
+                          ),
+
+                        if (widget.showMoreButton && widget.showScrapButton)
+                          const SizedBox(width: 8),
+
                         buildScrapButton(),
                       ],
                     ),

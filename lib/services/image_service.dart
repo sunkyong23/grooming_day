@@ -22,4 +22,23 @@ class ImageService {
 
     return File(compressedFile.path);
   }
+
+  static Future<File?> createThumbnail(File file) async {
+    final tempDir = await getTemporaryDirectory();
+
+    final targetPath =
+        '${tempDir.path}/thumb_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+    final thumbnailFile = await FlutterImageCompress.compressAndGetFile(
+      file.path,
+      targetPath,
+      quality: 40,
+      minWidth: 300,
+      minHeight: 300,
+    );
+
+    if (thumbnailFile == null) return null;
+
+    return File(thumbnailFile.path);
+  }
 }

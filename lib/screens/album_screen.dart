@@ -616,6 +616,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                       catProfileId: oldPost.catProfileId,
                       catName: oldPost.catName,
                       imageUrl: oldPost.imageUrl,
+                      thumbnailUrl: oldPost.thumbnailUrl,
                       caption: oldPost.caption,
                       tags: oldPost.tags,
                       aspectRatio: oldPost.aspectRatio,
@@ -628,6 +629,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                       commentCount: oldPost.commentCount,
                       visibility: oldPost.visibility,
                       storagePath: oldPost.storagePath,
+                      thumbnailStoragePath: oldPost.thumbnailStoragePath,
                       catProfileImageUrl: oldPost.catProfileImageUrl,
                       isVirtualCat: oldPost.isVirtualCat,
                       unreadReviewCount: 0,
@@ -650,7 +652,13 @@ class AlbumScreenState extends State<AlbumScreen> {
                 tagText: post.tags.map((tag) => '#$tag').join(' '),
                 canWriteReview:
                     post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
-
+                showMoreButton: selectedAlbumTab == 0,
+                onMoreTap: selectedAlbumTab == 0
+                    ? () {
+                        Navigator.pop(context);
+                        showPostMoreMenu(post);
+                      }
+                    : null,
                 showScrapButton: selectedAlbumTab == 1,
                 isScrapped: selectedAlbumTab == 1,
                 onScrapTap: selectedAlbumTab == 1
@@ -670,6 +678,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                           );
                         });
 
+                        if (!context.mounted) return;
                         Navigator.pop(context);
                       }
                     : null,
@@ -682,7 +691,9 @@ class AlbumScreenState extends State<AlbumScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: post.imageUrl,
+                    imageUrl: post.thumbnailUrl.isNotEmpty
+                        ? post.thumbnailUrl
+                        : post.imageUrl,
                     fit: BoxFit.cover,
                     placeholder: (context, url) {
                       return Container(

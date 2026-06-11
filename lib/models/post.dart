@@ -6,22 +6,32 @@ class Post {
   final String userId;
   final String catProfileId;
   final String catName;
+
   final String imageUrl;
+  final String thumbnailUrl;
+
   final String caption;
   final List<String> tags;
   final double aspectRatio;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
   final bool isDeleted;
   final bool isHidden;
+
   final int reportCount;
   final int scrapCount;
   final int commentCount;
+  final int unreadReviewCount;
+
   final String visibility;
+
   final String storagePath;
+  final String thumbnailStoragePath;
+
   final String catProfileImageUrl;
   final bool isVirtualCat;
-  final int unreadReviewCount;
 
   Post({
     required this.id,
@@ -30,6 +40,7 @@ class Post {
     required this.catProfileId,
     required this.catName,
     required this.imageUrl,
+    this.thumbnailUrl = '',
     required this.caption,
     required this.tags,
     required this.aspectRatio,
@@ -42,14 +53,14 @@ class Post {
     this.reportCount = 0,
     this.scrapCount = 0,
     this.commentCount = 0,
-    this.storagePath = '',
     this.unreadReviewCount = 0,
-
     this.visibility = 'public',
+    this.storagePath = '',
+    this.thumbnailStoragePath = '',
   });
 
   factory Post.fromDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
 
     return Post(
       id: data['id'] ?? doc.id,
@@ -58,23 +69,31 @@ class Post {
       catProfileId: data['catProfileId'] ?? '',
       catName: data['catName'] ?? '',
 
-      catProfileImageUrl: data['catProfileImageUrl'] ?? '',
-      isVirtualCat: data['isVirtualCat'] ?? false,
-
       imageUrl: data['imageUrl'] ?? '',
-      storagePath: data['storagePath'] ?? '',
+      thumbnailUrl: data['thumbnailUrl'] ?? '',
+
       caption: data['caption'] ?? '',
       tags: List<String>.from(data['tags'] ?? []),
       aspectRatio: (data['aspectRatio'] ?? 1.0).toDouble(),
+
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+
       isDeleted: data['isDeleted'] ?? false,
       isHidden: data['isHidden'] ?? false,
+
       reportCount: data['reportCount'] ?? 0,
       scrapCount: data['scrapCount'] ?? 0,
       commentCount: data['commentCount'] ?? 0,
-      visibility: data['visibility'] ?? 'public',
       unreadReviewCount: data['unreadReviewCount'] ?? 0,
+
+      visibility: data['visibility'] ?? 'public',
+
+      storagePath: data['storagePath'] ?? '',
+      thumbnailStoragePath: data['thumbnailStoragePath'] ?? '',
+
+      catProfileImageUrl: data['catProfileImageUrl'] ?? '',
+      isVirtualCat: data['isVirtualCat'] ?? false,
     );
   }
 }

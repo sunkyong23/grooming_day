@@ -43,7 +43,9 @@ class PostService {
       catProfileImageUrl: data['catProfileImageUrl'] ?? '',
       isVirtualCat: data['isVirtualCat'] ?? false,
       imageUrl: data['imageUrl'] ?? '',
+      thumbnailUrl: data['thumbnailUrl'] ?? '',
       storagePath: data['storagePath'] ?? '',
+      thumbnailStoragePath: data['thumbnailStoragePath'] ?? '',
       caption: data['caption'] ?? '',
       tags: List<String>.from(data['tags'] ?? []),
       aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
@@ -290,7 +292,9 @@ class PostService {
           catProfileImageUrl: data['catProfileImageUrl'] ?? '',
           isVirtualCat: data['isVirtualCat'] ?? false,
           imageUrl: data['imageUrl'] ?? '',
+          thumbnailUrl: data['thumbnailUrl'] ?? '',
           storagePath: data['storagePath'] ?? '',
+          thumbnailStoragePath: data['thumbnailStoragePath'] ?? '',
           caption: data['caption'] ?? '',
           tags: List<String>.from(data['tags'] ?? []),
           aspectRatio: (data['aspectRatio'] ?? 0.8).toDouble(),
@@ -326,12 +330,27 @@ class PostService {
     if (user == null) return null;
 
     final postId = FirebaseFirestore.instance.collection('posts').doc().id;
+
     final storagePath = 'posts/${user.uid}/$postId.jpg';
+    final thumbnailStoragePath = 'posts/${user.uid}/${postId}_thumb.jpg';
+
     final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+    final thumbnailStorageRef = FirebaseStorage.instance.ref().child(
+      thumbnailStoragePath,
+    );
 
     await storageRef.putFile(imageFile);
 
     final imageUrl = await storageRef.getDownloadURL();
+
+    final thumbnailFile = await ImageService.createThumbnail(imageFile);
+
+    String thumbnailUrl = imageUrl;
+
+    if (thumbnailFile != null) {
+      await thumbnailStorageRef.putFile(thumbnailFile);
+      thumbnailUrl = await thumbnailStorageRef.getDownloadURL();
+    }
 
     final newPost = Post(
       id: postId,
@@ -342,7 +361,9 @@ class PostService {
       catProfileImageUrl: catProfileImageUrl,
       isVirtualCat: isVirtualCat,
       imageUrl: imageUrl,
+      thumbnailUrl: thumbnailUrl,
       storagePath: storagePath,
+      thumbnailStoragePath: thumbnailStoragePath,
       caption: caption,
       tags: tags,
       aspectRatio: aspectRatio,
@@ -364,7 +385,9 @@ class PostService {
       'catProfileId': catProfileId,
       'catName': catName,
       'imageUrl': imageUrl,
+      'thumbnailUrl': thumbnailUrl,
       'storagePath': storagePath,
+      'thumbnailStoragePath': thumbnailStoragePath,
       'caption': caption,
       'tags': tags,
       'aspectRatio': aspectRatio,
@@ -441,7 +464,9 @@ class PostService {
     if (post.ownerUid != uid) return;
 
     String imageUrl = post.imageUrl;
+    String thumbnailUrl = post.thumbnailUrl;
     String storagePath = post.storagePath;
+    String thumbnailStoragePath = post.thumbnailStoragePath;
     double aspectRatio = post.aspectRatio;
 
     if (newImageFile != null) {
@@ -449,14 +474,36 @@ class PostService {
         await FirebaseStorage.instance.ref().child(post.storagePath).delete();
       }
 
+      if (post.thumbnailStoragePath.isNotEmpty) {
+        await FirebaseStorage.instance
+            .ref()
+            .child(post.thumbnailStoragePath)
+            .delete();
+      }
+
       storagePath = 'posts/$uid/${post.id}.jpg';
+      thumbnailStoragePath = 'posts/$uid/${post.id}_thumb.jpg';
+
       final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+      final thumbnailStorageRef = FirebaseStorage.instance.ref().child(
+        thumbnailStoragePath,
+      );
 
       final compressedImage = await ImageService.compressImage(newImageFile);
       final uploadFile = compressedImage ?? newImageFile;
 
       await storageRef.putFile(uploadFile);
       imageUrl = await storageRef.getDownloadURL();
+
+      final thumbnailFile = await ImageService.createThumbnail(uploadFile);
+
+      thumbnailUrl = imageUrl;
+
+      if (thumbnailFile != null) {
+        await thumbnailStorageRef.putFile(thumbnailFile);
+        thumbnailUrl = await thumbnailStorageRef.getDownloadURL();
+      }
+
       aspectRatio = newAspectRatio ?? post.aspectRatio;
     }
 
@@ -468,7 +515,9 @@ class PostService {
       'catProfileImageUrl': catProfileImageUrl,
       'isVirtualCat': isVirtualCat,
       'imageUrl': imageUrl,
+      'thumbnailUrl': thumbnailUrl,
       'storagePath': storagePath,
+      'thumbnailStoragePath': thumbnailStoragePath,
       'aspectRatio': aspectRatio,
       'visibility': tags.isEmpty ? 'private' : 'public',
       'updatedAt': FieldValue.serverTimestamp(),
@@ -480,6 +529,13 @@ class PostService {
     try {
       if (post.storagePath.isNotEmpty) {
         await FirebaseStorage.instance.ref().child(post.storagePath).delete();
+      }
+
+      if (post.thumbnailStoragePath.isNotEmpty) {
+        await FirebaseStorage.instance
+            .ref()
+            .child(post.thumbnailStoragePath)
+            .delete();
       }
 
       await FirebaseFirestore.instance
