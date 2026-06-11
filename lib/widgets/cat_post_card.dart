@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/review.dart';
 import '../services/review_service.dart';
+import '../services/report_service.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -204,6 +205,114 @@ class _CatPostCardState extends State<CatPostCard> {
     });
   }
 
+  Future<void> showReviewReportDialog(Review review) async {
+    String selectedReason = '불쾌한 내용';
+    final descriptionController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('감상평 신고'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedReason,
+                    decoration: const InputDecoration(labelText: '신고 사유'),
+                    items: const [
+                      DropdownMenuItem(value: '불쾌한 내용', child: Text('불쾌한 내용')),
+                      DropdownMenuItem(value: '스팸/홍보', child: Text('스팸/홍보')),
+                      DropdownMenuItem(value: '비방/욕설', child: Text('비방/욕설')),
+                      DropdownMenuItem(
+                        value: '개인정보 노출',
+                        child: Text('개인정보 노출'),
+                      ),
+                      DropdownMenuItem(value: '기타', child: Text('기타')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setDialogState(() {
+                        selectedReason = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    decoration: const InputDecoration(
+                      labelText: '상세 내용',
+                      hintText: '필요하면 신고 내용을 적어주세요.',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, false);
+                  },
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Text(
+                    '신고',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) {
+      descriptionController.dispose();
+      return;
+    }
+
+    try {
+      await ReportService.createReport(
+        targetType: 'review',
+        targetId: review.id,
+        targetOwnerUid: review.writerUid,
+        reason: selectedReason,
+        description: descriptionController.text,
+      );
+
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('신고가 접수되었습니다.')));
+    } catch (e) {
+      debugPrint('감상평 신고 오류: $e');
+
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      final message = e.toString().contains('이미 신고한 항목')
+          ? '이미 신고한 감상평이에요.'
+          : '신고 접수 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -298,13 +407,11 @@ class _CatPostCardState extends State<CatPostCard> {
                       child: CachedNetworkImage(
                         imageUrl: widget.imagePath,
                         fit: BoxFit.contain,
-
                         placeholder: (context, url) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         },
-
                         errorWidget: (context, url, error) {
                           return const Center(
                             child: Text(
@@ -323,7 +430,6 @@ class _CatPostCardState extends State<CatPostCard> {
               imageUrl: widget.imagePath,
               width: double.infinity,
               fit: BoxFit.fitWidth,
-
               placeholder: (context, url) {
                 return Container(
                   height: 260,
@@ -332,7 +438,6 @@ class _CatPostCardState extends State<CatPostCard> {
                   child: const CircularProgressIndicator(),
                 );
               },
-
               errorWidget: (context, url, error) {
                 return Container(
                   height: 260,
@@ -453,7 +558,6 @@ class _CatPostCardState extends State<CatPostCard> {
                                         width: 1,
                                       ),
                                     ),
-
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(14),
                                       borderSide: const BorderSide(
@@ -461,7 +565,6 @@ class _CatPostCardState extends State<CatPostCard> {
                                         width: 1,
                                       ),
                                     ),
-
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(14),
                                       borderSide: const BorderSide(
@@ -633,56 +736,68 @@ class _CatPostCardState extends State<CatPostCard> {
                                                   ),
                                                 ),
 
-                                                if (isMyReview)
-                                                  SizedBox(
-                                                    width: 24,
-                                                    height: 22,
-                                                    child: PopupMenuButton<String>(
-                                                      padding: EdgeInsets.zero,
-                                                      constraints:
-                                                          const BoxConstraints(
-                                                            minWidth: 28,
-                                                            minHeight: 28,
-                                                          ),
-                                                      iconSize: 14,
-                                                      icon: const Icon(
-                                                        Icons.more_vert,
-                                                        size: 14,
-                                                        color: Color(
-                                                          0xFFC0A39A,
+                                                SizedBox(
+                                                  width: 24,
+                                                  height: 22,
+                                                  child: PopupMenuButton<String>(
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                          minWidth: 28,
+                                                          minHeight: 28,
                                                         ),
-                                                      ),
-                                                      onSelected: (value) async {
-                                                        await Future.delayed(
-                                                          const Duration(
-                                                            milliseconds: 150,
-                                                          ),
-                                                        );
-
-                                                        if (!mounted) return;
-
-                                                        if (value == 'edit') {
-                                                          showEditReviewDialog(
-                                                            review,
-                                                          );
-                                                        } else if (value ==
-                                                            'delete') {
-                                                          deleteReview(review);
-                                                        }
-                                                      },
-                                                      itemBuilder: (context) =>
-                                                          const [
-                                                            PopupMenuItem(
-                                                              value: 'edit',
-                                                              child: Text('수정'),
-                                                            ),
-                                                            PopupMenuItem(
-                                                              value: 'delete',
-                                                              child: Text('삭제'),
-                                                            ),
-                                                          ],
+                                                    iconSize: 14,
+                                                    icon: const Icon(
+                                                      Icons.more_vert,
+                                                      size: 14,
+                                                      color: Color(0xFFC0A39A),
                                                     ),
+                                                    onSelected: (value) async {
+                                                      await Future.delayed(
+                                                        const Duration(
+                                                          milliseconds: 150,
+                                                        ),
+                                                      );
+
+                                                      if (!mounted) return;
+
+                                                      if (value == 'edit') {
+                                                        showEditReviewDialog(
+                                                          review,
+                                                        );
+                                                      } else if (value ==
+                                                          'delete') {
+                                                        deleteReview(review);
+                                                      } else if (value ==
+                                                          'report') {
+                                                        showReviewReportDialog(
+                                                          review,
+                                                        );
+                                                      }
+                                                    },
+                                                    itemBuilder: (context) {
+                                                      if (isMyReview) {
+                                                        return const [
+                                                          PopupMenuItem(
+                                                            value: 'edit',
+                                                            child: Text('수정'),
+                                                          ),
+                                                          PopupMenuItem(
+                                                            value: 'delete',
+                                                            child: Text('삭제'),
+                                                          ),
+                                                        ];
+                                                      }
+
+                                                      return const [
+                                                        PopupMenuItem(
+                                                          value: 'report',
+                                                          child: Text('신고'),
+                                                        ),
+                                                      ];
+                                                    },
                                                   ),
+                                                ),
                                               ],
                                             ),
 

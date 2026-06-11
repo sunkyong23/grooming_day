@@ -4,6 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/review.dart';
 import '../services/review_service.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/report_service.dart';
+
 class PostDetailDialog extends StatefulWidget {
   final String imageUrl;
   final String catName;
@@ -200,6 +203,127 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
     );
   }
 
+  Future<void> reportReview(Review review) async {
+    try {
+      await ReportService.createReport(
+        targetType: 'review',
+        targetId: review.id,
+        targetOwnerUid: review.writerUid,
+        reason: '감상평 신고',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('신고가 접수되었습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+
+      final message = e.toString().contains('이미 신고한 항목')
+          ? '이미 신고한 감상평이에요.'
+          : '신고 접수 중 오류가 발생했어요.';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> showEditReviewDialog(Review review) async {
+    final controller = TextEditingController(text: review.content);
+
+    final editedContent = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('감상평 수정'),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            maxLength: 200,
+            decoration: const InputDecoration(hintText: '감상평을 수정해 주세요.'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                final content = controller.text.trim();
+
+                if (content.isEmpty) return;
+
+                Navigator.pop(dialogContext, content);
+              },
+              child: const Text('수정'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (editedContent == null) return;
+
+    await ReviewService().updateReview(
+      postId: widget.postId,
+      reviewId: review.id,
+      content: editedContent,
+    );
+
+    await loadReviews();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('감상평이 수정되었습니다.')));
+  }
+
+  Future<void> deleteReview(Review review) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('감상평 삭제'),
+          content: const Text('감상평을 삭제할까요?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    await ReviewService().deleteReview(
+      postId: widget.postId,
+      reviewId: review.id,
+    );
+
+    await loadReviews();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('감상평이 삭제되었습니다.')));
+  }
+
   Widget buildReviewList() {
     if (isLoadingReviews) {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
@@ -215,45 +339,81 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: reviews.map((review) {
+        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+        final isMyReview = review.writerUid == currentUid;
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 14),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: review.content,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF5A372F),
-                        ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: review.content,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF5A372F),
+                            ),
+                          ),
+                          TextSpan(
+                            text: '  -${review.writerUserId}-',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFBFA79F),
+                            ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: '  -${review.writerUserId}-',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFBFA79F),
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      review.updatedAt != null
+                          ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
+                          : formatDate(review.createdAt ?? DateTime.now()),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFFBFA79F),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  review.updatedAt != null
-                      ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
-                      : formatDate(review.createdAt ?? DateTime.now()),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFFBFA79F),
-                  ),
+              ),
+
+              PopupMenuButton<String>(
+                icon: const Icon(
+                  Icons.more_vert,
+                  size: 16,
+                  color: Color(0xFFC0A39A),
                 ),
-              ],
-            ),
+                onSelected: (value) async {
+                  if (value == 'edit') {
+                    await showEditReviewDialog(review);
+                  } else if (value == 'delete') {
+                    await deleteReview(review);
+                  } else if (value == 'report') {
+                    await reportReview(review);
+                  }
+                },
+                itemBuilder: (context) {
+                  if (isMyReview) {
+                    return const [
+                      PopupMenuItem(value: 'edit', child: Text('수정')),
+                      PopupMenuItem(value: 'delete', child: Text('삭제')),
+                    ];
+                  }
+
+                  return const [
+                    PopupMenuItem(value: 'report', child: Text('신고')),
+                  ];
+                },
+              ),
+            ],
           ),
         );
       }).toList(),

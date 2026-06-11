@@ -13,6 +13,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'home_screen.dart';
+import '../services/report_service.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -223,6 +224,9 @@ class AlbumScreenState extends State<AlbumScreen> {
   }
 
   Future<void> showPostMoreMenu(Post post) async {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    final isMyPost = post.ownerUid == currentUid;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFFFFF7F1),
@@ -236,50 +240,165 @@ class AlbumScreenState extends State<AlbumScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('수정'),
-                  textColor: const Color(0xFF5A372F),
-                  iconColor: const Color(0xFF9A6B60),
-                  onTap: () async {
-                    Navigator.pop(bottomSheetContext);
+                if (isMyPost) ...[
+                  ListTile(
+                    leading: const Icon(Icons.edit_outlined),
+                    title: const Text('수정'),
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
 
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => EditPostScreen(post: post),
-                      ),
-                    );
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditPostScreen(post: post),
+                        ),
+                      );
 
-                    if (result == 'album' || result == 'home') {
+                      if (result == 'album' || result == 'home') {
+                        await loadMyPosts();
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline),
+                    title: const Text('삭제'),
+                    textColor: Colors.redAccent,
+                    iconColor: Colors.redAccent,
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+
+                      await PostService.deletePost(post);
                       await loadMyPosts();
-                    }
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_outline),
-                  title: const Text('삭제'),
-                  textColor: Colors.redAccent,
-                  iconColor: Colors.redAccent,
-                  onTap: () async {
-                    Navigator.pop(bottomSheetContext);
 
-                    await PostService.deletePost(post);
-                    await loadMyPosts();
+                      if (!mounted) return;
 
-                    if (!mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('게시글이 삭제되었습니다.')),
-                    );
-                  },
-                ),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('게시글이 삭제되었습니다.')),
+                      );
+                    },
+                  ),
+                ] else ...[
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined),
+                    title: const Text('신고'),
+                    textColor: Colors.redAccent,
+                    iconColor: Colors.redAccent,
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      showReportDialog(post);
+                    },
+                  ),
+                ],
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  Future<void> showReportDialog(Post post) async {
+    String selectedReason = '부적절한 사진';
+    final descriptionController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('게시글 신고'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedReason,
+                    decoration: const InputDecoration(labelText: '신고 사유'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: '부적절한 사진',
+                        child: Text('부적절한 사진'),
+                      ),
+                      DropdownMenuItem(value: '불쾌한 내용', child: Text('불쾌한 내용')),
+                      DropdownMenuItem(value: '스팸/홍보', child: Text('스팸/홍보')),
+                      DropdownMenuItem(
+                        value: '개인정보 노출',
+                        child: Text('개인정보 노출'),
+                      ),
+                      DropdownMenuItem(value: '기타', child: Text('기타')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setDialogState(() {
+                        selectedReason = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    decoration: const InputDecoration(
+                      labelText: '상세 내용',
+                      hintText: '필요하면 신고 내용을 적어주세요.',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text(
+                    '신고',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) {
+      descriptionController.dispose();
+      return;
+    }
+
+    try {
+      await ReportService.createReport(
+        targetType: 'post',
+        targetId: post.id,
+        targetOwnerUid: post.ownerUid,
+        reason: selectedReason,
+        description: descriptionController.text,
+      );
+
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('신고가 접수되었습니다.')));
+    } catch (e) {
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      final message = e.toString().contains('이미 신고한 항목')
+          ? '이미 신고한 게시글이에요.'
+          : '신고 접수 중 오류가 발생했어요.';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   Widget buildAlbumTab({required String label, required int index}) {
@@ -652,13 +771,11 @@ class AlbumScreenState extends State<AlbumScreen> {
                 tagText: post.tags.map((tag) => '#$tag').join(' '),
                 canWriteReview:
                     post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
-                showMoreButton: selectedAlbumTab == 0,
-                onMoreTap: selectedAlbumTab == 0
-                    ? () {
-                        Navigator.pop(context);
-                        showPostMoreMenu(post);
-                      }
-                    : null,
+                showMoreButton: true,
+                onMoreTap: () {
+                  Navigator.pop(context);
+                  showPostMoreMenu(post);
+                },
                 showScrapButton: selectedAlbumTab == 1,
                 isScrapped: selectedAlbumTab == 1,
                 onScrapTap: selectedAlbumTab == 1
@@ -771,6 +888,8 @@ class AlbumScreenState extends State<AlbumScreen> {
             commentCount: post.commentCount,
             postId: post.id,
             userId: post.userId,
+            canWriteReview:
+                post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
             isScrapped: selectedAlbumTab == 1,
             onScrapTap: selectedAlbumTab == 1
                 ? () async {

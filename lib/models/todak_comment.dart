@@ -8,6 +8,7 @@ class TodakComment {
   final String content;
   final bool isDeleted;
   final DateTime createdAt;
+  final DateTime? updatedAt;
 
   TodakComment({
     required this.id,
@@ -17,6 +18,7 @@ class TodakComment {
     required this.content,
     required this.isDeleted,
     required this.createdAt,
+    this.updatedAt,
   });
 
   factory TodakComment.fromDoc(DocumentSnapshot doc) {
@@ -30,6 +32,7 @@ class TodakComment {
       content: data['content'] ?? '',
       isDeleted: data['isDeleted'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 }
