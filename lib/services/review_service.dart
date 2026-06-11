@@ -12,6 +12,16 @@ class ReviewService {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) return null;
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final isSuspended = userDoc.data()?['isSuspended'] == true;
+
+    if (isSuspended) {
+      throw Exception('정지된 계정은 감상평을 작성할 수 없어요.');
+    }
 
     final trimmedContent = content.trim();
 

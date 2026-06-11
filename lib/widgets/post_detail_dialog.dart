@@ -105,9 +105,13 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
         isSubmittingReview = false;
       });
 
+      final message = e.toString().contains('정지된 계정')
+          ? '정지된 계정은 감상평을 작성할 수 없어요.'
+          : '감상평 등록 중 오류가 발생했어요.';
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('감상평 등록 중 오류가 발생했어요.')));
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -208,6 +212,7 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
       await ReportService.createReport(
         targetType: 'review',
         targetId: review.id,
+        postId: widget.postId,
         targetOwnerUid: review.writerUid,
         reason: '감상평 신고',
       );
@@ -218,11 +223,13 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
         context,
       ).showSnackBar(const SnackBar(content: Text('신고가 접수되었습니다.')));
     } catch (e) {
-      if (!mounted) return;
+      debugPrint('REPORT ERROR: $e');
 
       final message = e.toString().contains('이미 신고한 항목')
           ? '이미 신고한 감상평이에요.'
           : '신고 접수 중 오류가 발생했어요.';
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,

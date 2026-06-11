@@ -25,7 +25,10 @@ class AdminService {
   }
 
   static Future<int> countReports() async {
-    final snapshot = await _firestore.collection('reports').limit(1).get();
+    final snapshot = await _firestore
+        .collection('reports')
+        .where('status', isEqualTo: 'pending')
+        .get();
 
     return snapshot.docs.length;
   }

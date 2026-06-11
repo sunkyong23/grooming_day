@@ -432,6 +432,7 @@ class AlbumScreenState extends State<AlbumScreen> {
       await ReportService.createReport(
         targetType: 'post',
         targetId: post.id,
+        postId: post.id,
         targetOwnerUid: post.ownerUid,
         reason: selectedReason,
         description: descriptionController.text,

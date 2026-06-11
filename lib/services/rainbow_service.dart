@@ -9,6 +9,22 @@ import 'image_service.dart';
 class RainbowService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Future<void> checkSuspendedUser(String message) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('로그인이 필요합니다.');
+    }
+
+    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+
+    final isSuspended = userDoc.data()?['isSuspended'] == true;
+
+    if (isSuspended) {
+      throw Exception(message);
+    }
+  }
+
   Future<QuerySnapshot> loadPublicLetters() {
     return _firestore
         .collection('rainbowLetters')
@@ -44,6 +60,8 @@ class RainbowService {
     required String writerUserId,
     required String content,
   }) async {
+    await checkSuspendedUser('정지된 계정은 토닥토닥을 작성할 수 없어요.');
+
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -77,6 +95,8 @@ class RainbowService {
     required String commentId,
     required String content,
   }) async {
+    await checkSuspendedUser('정지된 계정은 토닥토닥을 수정할 수 없어요.');
+
     await _firestore
         .collection('rainbowLetters')
         .doc(letterId)
@@ -110,6 +130,8 @@ class RainbowService {
     required String content,
     File? imageFile,
   }) async {
+    await checkSuspendedUser('정지된 계정은 무지개별 편지를 작성할 수 없어요.');
+
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -160,6 +182,8 @@ class RainbowService {
     required String catName,
     required String content,
   }) async {
+    await checkSuspendedUser('정지된 계정은 무지개별 편지를 수정할 수 없어요.');
+
     await _firestore.collection('rainbowLetters').doc(letterId).update({
       'title': title,
       'catName': catName,
@@ -174,6 +198,8 @@ class RainbowService {
     String? oldImageStoragePath,
     required File imageFile,
   }) async {
+    await checkSuspendedUser('정지된 계정은 무지개별 편지를 수정할 수 없어요.');
+
     if (oldImageStoragePath != null && oldImageStoragePath.isNotEmpty) {
       try {
         await FirebaseStorage.instance
@@ -208,19 +234,6 @@ class RainbowService {
   }
 
   Future<void> deleteLetter(String letterId) async {
-    final doc = await _firestore
-        .collection('rainbowLetters')
-        .doc(letterId)
-        .get();
-
-    final data = doc.data();
-
-    final imageStoragePath = data?['imageStoragePath'];
-
-    if (imageStoragePath is String && imageStoragePath.isNotEmpty) {
-      await FirebaseStorage.instance.ref().child(imageStoragePath).delete();
-    }
-
     await _firestore.collection('rainbowLetters').doc(letterId).update({
       'isDeleted': true,
       'updatedAt': FieldValue.serverTimestamp(),

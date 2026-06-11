@@ -515,7 +515,6 @@ class HomeScreenState extends State<HomeScreen> {
 
     try {
       await UserReportService.reportUser(
-        reporterUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
         targetUid: post.ownerUid,
         targetUserId: post.userId,
         reason: selectedReason,
@@ -534,9 +533,15 @@ class HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
+      final message = e.toString().contains('이미 신고한 사용자')
+          ? '이미 신고한 사용자예요.'
+          : e.toString().contains('본인은 신고할 수')
+          ? '본인은 신고할 수 없어요.'
+          : '신고 접수 중 오류가 발생했어요.';
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('신고 접수 중 오류가 발생했습니다.')));
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 

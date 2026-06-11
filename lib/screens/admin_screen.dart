@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/admin_service.dart';
+import 'admin_report_list_screen.dart';
+import 'admin_user_report_list_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -134,16 +136,42 @@ class _AdminScreenState extends State<AdminScreen> {
                     icon: Icons.photo_library_outlined,
                   ),
                   const SizedBox(height: 14),
-                  buildStatCard(
-                    title: '게시글/감상평 신고',
-                    count: reportCount,
-                    icon: Icons.flag_outlined,
+                  GestureDetector(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminReportListScreen(),
+                        ),
+                      );
+
+                      if (!mounted) return;
+                      await loadStats();
+                    },
+                    child: buildStatCard(
+                      title: '게시글/감상평 신고',
+                      count: reportCount,
+                      icon: Icons.flag_outlined,
+                    ),
                   ),
                   const SizedBox(height: 14),
-                  buildStatCard(
-                    title: '사용자 신고',
-                    count: userReportCount,
-                    icon: Icons.person_off_outlined,
+                  GestureDetector(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AdminUserReportListScreen(),
+                        ),
+                      );
+
+                      if (!mounted) return;
+                      await loadStats();
+                    },
+                    child: buildStatCard(
+                      title: '사용자 신고',
+                      count: userReportCount,
+                      icon: Icons.person_off_outlined,
+                    ),
                   ),
                 ],
               ),

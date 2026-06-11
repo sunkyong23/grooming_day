@@ -7,6 +7,7 @@ class ReportService {
     required String targetId,
     required String targetOwnerUid,
     required String reason,
+    String? postId,
     String description = '',
   }) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -15,7 +16,8 @@ class ReportService {
       throw Exception('로그인이 필요합니다.');
     }
 
-    // 중복 신고 확인
+    final resolvedPostId = postId ?? (targetType == 'post' ? targetId : null);
+
     final existingReport = await FirebaseFirestore.instance
         .collection('reports')
         .where('reporterUid', isEqualTo: user.uid)
@@ -41,15 +43,20 @@ class ReportService {
       'id': reportRef.id,
       'reporterUid': user.uid,
       'reporterUserId': reporterUserId,
+
       'targetType': targetType,
       'targetId': targetId,
+      'postId': resolvedPostId,
       'targetOwnerUid': targetOwnerUid,
+
       'reason': reason,
       'description': description.trim(),
+
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
-      'handledAt': null,
-      'handlerUid': null,
+
+      'processedAt': null,
+      'processedBy': null,
     });
   }
 }

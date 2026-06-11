@@ -12,6 +12,8 @@ import '../services/user_service.dart';
 import '../services/cat_service.dart';
 
 import 'cat_profile_type_select_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final Function(Post, bool) onPostCreated;
@@ -181,7 +183,37 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() {
       isSubmitting = true;
     });
+    final user = FirebaseAuth.instance.currentUser;
 
+    if (user == null) {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
+      return;
+    }
+
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (!mounted) return;
+
+    final isSuspended = userDoc.data()?['isSuspended'] == true;
+
+    if (isSuspended) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('정지된 계정은 게시글을 작성할 수 없어요.')));
+
+      setState(() {
+        isSubmitting = false;
+      });
+
+      return;
+    }
     try {
       if (selectedImage == null) {
         ScaffoldMessenger.of(
