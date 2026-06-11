@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/post.dart';
 import '../services/image_service.dart';
+import '../services/notification_service.dart';
 
 class PostPage {
   final List<Post> posts;
@@ -379,6 +380,17 @@ class PostService {
       'unreadReviewCount': 0,
       'visibility': tags.isEmpty ? 'private' : 'public',
     });
+
+    if (tags.isNotEmpty) {
+      await NotificationService().createFavoriteCatPostNotifications(
+        catProfileId: catProfileId,
+        postOwnerUid: user.uid,
+        postOwnerUserId: userId,
+        catName: catName,
+        postId: postId,
+        postImageUrl: imageUrl,
+      );
+    }
 
     return newPost;
   }

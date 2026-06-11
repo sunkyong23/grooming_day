@@ -28,6 +28,55 @@ class NotificationService {
     });
   }
 
+  Future<void> createFavoriteCatPostNotifications({
+    required String catProfileId,
+    required String postOwnerUid,
+    required String postOwnerUserId,
+    required String catName,
+    required String postId,
+    required String postImageUrl,
+  }) async {
+    if (catProfileId.isEmpty) return;
+    if (postOwnerUid.isEmpty) return;
+
+    final snapshot = await _firestore
+        .collectionGroup('favoriteCats')
+        .where('catProfileId', isEqualTo: catProfileId)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+
+    for (final doc in snapshot.docs) {
+      final userDocRef = doc.reference.parent.parent;
+
+      if (userDocRef == null) continue;
+
+      final receiverUid = userDocRef.id;
+
+      if (receiverUid.isEmpty) continue;
+      if (receiverUid == postOwnerUid) continue;
+
+      final notificationRef = _firestore.collection('notifications').doc();
+
+      batch.set(notificationRef, {
+        'receiverUid': receiverUid,
+        'senderUid': postOwnerUid,
+        'senderUserId': postOwnerUserId,
+        'type': 'favorite_cat_post',
+        'targetPostId': postId,
+        'targetImageUrl': postImageUrl,
+        'title': '$catName의 새 글이 올라왔어요',
+        'body': '@$postOwnerUserId 님이 $catName의 새 게시글을 올렸어요.',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  }
+
   Stream<List<AppNotification>> watchMyNotifications(String uid) {
     if (uid.isEmpty) {
       return Stream.value([]);
