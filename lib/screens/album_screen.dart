@@ -14,6 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'home_screen.dart';
 import '../services/report_service.dart';
+import '../services/block_service.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -142,12 +143,15 @@ class AlbumScreenState extends State<AlbumScreen> {
       isLoadingScraps = true;
     });
 
+    final blockedUids = await BlockService.loadBlockedUserUids();
     final loadedPosts = await PostService.loadMyScrappedPosts();
 
     if (!mounted) return;
 
     setState(() {
-      scrappedPosts = loadedPosts;
+      scrappedPosts = loadedPosts
+          .where((post) => !blockedUids.contains(post.ownerUid))
+          .toList();
       isLoadingScraps = false;
       hasLoadedScraps = true;
     });
@@ -280,12 +284,66 @@ class AlbumScreenState extends State<AlbumScreen> {
                 ] else ...[
                   ListTile(
                     leading: const Icon(Icons.flag_outlined),
-                    title: const Text('신고'),
+                    title: const Text('게시글 신고'),
                     textColor: Colors.redAccent,
                     iconColor: Colors.redAccent,
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
                       showReportDialog(post);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person_off_outlined),
+                    title: const Text('사용자 차단'),
+                    textColor: Colors.redAccent,
+                    iconColor: Colors.redAccent,
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('사용자 차단'),
+                          content: Text(
+                            '@${post.userId} 사용자를 차단할까요?\n\n'
+                            '차단하면 해당 사용자의 게시글이 보이지 않게 됩니다.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('취소'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                '차단',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm != true) return;
+
+                      await BlockService.blockUser(
+                        blockedUid: post.ownerUid,
+                        blockedUserId: post.userId,
+                      );
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('@${post.userId} 사용자를 차단했습니다.')),
+                      );
+                      setState(() {
+                        myPosts.removeWhere(
+                          (item) => item.ownerUid == post.ownerUid,
+                        );
+                        scrappedPosts.removeWhere(
+                          (item) => item.ownerUid == post.ownerUid,
+                        );
+                      });
                     },
                   ),
                 ],

@@ -1,1 +1,47 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"grooming-day-49863","appId":"1:683237863646:android:65aecf73286858c31a124f","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"grooming-day-49863","appId":"1:683237863646:ios:e36688954730471b1a124f","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"macos":{"default":{"projectId":"grooming-day-49863","appId":"1:683237863646:ios:e36688954730471b1a124f","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"grooming-day-49863","configurations":{"android":"1:683237863646:android:65aecf73286858c31a124f","ios":"1:683237863646:ios:e36688954730471b1a124f","macos":"1:683237863646:ios:e36688954730471b1a124f","web":"1:683237863646:web:983b1cc888f07aed1a124f","windows":"1:683237863646:web:acd77cc4c2e903941a124f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "grooming-day-49863",
+          "appId": "1:683237863646:android:65aecf73286858c31a124f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "grooming-day-49863",
+          "appId": "1:683237863646:ios:e36688954730471b1a124f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "grooming-day-49863",
+          "appId": "1:683237863646:ios:e36688954730471b1a124f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "grooming-day-49863",
+          "configurations": {
+            "android": "1:683237863646:android:65aecf73286858c31a124f",
+            "ios": "1:683237863646:ios:e36688954730471b1a124f",
+            "macos": "1:683237863646:ios:e36688954730471b1a124f",
+            "web": "1:683237863646:web:983b1cc888f07aed1a124f",
+            "windows": "1:683237863646:web:acd77cc4c2e903941a124f"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-northeast3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

@@ -9,6 +9,7 @@ import 'login_screen.dart';
 
 import 'change_password_screen.dart';
 import '../services/auth_service.dart';
+import 'blocked_users_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final String email;
@@ -80,6 +81,31 @@ class SettingsScreen extends StatelessWidget {
               Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const UpdateScreen()));
+            },
+          ),
+
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(
+              Icons.person_off_outlined,
+              color: Color(0xFF8A756C),
+            ),
+            title: const Text(
+              '차단한 사용자',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF3D241E),
+              ),
+            ),
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFFB08678),
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
+              );
             },
           ),
 

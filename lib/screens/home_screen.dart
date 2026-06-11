@@ -16,6 +16,8 @@ import '../widgets/header.dart';
 
 import '../services/post_service.dart';
 import '../services/report_service.dart';
+import '../services/block_service.dart';
+import '../services/user_report_service.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -140,11 +142,15 @@ class HomeScreenState extends State<HomeScreen> {
         tag: selectedFeedTag,
         limit: _postPageLimit,
       );
+      final blockedUids = await BlockService.loadBlockedUserUids();
 
+      final visiblePosts = page.posts
+          .where((post) => !blockedUids.contains(post.ownerUid))
+          .toList();
       if (!mounted) return;
 
       setState(() {
-        posts.addAll(page.posts);
+        posts.addAll(visiblePosts);
         _lastPostDocument = page.lastDocument;
         _hasMorePosts = page.hasMore;
         _isLoadingPosts = false;
@@ -178,10 +184,16 @@ class HomeScreenState extends State<HomeScreen> {
         limit: _postPageLimit,
       );
 
+      final blockedUids = await BlockService.loadBlockedUserUids();
+
+      final visiblePosts = page.posts
+          .where((post) => !blockedUids.contains(post.ownerUid))
+          .toList();
+
       if (!mounted) return;
 
       setState(() {
-        posts.addAll(page.posts);
+        posts.addAll(visiblePosts);
         _lastPostDocument = page.lastDocument;
         _hasMorePosts = page.hasMore;
         _isLoadingPosts = false;
@@ -211,10 +223,16 @@ class HomeScreenState extends State<HomeScreen> {
         limit: _postPageLimit,
       );
 
+      final blockedUids = await BlockService.loadBlockedUserUids();
+
+      final visiblePosts = page.posts
+          .where((post) => !blockedUids.contains(post.ownerUid))
+          .toList();
+
       if (!mounted) return;
 
       setState(() {
-        posts.addAll(page.posts);
+        posts.addAll(visiblePosts);
         _lastPostDocument = page.lastDocument;
         _hasMorePosts = page.hasMore;
         _isLoadingPosts = false;
@@ -341,14 +359,78 @@ class HomeScreenState extends State<HomeScreen> {
                 ] else ...[
                   ListTile(
                     leading: const Icon(Icons.flag_outlined),
-                    title: const Text('신고'),
+                    title: const Text('게시글 신고'),
                     textColor: Colors.redAccent,
                     iconColor: Colors.redAccent,
                     onTap: () {
                       Navigator.pop(bottomSheetContext);
-
-                      // 다음 단계
                       showReportDialog(post);
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.person_outline),
+                    title: const Text('사용자 신고'),
+                    textColor: Colors.redAccent,
+                    iconColor: Colors.redAccent,
+                    onTap: () {
+                      Navigator.pop(bottomSheetContext);
+                      showUserReportDialog(post);
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.person_off_outlined),
+                    title: const Text('사용자 차단'),
+                    textColor: Colors.redAccent,
+                    iconColor: Colors.redAccent,
+                    onTap: () async {
+                      Navigator.pop(bottomSheetContext);
+
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('사용자 차단'),
+                          content: Text(
+                            '@${post.userId} 사용자를 차단할까요?\n\n'
+                            '차단하면 해당 사용자의 게시글이 보이지 않게 됩니다.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('취소'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                '차단',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm != true) return;
+
+                      await BlockService.blockUser(
+                        blockedUid: post.ownerUid,
+                        blockedUserId: post.userId,
+                      );
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('@${post.userId} 사용자를 차단했습니다.')),
+                      );
+                      setState(() {
+                        posts.removeWhere(
+                          (item) => item.ownerUid == post.ownerUid,
+                        );
+                        myPosts.removeWhere(
+                          (item) => item.ownerUid == post.ownerUid,
+                        );
+                      });
                     },
                   ),
                 ],
@@ -358,6 +440,104 @@ class HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  Future<void> showUserReportDialog(Post post) async {
+    String selectedReason = '불쾌한 사용자';
+    final descriptionController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('사용자 신고'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedReason,
+                    decoration: const InputDecoration(labelText: '신고 사유'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: '불쾌한 사용자',
+                        child: Text('불쾌한 사용자'),
+                      ),
+                      DropdownMenuItem(value: '스팸/홍보', child: Text('스팸/홍보')),
+                      DropdownMenuItem(value: '비방/욕설', child: Text('비방/욕설')),
+                      DropdownMenuItem(value: '기타', child: Text('기타')),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setDialogState(() {
+                        selectedReason = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    decoration: const InputDecoration(labelText: '상세 내용'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, false);
+                  },
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Text(
+                    '신고',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) {
+      descriptionController.dispose();
+      return;
+    }
+
+    try {
+      await UserReportService.reportUser(
+        reporterUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+        targetUid: post.ownerUid,
+        targetUserId: post.userId,
+        reason: selectedReason,
+        detail: descriptionController.text,
+      );
+
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('사용자 신고가 접수되었습니다.')));
+    } catch (e) {
+      descriptionController.dispose();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('신고 접수 중 오류가 발생했습니다.')));
+    }
   }
 
   Future<void> showReportDialog(Post post) async {
