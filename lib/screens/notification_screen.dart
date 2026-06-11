@@ -6,7 +6,10 @@ import '../models/app_notification.dart';
 import '../services/notification_service.dart';
 
 import '../services/post_service.dart';
+import '../services/notice_service.dart';
+
 import '../widgets/post_detail_dialog.dart';
+import 'notice_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -29,6 +32,117 @@ class _NotificationScreenState extends State<NotificationScreen> {
         await notificationService.markAllAsRead(uid);
       }
     });
+  }
+
+  Future<void> handleNotificationTap(AppNotification notification) async {
+    if (notification.type == 'notice') {
+      final noticeData = await NoticeService.loadNoticeById(
+        notification.targetNoticeId,
+      );
+
+      if (noticeData == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('공지를 찾을 수 없어요.')));
+        return;
+      }
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NoticeDetailScreen(
+            title: noticeData['title'] ?? '공지',
+            content: noticeData['content'] ?? '',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final post = await PostService.loadPostById(notification.targetPostId);
+
+    if (post == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('게시글을 찾을 수 없어요.')));
+      return;
+    }
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (_) => PostDetailDialog(
+        imageUrl: post.imageUrl,
+        catName: post.catName,
+        caption: post.caption,
+        postId: post.id,
+        createdAt: post.createdAt ?? DateTime.now(),
+        tagText: post.tags.map((tag) => '#$tag').join(' '),
+        canWriteReview: post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
+      ),
+    );
+  }
+
+  Widget buildNotificationImage(AppNotification notification) {
+    if (notification.type == 'notice') {
+      return Container(
+        width: 48,
+        height: 48,
+        color: const Color(0xFFFFEFE6),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.campaign_outlined,
+          size: 24,
+          color: Color(0xFF8A5A44),
+        ),
+      );
+    }
+
+    if (notification.targetImageUrl.isEmpty) {
+      return Container(
+        width: 48,
+        height: 48,
+        color: const Color(0xFFFFEFE6),
+        alignment: Alignment.center,
+        child: const Text('🐾'),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: notification.targetImageUrl,
+      width: 48,
+      height: 48,
+      fit: BoxFit.cover,
+      placeholder: (context, url) {
+        return Container(
+          width: 48,
+          height: 48,
+          color: const Color(0xFFFFEFE6),
+          alignment: Alignment.center,
+          child: const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      },
+      errorWidget: (context, url, error) {
+        return Container(
+          width: 48,
+          height: 48,
+          color: const Color(0xFFFFEFE6),
+          alignment: Alignment.center,
+          child: const Text('🐾'),
+        );
+      },
+    );
   }
 
   @override
@@ -92,35 +206,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
               return GestureDetector(
                 onTap: () async {
-                  final post = await PostService.loadPostById(
-                    notification.targetPostId,
-                  );
-
-                  if (post == null) {
-                    if (!context.mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('게시글을 찾을 수 없어요.')),
-                    );
-                    return;
-                  }
-
-                  if (!context.mounted) return;
-
-                  showDialog(
-                    context: context,
-                    builder: (_) => PostDetailDialog(
-                      imageUrl: post.imageUrl,
-                      catName: post.catName,
-                      caption: post.caption,
-                      postId: post.id,
-                      createdAt: post.createdAt ?? DateTime.now(),
-                      tagText: post.tags.map((tag) => '#$tag').join(' '),
-                      canWriteReview:
-                          post.ownerUid !=
-                          FirebaseAuth.instance.currentUser?.uid,
-                    ),
-                  );
+                  await handleNotificationTap(notification);
                 },
                 child: Container(
                   padding: const EdgeInsets.all(14),
@@ -132,44 +218,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: notification.targetImageUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: notification.targetImageUrl,
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) {
-                                  return Container(
-                                    width: 48,
-                                    height: 48,
-                                    color: const Color(0xFFFFEFE6),
-                                    alignment: Alignment.center,
-                                    child: const SizedBox(
-                                      width: 14,
-                                      height: 14,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                errorWidget: (context, url, error) {
-                                  return Container(
-                                    width: 48,
-                                    height: 48,
-                                    color: const Color(0xFFFFEFE6),
-                                    alignment: Alignment.center,
-                                    child: const Text('🐾'),
-                                  );
-                                },
-                              )
-                            : Container(
-                                width: 48,
-                                height: 48,
-                                color: const Color(0xFFFFEFE6),
-                                alignment: Alignment.center,
-                                child: const Text('🐾'),
-                              ),
+                        child: buildNotificationImage(notification),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

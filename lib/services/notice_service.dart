@@ -7,4 +7,17 @@ class NoticeService {
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
+
+  static Future<Map<String, dynamic>?> loadNoticeById(String noticeId) async {
+    if (noticeId.isEmpty) return null;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('notices')
+        .doc(noticeId)
+        .get();
+
+    if (!doc.exists) return null;
+
+    return doc.data();
+  }
 }

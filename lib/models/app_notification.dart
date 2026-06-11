@@ -7,6 +7,8 @@ class AppNotification {
   final String senderUserId;
   final String type;
   final String targetPostId;
+  final String targetNoticeId;
+  final String targetUpdateId;
   final String targetImageUrl;
   final String title;
   final String body;
@@ -20,6 +22,8 @@ class AppNotification {
     required this.senderUserId,
     required this.type,
     required this.targetPostId,
+    required this.targetNoticeId,
+    required this.targetUpdateId,
     required this.targetImageUrl,
     required this.title,
     required this.body,
@@ -39,6 +43,8 @@ class AppNotification {
       senderUserId: data['senderUserId'] ?? '',
       type: data['type'] ?? '',
       targetPostId: data['targetPostId'] ?? '',
+      targetNoticeId: data['targetNoticeId'] ?? '',
+      targetUpdateId: data['targetUpdateId'] ?? '',
       targetImageUrl: data['targetImageUrl'] ?? '',
       title: data['title'] ?? '',
       body: data['body'] ?? '',

@@ -1,10 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'notice_detail_screen.dart';
+
 import '../services/notice_service.dart';
+import '../services/notification_service.dart';
 
 class NoticeScreen extends StatelessWidget {
   const NoticeScreen({super.key});
+
+  Future<void> sendNoticeNotification({
+    required BuildContext context,
+    required String noticeId,
+    required String title,
+  }) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('공지 알림 보내기'),
+          content: Text('"$title"\n\n전체 사용자에게 이 공지 알림을 보낼까요?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('보내기'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    await NotificationService().createNoticeNotifications(
+      noticeId: noticeId,
+      noticeTitle: title,
+    );
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('공지 알림을 보냈어요.')));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +152,14 @@ class NoticeScreen extends StatelessWidget {
                       builder: (_) =>
                           NoticeDetailScreen(title: title, content: content),
                     ),
+                  );
+                },
+
+                onLongPress: () async {
+                  await sendNoticeNotification(
+                    context: context,
+                    noticeId: notice.id,
+                    title: title,
                   );
                 },
               );
