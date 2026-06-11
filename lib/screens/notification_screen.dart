@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/app_notification.dart';
 import '../services/notification_service.dart';
 
+import '../services/post_service.dart';
+import '../widgets/post_detail_dialog.dart';
+
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
 
@@ -87,80 +90,113 @@ class _NotificationScreenState extends State<NotificationScreen> {
             itemBuilder: (context, index) {
               final notification = notifications[index];
 
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: notification.targetImageUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: notification.targetImageUrl,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) {
-                                return Container(
-                                  width: 48,
-                                  height: 48,
-                                  color: const Color(0xFFFFEFE6),
-                                  alignment: Alignment.center,
-                                  child: const SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+              return GestureDetector(
+                onTap: () async {
+                  final post = await PostService.loadPostById(
+                    notification.targetPostId,
+                  );
+
+                  if (post == null) {
+                    if (!context.mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('게시글을 찾을 수 없어요.')),
+                    );
+                    return;
+                  }
+
+                  if (!context.mounted) return;
+
+                  showDialog(
+                    context: context,
+                    builder: (_) => PostDetailDialog(
+                      imageUrl: post.imageUrl,
+                      catName: post.catName,
+                      caption: post.caption,
+                      postId: post.id,
+                      createdAt: post.createdAt ?? DateTime.now(),
+                      tagText: post.tags.map((tag) => '#$tag').join(' '),
+                      canWriteReview:
+                          post.ownerUid !=
+                          FirebaseAuth.instance.currentUser?.uid,
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: notification.targetImageUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: notification.targetImageUrl,
+                                width: 48,
+                                height: 48,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) {
+                                  return Container(
+                                    width: 48,
+                                    height: 48,
+                                    color: const Color(0xFFFFEFE6),
+                                    alignment: Alignment.center,
+                                    child: const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                              errorWidget: (context, url, error) {
-                                return Container(
-                                  width: 48,
-                                  height: 48,
-                                  color: const Color(0xFFFFEFE6),
-                                  alignment: Alignment.center,
-                                  child: const Text('🐾'),
-                                );
-                              },
-                            )
-                          : Container(
-                              width: 48,
-                              height: 48,
-                              color: const Color(0xFFFFEFE6),
-                              alignment: Alignment.center,
-                              child: const Text('🐾'),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            notification.title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF3D241E),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            notification.body,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF8A6A5F),
-                            ),
-                          ),
-                        ],
+                                  );
+                                },
+                                errorWidget: (context, url, error) {
+                                  return Container(
+                                    width: 48,
+                                    height: 48,
+                                    color: const Color(0xFFFFEFE6),
+                                    alignment: Alignment.center,
+                                    child: const Text('🐾'),
+                                  );
+                                },
+                              )
+                            : Container(
+                                width: 48,
+                                height: 48,
+                                color: const Color(0xFFFFEFE6),
+                                alignment: Alignment.center,
+                                child: const Text('🐾'),
+                              ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              notification.title,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF3D241E),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              notification.body,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF8A6A5F),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

@@ -530,4 +530,21 @@ class PostService {
       'unreadReviewCount': 0,
     });
   }
+
+  static Future<Post?> loadPostById(String postId) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(postId)
+        .get();
+
+    if (!doc.exists) return null;
+
+    final data = doc.data();
+
+    if (data == null) return null;
+    if (data['isDeleted'] == true) return null;
+    if (data['isHidden'] == true) return null;
+
+    return Post.fromDoc(doc);
+  }
 }
