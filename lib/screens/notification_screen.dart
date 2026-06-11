@@ -3,13 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/app_notification.dart';
-import '../services/notification_service.dart';
 
+import '../services/notification_service.dart';
 import '../services/post_service.dart';
 import '../services/notice_service.dart';
+import '../services/update_service.dart';
 
 import '../widgets/post_detail_dialog.dart';
+
 import 'notice_detail_screen.dart';
+import 'update_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -63,6 +66,35 @@ class _NotificationScreenState extends State<NotificationScreen> {
       return;
     }
 
+    if (notification.type == 'update') {
+      final updateData = await UpdateService.loadUpdateById(
+        notification.targetUpdateId,
+      );
+
+      if (updateData == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('업데이트 소식을 찾을 수 없어요.')));
+        return;
+      }
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => UpdateDetailScreen(
+            version: updateData['version'] ?? '업데이트',
+            title: updateData['title'] ?? '업데이트 소식',
+            content: updateData['content'] ?? '',
+          ),
+        ),
+      );
+      return;
+    }
+
     final post = await PostService.loadPostById(notification.targetPostId);
 
     if (post == null) {
@@ -99,6 +131,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
         alignment: Alignment.center,
         child: const Icon(
           Icons.campaign_outlined,
+          size: 24,
+          color: Color(0xFF8A5A44),
+        ),
+      );
+    }
+
+    if (notification.type == 'update') {
+      return Container(
+        width: 48,
+        height: 48,
+        color: const Color(0xFFFFEFE6),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.system_update_alt_rounded,
           size: 24,
           color: Color(0xFF8A5A44),
         ),

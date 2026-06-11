@@ -154,6 +154,49 @@ class NotificationService {
         .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 
+  Future<void> createUpdateNotifications({
+    required String updateId,
+    required String updateTitle,
+    required String version,
+  }) async {
+    if (updateId.isEmpty) return;
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final usersSnapshot = await _firestore.collection('users').get();
+
+    if (usersSnapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+
+    for (final userDoc in usersSnapshot.docs) {
+      final receiverUid = userDoc.id;
+
+      if (receiverUid.isEmpty) continue;
+      if (receiverUid == currentUser.uid) continue;
+
+      final notificationRef = _firestore.collection('notifications').doc();
+
+      batch.set(notificationRef, {
+        'receiverUid': receiverUid,
+        'senderUid': currentUser.uid,
+        'senderUserId': '그루밍데이',
+        'type': 'update',
+        'targetPostId': '',
+        'targetNoticeId': '',
+        'targetUpdateId': updateId,
+        'targetImageUrl': '',
+        'title': '새 업데이트 소식이 있어요',
+        'body': '$version · $updateTitle',
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+  }
+
   Future<void> markAllAsRead(String uid) async {
     if (uid.isEmpty) return;
 
