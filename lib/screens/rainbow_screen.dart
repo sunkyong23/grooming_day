@@ -235,15 +235,41 @@ class _RainbowScreenState extends State<RainbowScreen> {
               color: const Color(0xFF0B113A).withValues(alpha: 0.14),
             ),
           ),
-          const Positioned(
-            left: 24,
-            top: 58,
-            child: Text(
-              '🌈 무지개별',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+          Positioned(
+            left: 16,
+            top: 0,
+            right: 24,
+            child: SafeArea(
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '🌈 무지개별',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

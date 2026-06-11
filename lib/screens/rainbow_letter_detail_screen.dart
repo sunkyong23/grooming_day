@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -56,10 +57,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   Future<void> submitTodak() async {
     final content = todakController.text.trim();
 
-    if (content.isEmpty) {
-      return;
-    }
-
+    if (content.isEmpty) return;
     if (isSubmitting) return;
 
     setState(() {
@@ -115,20 +113,20 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   Future<void> showDeleteDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('편지 삭제'),
           content: const Text('정말 삭제하시겠어요?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context, false);
+                Navigator.pop(dialogContext, false);
               },
               child: const Text('취소'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context, true);
+                Navigator.pop(dialogContext, true);
               },
               child: const Text('삭제'),
             ),
@@ -156,6 +154,41 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
     return '$year.$month.$day $hour:$minute';
   }
 
+  Widget buildLetterImage() {
+    final imageUrl = widget.letter.imageUrl;
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 22),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            height: 220,
+            alignment: Alignment.center,
+            color: Colors.white.withValues(alpha: 0.08),
+            child: const CircularProgressIndicator(color: Color(0xFFFFDCA8)),
+          ),
+          errorWidget: (context, url, error) => Container(
+            height: 220,
+            alignment: Alignment.center,
+            color: Colors.white.withValues(alpha: 0.08),
+            child: const Icon(
+              Icons.broken_image_outlined,
+              color: Color(0xFFFFDCA8),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget buildTodakSection() {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -175,9 +208,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               fontWeight: FontWeight.w800,
             ),
           ),
-
           const SizedBox(height: 18),
-
           if (isLoadingComments)
             const Center(
               child: Padding(
@@ -227,9 +258,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                 );
               }).toList(),
             ),
-
           const SizedBox(height: 14),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -343,6 +372,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
+          buildLetterImage(),
           const SizedBox(height: 28),
           Text(
             widget.letter.content,

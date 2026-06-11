@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import 'image_service.dart';
+
 class RainbowService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -73,6 +75,7 @@ class RainbowService {
     required String title,
     required String catName,
     required String content,
+    File? imageFile,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -85,6 +88,22 @@ class RainbowService {
 
     final docRef = _firestore.collection('rainbowLetters').doc();
 
+    String? imageUrl;
+    String? imageStoragePath;
+
+    if (imageFile != null) {
+      final compressedImage = await ImageService.compressImage(imageFile);
+      final uploadFile = compressedImage ?? imageFile;
+
+      imageStoragePath = 'rainbowLetters/${user.uid}/${docRef.id}.jpg';
+
+      final storageRef = FirebaseStorage.instance.ref().child(imageStoragePath);
+
+      await storageRef.putFile(uploadFile);
+
+      imageUrl = await storageRef.getDownloadURL();
+    }
+
     await docRef.set({
       'id': docRef.id,
       'ownerUid': user.uid,
@@ -92,8 +111,8 @@ class RainbowService {
       'title': title,
       'catName': catName,
       'content': content,
-      'imageUrl': null,
-      'imageStoragePath': null,
+      'imageUrl': imageUrl,
+      'imageStoragePath': imageStoragePath,
       'todakCount': 0,
       'isPublic': true,
       'isDeleted': false,
@@ -103,6 +122,18 @@ class RainbowService {
   }
 
   Future<void> deleteLetter(String letterId) async {
+    final doc = await _firestore
+        .collection('rainbowLetters')
+        .doc(letterId)
+        .get();
+    final data = doc.data();
+
+    final imageStoragePath = data?['imageStoragePath'];
+
+    if (imageStoragePath is String && imageStoragePath.isNotEmpty) {
+      await FirebaseStorage.instance.ref().child(imageStoragePath).delete();
+    }
+
     await _firestore.collection('rainbowLetters').doc(letterId).update({
       'isDeleted': true,
       'updatedAt': FieldValue.serverTimestamp(),

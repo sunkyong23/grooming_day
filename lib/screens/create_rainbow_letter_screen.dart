@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../services/rainbow_service.dart';
 
 class CreateRainbowLetterScreen extends StatefulWidget {
@@ -14,6 +18,11 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
   final catNameController = TextEditingController();
   final contentController = TextEditingController();
 
+  final ImagePicker picker = ImagePicker();
+
+  File? selectedImage;
+  bool isSubmitting = false;
+
   @override
   void dispose() {
     titleController.dispose();
@@ -22,7 +31,19 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
     super.dispose();
   }
 
+  Future<void> pickImage() async {
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    setState(() {
+      selectedImage = File(image.path);
+    });
+  }
+
   Future<void> submitLetter() async {
+    if (isSubmitting) return;
+
     if (titleController.text.trim().isEmpty ||
         catNameController.text.trim().isEmpty ||
         contentController.text.trim().isEmpty) {
@@ -32,11 +53,16 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
       return;
     }
 
+    setState(() {
+      isSubmitting = true;
+    });
+
     try {
       await RainbowService().createLetter(
         title: titleController.text.trim(),
         catName: catNameController.text.trim(),
         content: contentController.text.trim(),
+        imageFile: selectedImage,
       );
 
       if (!mounted) return;
@@ -47,12 +73,68 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
 
       Navigator.pop(context, true);
     } catch (e) {
+      debugPrint('무지개별 편지 저장 오류: $e');
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('편지를 저장하지 못했어요.')));
+      ).showSnackBar(SnackBar(content: Text('편지를 저장하지 못했어요: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
     }
+  }
+
+  Widget buildImagePicker() {
+    return GestureDetector(
+      onTap: pickImage,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: selectedImage == null
+            ? const Row(
+                children: [
+                  Icon(Icons.photo_outlined, color: Color(0xFFFFDCA8)),
+                  SizedBox(width: 10),
+                  Text(
+                    '추억 사진 선택하기 (선택)',
+                    style: TextStyle(
+                      color: Color(0xFFFFDCA8),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.file(
+                      selectedImage!,
+                      height: 220,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '사진을 다시 선택하려면 이미지를 눌러주세요.',
+                    style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 12),
+                  ),
+                ],
+              ),
+      ),
+    );
   }
 
   @override
@@ -85,18 +167,26 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
             hintText: '오늘도 네 생각이 났어.',
             maxLines: 12,
           ),
+          const SizedBox(height: 16),
+          buildImagePicker(),
           const SizedBox(height: 28),
           ElevatedButton(
-            onPressed: submitLetter,
+            onPressed: isSubmitting ? null : submitLetter,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFDCA8),
               foregroundColor: const Color(0xFF3D241E),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text(
-              '무지개별에 남기기',
-              style: TextStyle(fontWeight: FontWeight.w900),
-            ),
+            child: isSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text(
+                    '무지개별에 남기기',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
           ),
         ],
       ),
