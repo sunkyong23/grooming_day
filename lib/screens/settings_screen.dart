@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 import 'privacy_policy_screen.dart';
 import 'terms_screen.dart';
-
 import 'notice_screen.dart';
 import 'update_screen.dart';
 import 'login_screen.dart';
-
 import 'change_password_screen.dart';
-import '../services/auth_service.dart';
 import 'blocked_users_screen.dart';
+import 'admin_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+import '../services/auth_service.dart';
+import '../services/admin_service.dart';
+
+class SettingsScreen extends StatefulWidget {
   final String email;
   final VoidCallback onDeleteAccountTap;
 
@@ -20,6 +21,31 @@ class SettingsScreen extends StatelessWidget {
     required this.email,
     required this.onDeleteAccountTap,
   });
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool isAdmin = false;
+  bool isCheckingAdmin = true;
+
+  @override
+  void initState() {
+    super.initState();
+    checkAdmin();
+  }
+
+  Future<void> checkAdmin() async {
+    final result = await AdminService.isCurrentUserAdmin();
+
+    if (!mounted) return;
+
+    setState(() {
+      isAdmin = result;
+      isCheckingAdmin = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +60,34 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          if (!isCheckingAdmin && isAdmin)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(
+                Icons.admin_panel_settings_rounded,
+                color: Color(0xFFFF8A7A),
+              ),
+              title: const Text(
+                '관리자 페이지',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
+              trailing: const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFFB08678),
+              ),
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const AdminScreen()));
+              },
+            ),
+
+          if (!isCheckingAdmin && isAdmin) const SizedBox(height: 12),
+
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(
@@ -132,7 +186,7 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           Text(
-            '이메일\n$email',
+            '이메일\n${widget.email}',
             style: const TextStyle(fontSize: 14, color: Color(0xFF8A756C)),
           ),
 
@@ -162,7 +216,7 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           TextButton(
-            onPressed: onDeleteAccountTap,
+            onPressed: widget.onDeleteAccountTap,
             child: const Text('계정 탈퇴', style: TextStyle(color: Colors.red)),
           ),
 

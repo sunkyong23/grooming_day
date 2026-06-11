@@ -3,23 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // -------------------------
-    // REPORTS - 게시글/감상평/기타 신고
-    // -------------------------
-    match /reports/{reportId} {
-      allow create: if request.auth != null
-        && request.resource.data.reporterUid == request.auth.uid
-        && request.resource.data.status == 'pending';
-
-      allow read: if request.auth != null
-        && resource.data.reporterUid == request.auth.uid;
-
-      allow update, delete: if false;
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
-    // -------------------------
-    // USER REPORTS - 사용자 계정 신고
-    // -------------------------
+    match /reports/{reportId} {
+  allow create: if request.auth != null
+    && request.resource.data.reporterUid == request.auth.uid
+    && request.resource.data.status == 'pending';
+
+  allow read: if request.auth != null;
+
+  allow update, delete: if false;
+}
+
     match /userReports/{reportId} {
       allow create: if request.auth != null
         && request.resource.data.reporterUid == request.auth.uid
@@ -28,12 +26,12 @@ service cloud.firestore {
         && request.resource.data.reason is string
         && request.resource.data.status == 'pending';
 
-      allow read, update, delete: if false;
+      allow read: if isAdmin()
+        && resource.data.status == 'pending';
+
+      allow update, delete: if false;
     }
 
-    // -------------------------
-    // USERS
-    // -------------------------
     match /users/{uid} {
       allow read: if request.auth != null;
 
@@ -41,7 +39,8 @@ service cloud.firestore {
         && uid == request.auth.uid;
 
       allow update: if request.auth != null
-        && uid == request.auth.uid;
+        && uid == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']);
 
       allow delete: if false;
 
@@ -63,9 +62,6 @@ service cloud.firestore {
       }
     }
 
-    // -------------------------
-    // USER IDS
-    // -------------------------
     match /userIds/{userId} {
       allow read: if true;
 
@@ -79,9 +75,6 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    // -------------------------
-    // CAT PROFILES
-    // -------------------------
     match /catProfiles/{catProfileId} {
       allow read: if request.auth != null
         && (
@@ -103,9 +96,6 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // -------------------------
-    // POSTS
-    // -------------------------
     match /posts/{postId} {
       allow read: if request.auth != null;
 
@@ -143,9 +133,6 @@ service cloud.firestore {
       }
     }
 
-    // -------------------------
-    // RAINBOW LETTERS
-    // -------------------------
     match /rainbowLetters/{letterId} {
       allow read: if request.auth != null
         && resource.data.isDeleted == false
@@ -190,25 +177,16 @@ service cloud.firestore {
       }
     }
 
-    // -------------------------
-    // NOTICES
-    // -------------------------
     match /notices/{noticeId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
 
-    // -------------------------
-    // UPDATES
-    // -------------------------
     match /updates/{updateId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
 
-    // -------------------------
-    // NOTIFICATIONS
-    // -------------------------
     match /notifications/{notificationId} {
       allow read: if request.auth != null
         && resource.data.receiverUid == request.auth.uid;
@@ -225,16 +203,10 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // -------------------------
-    // FAVORITE CATS COLLECTION GROUP
-    // -------------------------
     match /{path=**}/favoriteCats/{catProfileId} {
       allow read: if request.auth != null;
     }
 
-    // -------------------------
-    // DEFAULT DENY
-    // -------------------------
     match /{document=**} {
       allow read, write: if false;
     }

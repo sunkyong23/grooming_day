@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/cat_service.dart';
-import 'home_screen.dart';
+import 'main_tab_screen.dart';
 
 class CreateVirtualCatScreen extends StatefulWidget {
   const CreateVirtualCatScreen({super.key});
@@ -48,7 +48,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
 
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const MainTabScreen()),
     );
   }
 
@@ -80,9 +80,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
             const Text(
               '랜선집사',
               style: TextStyle(
@@ -91,9 +89,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
                 color: Color(0xFF4A2B22),
               ),
             ),
-
             const SizedBox(height: 8),
-
             const Text(
               '고양이가 없어도 괜찮아요.\n좋아하는 마음만으로도 충분해요.',
               textAlign: TextAlign.center,
@@ -103,9 +99,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
                 color: Color(0xFF8C6A5F),
               ),
             ),
-
             const SizedBox(height: 28),
-
             TextField(
               controller: introductionController,
               maxLines: 3,
@@ -114,9 +108,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
                 hintText: '예: 고양이 사진 보는 게 하루의 행복이에요 🐾',
               ),
             ),
-
             const SizedBox(height: 32),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
