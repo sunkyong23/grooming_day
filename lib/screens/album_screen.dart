@@ -36,6 +36,9 @@ class AlbumScreenState extends State<AlbumScreen> {
   int selectedAlbumTab = 0;
   bool isGridView = true;
 
+  bool isSelectionMode = false;
+  final Set<String> selectedPostIds = {};
+
   List<Post> scrappedPosts = [];
   bool isLoadingScraps = false;
   bool hasLoadedScraps = false;
@@ -77,6 +80,8 @@ class AlbumScreenState extends State<AlbumScreen> {
       setState(() {
         isLoading = true;
         myPosts.clear();
+        selectedPostIds.clear();
+        isSelectionMode = false;
         lastMyPostDocument = null;
         hasMoreMyPosts = true;
       });
@@ -189,6 +194,71 @@ class AlbumScreenState extends State<AlbumScreen> {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOut,
     );
+  }
+
+  void toggleSelection(String postId) {
+    setState(() {
+      if (selectedPostIds.contains(postId)) {
+        selectedPostIds.remove(postId);
+      } else {
+        selectedPostIds.add(postId);
+      }
+    });
+  }
+
+  Future<void> deleteSelectedPosts() async {
+    if (selectedPostIds.isEmpty) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('게시글 삭제'),
+        content: Text(
+          '${selectedPostIds.length}개의 게시글을 삭제할까요?\n\n삭제 후에는 되돌릴 수 없어요.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final postsToDelete = myPosts
+        .where((post) => selectedPostIds.contains(post.id))
+        .toList();
+
+    try {
+      for (final post in postsToDelete) {
+        await PostService.deletePost(post);
+      }
+
+      await loadMyPosts();
+
+      if (!mounted) return;
+
+      setState(() {
+        isSelectionMode = false;
+        selectedPostIds.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${postsToDelete.length}개의 게시글을 삭제했어요.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('게시글 삭제 중 오류가 발생했어요: $e')));
+    }
   }
 
   List<Post> get filteredPosts {
@@ -336,10 +406,12 @@ class AlbumScreenState extends State<AlbumScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('@${post.userId} 사용자를 차단했습니다.')),
                       );
+
                       setState(() {
                         myPosts.removeWhere(
                           (item) => item.ownerUid == post.ownerUid,
                         );
+
                         scrappedPosts.removeWhere(
                           (item) => item.ownerUid == post.ownerUid,
                         );
@@ -387,6 +459,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                     ],
                     onChanged: (value) {
                       if (value == null) return;
+
                       setDialogState(() {
                         selectedReason = value;
                       });
@@ -468,6 +541,8 @@ class AlbumScreenState extends State<AlbumScreen> {
         onTap: () async {
           setState(() {
             selectedAlbumTab = index;
+            isSelectionMode = false;
+            selectedPostIds.clear();
           });
 
           scrollAlbumToTop();
@@ -580,6 +655,8 @@ class AlbumScreenState extends State<AlbumScreen> {
               onTap: () async {
                 setState(() {
                   selectedCatProfileId = null;
+                  isSelectionMode = false;
+                  selectedPostIds.clear();
                 });
                 scrollAlbumToTop();
               },
@@ -591,6 +668,8 @@ class AlbumScreenState extends State<AlbumScreen> {
                 onTap: () async {
                   setState(() {
                     selectedCatProfileId = cat.id;
+                    isSelectionMode = false;
+                    selectedPostIds.clear();
                   });
                   scrollAlbumToTop();
                 },
@@ -636,6 +715,8 @@ class AlbumScreenState extends State<AlbumScreen> {
             onTap: () async {
               setState(() {
                 isGridView = false;
+                isSelectionMode = false;
+                selectedPostIds.clear();
               });
             },
             child: Icon(
@@ -738,6 +819,8 @@ class AlbumScreenState extends State<AlbumScreen> {
       onTap: () async {
         setState(() {
           selectedSort = value;
+          isSelectionMode = false;
+          selectedPostIds.clear();
         });
 
         Navigator.pop(bottomSheetContext);
@@ -775,6 +858,11 @@ class AlbumScreenState extends State<AlbumScreen> {
 
         return GestureDetector(
           onTap: () async {
+            if (isSelectionMode) {
+              toggleSelection(post.id);
+              return;
+            }
+
             if (selectedAlbumTab == 0 && post.unreadReviewCount > 0) {
               await PostService.clearUnreadReviewCount(post.id);
 
@@ -908,6 +996,21 @@ class AlbumScreenState extends State<AlbumScreen> {
                     ),
                   ),
                 ),
+
+              if (isSelectionMode)
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: Icon(
+                    selectedPostIds.contains(post.id)
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: selectedPostIds.contains(post.id)
+                        ? const Color(0xFFFF8A7A)
+                        : Colors.white,
+                    size: 24,
+                  ),
+                ),
             ],
           ),
         );
@@ -1016,7 +1119,45 @@ class AlbumScreenState extends State<AlbumScreen> {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('나의 앨범'),
+        title: isSelectionMode
+            ? Text('${selectedPostIds.length}개 선택')
+            : const Text('나의 앨범'),
+        actions: [
+          if (selectedAlbumTab == 0 && isGridView)
+            isSelectionMode
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            isSelectionMode = false;
+                            selectedPostIds.clear();
+                          });
+                        },
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: selectedPostIds.isEmpty
+                            ? null
+                            : deleteSelectedPosts,
+                        child: const Text(
+                          '삭제',
+                          style: TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
+                    ],
+                  )
+                : TextButton(
+                    onPressed: () {
+                      setState(() {
+                        isSelectionMode = true;
+                        selectedPostIds.clear();
+                      });
+                    },
+                    child: const Text('선택'),
+                  ),
+        ],
       ),
       body: Column(
         children: [
