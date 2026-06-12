@@ -7,6 +7,7 @@ import '../services/cat_service.dart';
 import '../services/user_service.dart';
 import 'cat_profile_detail_screen.dart';
 import 'user_profile_screen.dart';
+import '../services/block_service.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -64,22 +65,33 @@ class _SearchScreenState extends State<SearchScreen> {
       isLoading = true;
     });
 
+    final blockedUids = await BlockService.loadBlockedUserUids();
+
     if (selectedTabIndex == 0) {
       final results = await CatService.searchCatsByName(keyword);
+
+      final visibleCats = results.where((cat) {
+        return !blockedUids.contains(cat.ownerUid);
+      }).toList();
 
       if (!mounted) return;
 
       setState(() {
-        searchedCats = results;
+        searchedCats = visibleCats;
         isLoading = false;
       });
     } else {
       final results = await UserService.searchUsers(keyword);
 
+      final visibleUsers = results.where((user) {
+        final uid = user['uid'] as String? ?? '';
+        return !blockedUids.contains(uid);
+      }).toList();
+
       if (!mounted) return;
 
       setState(() {
-        searchedUsers = results;
+        searchedUsers = visibleUsers;
         isLoading = false;
       });
     }
