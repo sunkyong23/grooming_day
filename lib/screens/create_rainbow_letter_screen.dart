@@ -23,6 +23,7 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
 
   File? selectedImage;
   bool isSubmitting = false;
+  bool isPublic = true;
 
   @override
   void dispose() {
@@ -152,13 +153,16 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
         catName: catNameController.text.trim(),
         content: contentController.text.trim(),
         imageFile: selectedImage,
+        isPublic: isPublic,
       );
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('무지개별에 편지를 남겼어요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isPublic ? '무지개별에 편지를 남겼어요.' : '내 편지함에 편지를 보관했어요.'),
+        ),
+      );
 
       Navigator.pop(context, true);
     } catch (e) {
@@ -226,6 +230,83 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
     );
   }
 
+  Widget buildVisibilitySelector() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '공개 범위',
+              style: TextStyle(
+                color: Color(0xFFFFDCA8),
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 6),
+            RadioListTile<bool>(
+              value: true,
+              groupValue: isPublic,
+              onChanged: (value) {
+                setState(() {
+                  isPublic = value ?? true;
+                });
+              },
+              activeColor: const Color(0xFFFFDCA8),
+              contentPadding: EdgeInsets.zero,
+              tileColor: Colors.transparent,
+              selectedTileColor: Colors.transparent,
+              title: const Text(
+                '무지개별 전체 공개',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: const Text(
+                '다른 집사들도 이 편지를 볼 수 있어요.',
+                style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 12),
+              ),
+            ),
+            RadioListTile<bool>(
+              value: false,
+              groupValue: isPublic,
+              onChanged: (value) {
+                setState(() {
+                  isPublic = value ?? false;
+                });
+              },
+              activeColor: const Color(0xFFFFDCA8),
+              contentPadding: EdgeInsets.zero,
+              tileColor: Colors.transparent,
+              selectedTileColor: Colors.transparent,
+              title: const Text(
+                '내 편지함에만 보관',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: const Text(
+                '나만 볼 수 있는 편지로 저장돼요.',
+                style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,6 +339,8 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
           ),
           const SizedBox(height: 16),
           buildImagePicker(),
+          const SizedBox(height: 16),
+          buildVisibilitySelector(),
           const SizedBox(height: 28),
           ElevatedButton(
             onPressed: isSubmitting ? null : submitLetter,

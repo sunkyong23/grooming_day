@@ -24,15 +24,15 @@ class RainbowLetter {
     required this.content,
     this.imageUrl,
     this.imageStoragePath,
-    required this.todakCount,
-    required this.isPublic,
-    required this.isDeleted,
+    this.todakCount = 0,
+    this.isPublic = true,
+    this.isDeleted = false,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory RainbowLetter.fromDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
 
     return RainbowLetter(
       id: doc.id,
@@ -49,5 +49,23 @@ class RainbowLetter {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'ownerUid': ownerUid,
+      'ownerUserId': ownerUserId,
+      'title': title,
+      'catName': catName,
+      'content': content,
+      'imageUrl': imageUrl,
+      'imageStoragePath': imageStoragePath,
+      'todakCount': todakCount,
+      'isPublic': isPublic,
+      'isDeleted': isDeleted,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+    };
   }
 }

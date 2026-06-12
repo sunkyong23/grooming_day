@@ -128,6 +128,7 @@ class RainbowService {
     required String title,
     required String catName,
     required String content,
+    required bool isPublic,
     File? imageFile,
   }) async {
     await checkSuspendedUser('정지된 계정은 무지개별 편지를 작성할 수 없어요.');
@@ -169,7 +170,7 @@ class RainbowService {
       'imageUrl': imageUrl,
       'imageStoragePath': imageStoragePath,
       'todakCount': 0,
-      'isPublic': true,
+      'isPublic': isPublic,
       'isDeleted': false,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
