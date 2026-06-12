@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/review.dart';
 import 'user_service.dart';
 
+import 'block_service.dart';
+
 class ReviewService {
   static Future<Review?> createReview({
     required String postId,
@@ -99,6 +101,8 @@ class ReviewService {
   }
 
   static Future<List<Review>> loadReviews(String postId) async {
+    final blockedUids = await BlockService.loadBlockedUserUids();
+
     final snapshot = await FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
@@ -108,7 +112,10 @@ class ReviewService {
         .orderBy('createdAt', descending: true)
         .get();
 
-    return snapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
+    return snapshot.docs
+        .map((doc) => Review.fromDoc(doc))
+        .where((review) => !blockedUids.contains(review.writerUid))
+        .toList();
   }
 
   Future<void> updateReview({
