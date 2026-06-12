@@ -181,7 +181,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   const Padding(
                     padding: EdgeInsets.only(top: 60),
                     child: Text(
-                      '검색 결과가 없어요 🐾',
+                      '검색 결과가 없어요',
                       style: TextStyle(
                         color: Color(0xFF8C6A5F),
                         fontWeight: FontWeight.w600,

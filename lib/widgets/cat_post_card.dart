@@ -540,7 +540,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                   controller: reviewController,
                                   style: const TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
-                                    hintText: '감상평을 남겨보세요 🐾',
+                                    hintText: '감상평을 남겨보세요 ',
                                     filled: true,
                                     fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(

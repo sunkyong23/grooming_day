@@ -170,7 +170,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: const Color(0xFF18213A),
+          backgroundColor: const Color(0xFF0B113A),
           insetPadding: const EdgeInsets.symmetric(horizontal: 22),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
@@ -289,7 +289,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   Future<CropAspectRatio?> selectImageRatio() {
     return showModalBottomSheet<CropAspectRatio>(
       context: context,
-      backgroundColor: const Color(0xFF10172A),
+      backgroundColor: const Color(0xFF0B113A),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -641,10 +641,10 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '🤗 토닥토닥 $currentTodakCount개',
+            '토닥토닥 $currentTodakCount개',
             style: const TextStyle(
               color: Color(0xFFFFDCA8),
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -828,9 +828,9 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         widget.letter.ownerUid == FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF10172A),
+      backgroundColor: const Color(0xFF0B113A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10172A),
+        backgroundColor: const Color(0xFF0B113A),
         foregroundColor: Colors.white,
         title: const Text('무지개별 편지'),
         actions: [

@@ -41,7 +41,7 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
     final CropAspectRatio? selectedRatio =
         await showModalBottomSheet<CropAspectRatio>(
           context: context,
-          backgroundColor: const Color(0xFF10172A),
+          backgroundColor: const Color(0xFF0B113A),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -229,9 +229,9 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF10172A),
+      backgroundColor: const Color(0xFF0B113A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10172A),
+        backgroundColor: const Color(0xFF0B113A),
         foregroundColor: Colors.white,
         title: const Text('추억 남기기'),
       ),
@@ -246,7 +246,7 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
           const SizedBox(height: 16),
           _InputField(
             controller: catNameController,
-            label: '아이 이름',
+            label: '고양이 이름',
             hintText: '가을이',
           ),
           const SizedBox(height: 16),

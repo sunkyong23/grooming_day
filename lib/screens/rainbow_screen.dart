@@ -162,7 +162,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
     if (myLetters.isEmpty) {
       return const _EmptyRainbowTab(
         title: '아직 쓴 편지가 없어요',
-        subtitle: '아이에게 전하고 싶은 마음을 남겨보세요.',
+        subtitle: '전하고 싶은 마음을 남겨보세요.',
       );
     }
 
@@ -270,11 +270,11 @@ class _RainbowScreenState extends State<RainbowScreen> {
           ),
           Positioned(
             left: 45,
-            top: 160,
-            width: 230,
+            top: 120,
+            width: 400,
             child: AnimatedOpacity(
               opacity: showMessage ? 1 : 0,
-              duration: const Duration(milliseconds: 5000),
+              duration: const Duration(milliseconds: 4000),
               curve: Curves.easeOut,
               child: Text(
                 selectedMessage,
@@ -316,8 +316,8 @@ class _RainbowScreenState extends State<RainbowScreen> {
           children: [
             _buildHeader(),
             const TabBar(
-              indicatorColor: Color(0xFFFFB6D5),
-              labelColor: Color(0xFFFFB6D5),
+              indicatorColor: Color(0xFFFFE1A8),
+              labelColor: Color(0xFFFFE1A8),
               unselectedLabelColor: Color(0xFF9EA3C7),
               labelStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               unselectedLabelStyle: TextStyle(
@@ -412,7 +412,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                       textAlign: TextAlign.left,
                       style: const TextStyle(
                         color: Color(0xFFE8C99C),
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         height: 1.1,
                       ),
@@ -433,7 +433,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                       textAlign: TextAlign.left,
                       style: const TextStyle(
                         color: Color(0xFFB8A98D),
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -516,8 +516,8 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                 Text(
                   '토닥토닥 $todakCount',
                   style: const TextStyle(
-                    color: Color(0xFF7D5FA0),
-                    fontSize: 13,
+                    color: Color.fromARGB(255, 186, 162, 213),
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

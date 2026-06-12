@@ -111,7 +111,7 @@ class AdminUserReportDetailScreen extends StatelessWidget {
     final reporterUid = reportData['reporterUid'] as String? ?? '';
     final reporterUserId = reportData['reporterUserId'] as String? ?? '';
     final reason = reportData['reason'] as String? ?? '';
-    final description = reportData['description'] as String? ?? '';
+    final description = reportData['detail'] as String? ?? '';
     final status = reportData['status'] as String? ?? 'pending';
     final createdAt = reportData['createdAt'] as Timestamp?;
 
@@ -139,7 +139,11 @@ class AdminUserReportDetailScreen extends StatelessWidget {
               _row('상세 내용', description.isEmpty ? '없음' : description),
               _row(
                 '신고자',
-                reporterUserId.isEmpty ? '알 수 없음' : '@$reporterUserId',
+                reporterUserId.isNotEmpty
+                    ? '@$reporterUserId'
+                    : reporterUid.isNotEmpty
+                    ? '@$reporterUid'
+                    : '알 수 없음',
               ),
               _row('신고자 UID', reporterUid.isEmpty ? '없음' : reporterUid),
               _row('신고일', formatDate(createdAt)),
