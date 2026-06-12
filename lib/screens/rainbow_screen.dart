@@ -5,6 +5,8 @@ import '../services/rainbow_service.dart';
 import 'create_rainbow_letter_screen.dart';
 import 'rainbow_letter_detail_screen.dart';
 
+import '../services/block_service.dart';
+
 class RainbowScreen extends StatefulWidget {
   const RainbowScreen({super.key});
 
@@ -75,6 +77,12 @@ class _RainbowScreenState extends State<RainbowScreen> {
     final loadedMyLetters = mySnapshot.docs
         .map((doc) => RainbowLetter.fromDoc(doc))
         .toList();
+
+    final blockedUids = await BlockService.loadBlockedUserUids();
+
+    loadedLetters.removeWhere(
+      (letter) => blockedUids.contains(letter.ownerUid),
+    );
 
     if (!mounted) return;
 
@@ -514,7 +522,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '토닥토닥 $todakCount',
+                  todakCount == 0 ? '토닥토닥' : '토닥토닥 $todakCount개',
                   style: const TextStyle(
                     color: Color.fromARGB(255, 186, 162, 213),
                     fontSize: 11,

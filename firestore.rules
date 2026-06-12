@@ -185,50 +185,81 @@ service cloud.firestore {
       }
     }
 
-    match /rainbowLetters/{letterId} {
-      allow read: if isSignedIn()
-        && resource.data.isDeleted == false
+   match /rainbowLetters/{letterId} {
+  allow read: if isSignedIn()
+    && (
+      isAdmin()
+      ||
+      (
+        resource.data.isDeleted == false
         && (
           resource.data.isPublic == true
           || resource.data.ownerUid == request.auth.uid
-        );
+        )
+      )
+    );
 
-      allow create: if isSignedIn()
-        && request.resource.data.ownerUid == request.auth.uid;
+  allow create: if isSignedIn()
+    && request.resource.data.ownerUid == request.auth.uid;
 
-      allow update: if isSignedIn()
-        && (
-          resource.data.ownerUid == request.auth.uid
-          ||
-          (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              'todakCount'
-            ])
-            && request.resource.data.diff(resource.data).removedKeys().hasOnly([])
-          )
-        );
+  allow update: if isSignedIn()
+    && (
+      resource.data.ownerUid == request.auth.uid
+      ||
+      (
+        isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'isHidden',
+          'updatedAt'
+        ])
+        && request.resource.data.diff(resource.data).removedKeys().hasOnly([])
+      )
+      ||
+      (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'todakCount'
+        ])
+        && request.resource.data.diff(resource.data).removedKeys().hasOnly([])
+      )
+    );
 
-      allow delete: if false;
+  allow delete: if false;
 
-      match /todakComments/{commentId} {
-        allow read: if isSignedIn();
+  match /todakComments/{commentId} {
+    allow read: if isSignedIn()
+      && (
+        isAdmin()
+        || get(/databases/$(database)/documents/rainbowLetters/$(letterId)).data.isDeleted == false
+      );
 
-        allow create: if isSignedIn()
-          && request.resource.data.writerUid == request.auth.uid;
+    allow create: if isSignedIn()
+      && request.resource.data.writerUid == request.auth.uid;
 
-        allow update: if isSignedIn()
-          && resource.data.writerUid == request.auth.uid
+    allow update: if isSignedIn()
+      && (
+        (
+          resource.data.writerUid == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'content',
             'isDeleted',
             'updatedAt'
           ])
-          && request.resource.data.diff(resource.data).removedKeys().hasOnly([]);
+          && request.resource.data.diff(resource.data).removedKeys().hasOnly([])
+        )
+        ||
+        (
+          isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'isHidden',
+            'updatedAt'
+          ])
+          && request.resource.data.diff(resource.data).removedKeys().hasOnly([])
+        )
+      );
 
-        allow delete: if false;
-      }
-    }
-
+    allow delete: if false;
+  }
+}
     match /notices/{noticeId} {
       allow read: if isSignedIn();
       allow write: if false;

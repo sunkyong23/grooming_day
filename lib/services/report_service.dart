@@ -8,6 +8,8 @@ class ReportService {
     required String targetOwnerUid,
     required String reason,
     String? postId,
+    String? letterId,
+    String? commentId,
     String description = '',
   }) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -17,6 +19,15 @@ class ReportService {
     }
 
     final resolvedPostId = postId ?? (targetType == 'post' ? targetId : null);
+
+    final resolvedLetterId =
+        letterId ?? (targetType == 'rainbowLetter' ? targetId : null);
+
+    final resolvedCommentId =
+        commentId ??
+        (targetType == 'review' || targetType == 'todakComment'
+            ? targetId
+            : null);
 
     final existingReport = await FirebaseFirestore.instance
         .collection('reports')
@@ -47,6 +58,8 @@ class ReportService {
       'targetType': targetType,
       'targetId': targetId,
       'postId': resolvedPostId,
+      'letterId': resolvedLetterId,
+      'commentId': resolvedCommentId,
       'targetOwnerUid': targetOwnerUid,
 
       'reason': reason,

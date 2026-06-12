@@ -12,6 +12,8 @@ import '../models/todak_comment.dart';
 import '../services/rainbow_service.dart';
 import '../services/report_service.dart';
 
+import '../services/block_service.dart';
+
 class RainbowLetterDetailScreen extends StatefulWidget {
   final RainbowLetter letter;
 
@@ -65,6 +67,12 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
     final loadedComments = snapshot.docs
         .map((doc) => TodakComment.fromDoc(doc))
         .toList();
+
+    final blockedUids = await BlockService.loadBlockedUserUids();
+
+    loadedComments.removeWhere(
+      (comment) => blockedUids.contains(comment.writerUid),
+    );
 
     if (!mounted) return;
 
@@ -425,6 +433,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         targetId: widget.letter.id,
         targetOwnerUid: widget.letter.ownerUid,
         reason: '무지개별 편지 신고',
+        letterId: widget.letter.id,
       );
 
       if (!mounted) return;
@@ -445,6 +454,36 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
     }
   }
 
+  Future<void> blockLetterOwner() async {
+    await BlockService.blockUser(
+      blockedUid: widget.letter.ownerUid,
+      blockedUserId: widget.letter.ownerUserId,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('작성자를 차단했어요.')));
+
+    Navigator.pop(context, true);
+  }
+
+  Future<void> blockTodakWriter(TodakComment comment) async {
+    await BlockService.blockUser(
+      blockedUid: comment.writerUid,
+      blockedUserId: comment.writerUserId,
+    );
+
+    await loadComments();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('작성자를 차단했어요.')));
+  }
+
   Future<void> reportTodakComment(TodakComment comment) async {
     try {
       await ReportService.createReport(
@@ -452,6 +491,8 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         targetId: comment.id,
         targetOwnerUid: comment.writerUid,
         reason: '토닥토닥 신고',
+        letterId: widget.letter.id,
+        commentId: comment.id,
       );
 
       if (!mounted) return;
@@ -641,10 +682,10 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '토닥토닥 $currentTodakCount개',
+            currentTodakCount == 0 ? '토닥토닥' : '토닥토닥 $currentTodakCount개',
             style: const TextStyle(
               color: Color(0xFFFFDCA8),
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -728,6 +769,8 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                                 await deleteTodakComment(comment);
                               } else if (value == 'report') {
                                 await reportTodakComment(comment);
+                              } else if (value == 'block') {
+                                await blockTodakWriter(comment);
                               }
                             },
                             itemBuilder: (context) {
@@ -748,6 +791,10 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                                 PopupMenuItem(
                                   value: 'report',
                                   child: Text('신고'),
+                                ),
+                                PopupMenuItem(
+                                  value: 'block',
+                                  child: Text('작성자 차단'),
                                 ),
                               ];
                             },
@@ -844,6 +891,8 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                 await showDeleteDialog();
               } else if (value == 'report') {
                 await showReportDialog();
+              } else if (value == 'block') {
+                await blockLetterOwner();
               }
             },
             itemBuilder: (context) {
@@ -855,7 +904,10 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                 ];
               }
 
-              return const [PopupMenuItem(value: 'report', child: Text('신고'))];
+              return const [
+                PopupMenuItem(value: 'report', child: Text('신고')),
+                PopupMenuItem(value: 'block', child: Text('작성자 차단')),
+              ];
             },
           ),
         ],

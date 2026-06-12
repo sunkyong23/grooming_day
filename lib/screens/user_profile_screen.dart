@@ -188,10 +188,12 @@ class UserProfileScreen extends StatelessWidget {
               onSelected: (value) async {
                 if (value == 'report') {
                   await showUserReportDialog(context);
+                  return;
                 }
 
                 if (value == 'block') {
                   await showBlockDialog(context);
+                  return;
                 }
               },
               itemBuilder: (_) => const [

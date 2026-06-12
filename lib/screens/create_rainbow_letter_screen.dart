@@ -233,76 +233,46 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
   Widget buildVisibilitySelector() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '공개 범위',
-              style: TextStyle(
-                color: Color(0xFFFFDCA8),
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '공개 범위',
+            style: TextStyle(
+              color: Color(0xFFFFDCA8),
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
             ),
-            const SizedBox(height: 6),
-            RadioListTile<bool>(
-              value: true,
-              groupValue: isPublic,
-              onChanged: (value) {
-                setState(() {
-                  isPublic = value ?? true;
-                });
-              },
-              activeColor: const Color(0xFFFFDCA8),
-              contentPadding: EdgeInsets.zero,
-              tileColor: Colors.transparent,
-              selectedTileColor: Colors.transparent,
-              title: const Text(
-                '무지개별 전체 공개',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: const Text(
-                '다른 집사들도 이 편지를 볼 수 있어요.',
-                style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 12),
-              ),
-            ),
-            RadioListTile<bool>(
-              value: false,
-              groupValue: isPublic,
-              onChanged: (value) {
-                setState(() {
-                  isPublic = value ?? false;
-                });
-              },
-              activeColor: const Color(0xFFFFDCA8),
-              contentPadding: EdgeInsets.zero,
-              tileColor: Colors.transparent,
-              selectedTileColor: Colors.transparent,
-              title: const Text(
-                '내 편지함에만 보관',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: const Text(
-                '나만 볼 수 있는 편지로 저장돼요.',
-                style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 12),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          _VisibilityOption(
+            isSelected: isPublic,
+            title: '무지개별 전체 공개',
+            subtitle: '다른 집사들도 이 편지를 볼 수 있어요.',
+            onTap: () {
+              setState(() {
+                isPublic = true;
+              });
+            },
+          ),
+          const SizedBox(height: 10),
+          _VisibilityOption(
+            isSelected: !isPublic,
+            title: '내 편지함에만 보관',
+            subtitle: '나만 볼 수 있는 편지로 저장돼요.',
+            onTap: () {
+              setState(() {
+                isPublic = false;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -361,6 +331,78 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _VisibilityOption extends StatelessWidget {
+  final bool isSelected;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _VisibilityOption({
+    required this.isSelected,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFFFFDCA8).withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFFFDCA8)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_unchecked,
+              color: const Color(0xFFFFDCA8),
+              size: 21,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFFB8BDD8),
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
