@@ -290,6 +290,14 @@ service cloud.firestore {
       allow read: if isSignedIn();
     }
 
+    match /{path=**}/reviews/{reviewId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/todakComments/{commentId} {
+      allow read: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
