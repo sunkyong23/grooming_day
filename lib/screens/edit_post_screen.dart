@@ -15,8 +15,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 class EditPostScreen extends StatefulWidget {
   final Post post;
+  final String returnTarget;
 
-  const EditPostScreen({super.key, required this.post});
+  const EditPostScreen({
+    super.key,
+    required this.post,
+    this.returnTarget = 'home',
+  });
 
   @override
   State<EditPostScreen> createState() => _EditPostScreenState();
@@ -302,10 +307,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                       );
 
                       if (!context.mounted) return;
-                      Navigator.pop(
-                        context,
-                        selectedTags.isEmpty ? 'album' : 'home',
-                      );
+                      Navigator.pop(context, widget.returnTarget);
                     } finally {
                       if (mounted) {
                         setState(() {

@@ -148,29 +148,47 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: TextField(
               controller: reviewController,
               minLines: 1,
-              maxLines: 3,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF5A372F)),
+              maxLines: 1,
+              textAlignVertical: TextAlignVertical.center,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF5A372F)),
               decoration: InputDecoration(
                 hintText: '감상평을 남겨보세요',
                 hintStyle: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 13,
                   color: Color(0xFFC7ADA4),
                 ),
                 filled: true,
-                fillColor: const Color(0xFFFFF7F1),
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 9,
+                  horizontal: 16,
+                  vertical: 10,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    color: Color(0xFFF3E3DA),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFF3E3DA),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE8A58A),
+                    width: 1.4,
+                  ),
                 ),
               ),
             ),
@@ -179,11 +197,13 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
           GestureDetector(
             onTap: isSubmittingReview ? null : submitReview,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isSubmittingReview
                     ? const Color(0xFFE7D4CB)
-                    : const Color(0xFFFFB199),
+                    : const Color(0xFFFFC4A3),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: isSubmittingReview
@@ -195,9 +215,9 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                   : const Text(
                       '등록',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: Color(0xFF7A4B3A),
                       ),
                     ),
             ),
@@ -244,29 +264,100 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('감상평 수정'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            maxLength: 200,
-            decoration: const InputDecoration(hintText: '감상평을 수정해 주세요.'),
+          backgroundColor: const Color(0xFFFFF7F1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            '감상평 수정',
+            style: TextStyle(
+              color: Color(0xFF5C4033),
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+            ),
+          ),
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    cursorColor: const Color(0xFF8A5A44),
+                    maxLines: 2,
+                    maxLength: 200,
+                    style: const TextStyle(
+                      color: Color(0xFF5A372F),
+                      fontSize: 15,
+                    ),
+                    onChanged: (_) {
+                      setDialogState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: '감상평을 수정해 주세요.',
+                      counterText: '',
+                      hintStyle: const TextStyle(color: Color(0xFFC9B8AE)),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE8A58A),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${controller.text.length}/200',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A756C),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A756C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
                 final content = controller.text.trim();
-
                 if (content.isEmpty) return;
-
                 Navigator.pop(dialogContext, content);
               },
-              child: const Text('수정'),
+              child: const Text(
+                '수정',
+                style: TextStyle(
+                  color: Color(0xFFE8A58A),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         );
@@ -294,23 +385,75 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('감상평 삭제'),
-          content: const Text('감상평을 삭제할까요?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text('취소'),
+        return Dialog(
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '감상평 삭제',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2D1B16),
+                  ),
+                ),
+
+                const SizedBox(height: 28),
+
+                const Text(
+                  '감상평을 삭제할까요?\n삭제 후에는 복구할 수 없어요.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.6,
+                    color: Color(0xFF5C4033),
+                  ),
+                ),
+
+                const SizedBox(height: 36),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext, false);
+                      },
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          color: Color(0xFF8A756C),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(dialogContext, true);
+                      },
+                      child: const Text(
+                        '삭제',
+                        style: TextStyle(
+                          color: Color(0xFFFF6B6B),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('삭제'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -349,79 +492,151 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
         final currentUid = FirebaseAuth.instance.currentUser?.uid;
         final isMyReview = review.writerUid == currentUid;
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: review.content,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF5A372F),
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: review.content,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF5A372F),
+                                ),
+                              ),
+                              TextSpan(
+                                text: '  -${review.writerUserId}-',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFFBFA79F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          review.updatedAt != null
+                              ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
+                              : formatDate(review.createdAt ?? DateTime.now()),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFBFA79F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(
+                    width: 24,
+                    height: 22,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: const Color(0xFFFFF7F1),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
                             ),
                           ),
-                          TextSpan(
-                            text: '  -${review.writerUserId}-',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFFBFA79F),
-                            ),
-                          ),
-                        ],
+                          builder: (bottomSheetContext) {
+                            return SafeArea(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  14,
+                                  20,
+                                  24,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isMyReview) ...[
+                                      ListTile(
+                                        leading: const Icon(
+                                          Icons.edit_outlined,
+                                          color: Color(0xFF8A756C),
+                                        ),
+                                        title: const Text(
+                                          '감상평 수정',
+                                          style: TextStyle(
+                                            color: Color(0xFF5C4033),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          Navigator.pop(bottomSheetContext);
+                                          showEditReviewDialog(review);
+                                        },
+                                      ),
+                                      ListTile(
+                                        leading: const Icon(
+                                          Icons.delete_outline,
+                                          color: Color(0xFFFF7F7F),
+                                        ),
+                                        title: const Text(
+                                          '감상평 삭제',
+                                          style: TextStyle(
+                                            color: Color(0xFFFF7F7F),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          Navigator.pop(bottomSheetContext);
+                                          deleteReview(review);
+                                        },
+                                      ),
+                                    ] else ...[
+                                      ListTile(
+                                        leading: const Icon(
+                                          Icons.flag_outlined,
+                                          color: Color(0xFFFF7F7F),
+                                        ),
+                                        title: const Text(
+                                          '감상평 신고',
+                                          style: TextStyle(
+                                            color: Color(0xFFFF7F7F),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          Navigator.pop(bottomSheetContext);
+                                          reportReview(review);
+                                        },
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: const Icon(
+                        Icons.more_vert,
+                        size: 16,
+                        color: Color(0xFFC0A39A),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      review.updatedAt != null
-                          ? '${formatDate(review.createdAt ?? DateTime.now())} · 수정됨'
-                          : formatDate(review.createdAt ?? DateTime.now()),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFFBFA79F),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
-              PopupMenuButton<String>(
-                icon: const Icon(
-                  Icons.more_vert,
-                  size: 16,
-                  color: Color(0xFFC0A39A),
-                ),
-                onSelected: (value) async {
-                  if (value == 'edit') {
-                    await showEditReviewDialog(review);
-                  } else if (value == 'delete') {
-                    await deleteReview(review);
-                  } else if (value == 'report') {
-                    await reportReview(review);
-                  }
-                },
-                itemBuilder: (context) {
-                  if (isMyReview) {
-                    return const [
-                      PopupMenuItem(value: 'edit', child: Text('수정')),
-                      PopupMenuItem(value: 'delete', child: Text('삭제')),
-                    ];
-                  }
-
-                  return const [
-                    PopupMenuItem(value: 'report', child: Text('신고')),
-                  ];
-                },
-              ),
-            ],
-          ),
+            Container(height: 0.5, color: const Color(0xFFF1E6E1)),
+          ],
         );
       }).toList(),
     );
@@ -572,7 +787,7 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
 
                     const Text(
                       '감상평',

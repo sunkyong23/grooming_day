@@ -117,7 +117,7 @@ class _CatPostCardState extends State<CatPostCard> {
             style: TextStyle(
               color: Color(0xFF5C4033),
               fontWeight: FontWeight.w900,
-              fontSize: 22,
+              fontSize: 18,
             ),
           ),
 
@@ -266,7 +266,7 @@ class _CatPostCardState extends State<CatPostCard> {
           title: const Text(
             '감상평 삭제',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
               color: Color(0xFF5A372F),
             ),
@@ -951,7 +951,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 5,
+                                      vertical: 4,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -1128,7 +1128,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                           ],
                                         ),
 
-                                        const SizedBox(height: 3),
+                                        const SizedBox(height: 1),
 
                                         Text(
                                           review.createdAt == null
