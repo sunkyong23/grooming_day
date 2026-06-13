@@ -341,50 +341,169 @@ class _CatPostCardState extends State<CatPostCard> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            Future<void> showReasonBottomSheet() async {
+              final reason = await showModalBottomSheet<String>(
+                context: this.context,
+                useRootNavigator: true,
+                backgroundColor: const Color(0xFFFFF8F2),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                builder: (sheetContext) {
+                  final reasons = ['불쾌한 내용', '스팸/홍보', '비방/욕설', '개인정보 노출', '기타'];
+
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 18),
+
+                          ...reasons.map((reason) {
+                            final isSelected = selectedReason == reason;
+
+                            return ListTile(
+                              dense: true,
+                              visualDensity: const VisualDensity(vertical: -2),
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                reason,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: const Color(0xFF5C4033),
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Color(0xFFE8A58A),
+                                    )
+                                  : null,
+                              onTap: () {
+                                Navigator.pop(sheetContext, reason);
+                              },
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+
+              if (reason == null) return;
+              if (!mounted) return;
+
+              setDialogState(() {
+                selectedReason = reason;
+              });
+            }
+
             return AlertDialog(
-              title: const Text('감상평 신고'),
+              backgroundColor: const Color(0xFFFFF8F2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+              title: const Text(
+                '감상평 신고',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF5C4033),
+                ),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedReason,
-                    decoration: const InputDecoration(labelText: '신고 사유'),
-                    items: const [
-                      DropdownMenuItem(value: '불쾌한 내용', child: Text('불쾌한 내용')),
-                      DropdownMenuItem(value: '스팸/홍보', child: Text('스팸/홍보')),
-                      DropdownMenuItem(value: '비방/욕설', child: Text('비방/욕설')),
-                      DropdownMenuItem(
-                        value: '개인정보 노출',
-                        child: Text('개인정보 노출'),
-                      ),
-                      DropdownMenuItem(value: '기타', child: Text('기타')),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
+                  const SizedBox(height: 8),
 
-                      setDialogState(() {
-                        selectedReason = value;
-                      });
-                    },
+                  GestureDetector(
+                    onTap: showReasonBottomSheet,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 15,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF3E3DA)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedReason,
+                              style: const TextStyle(
+                                color: Color(0xFF5C4033),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF8A756C),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 16),
+
                   TextField(
                     controller: descriptionController,
+                    cursorColor: const Color(0xFF8A5A44),
                     maxLines: 3,
                     maxLength: 200,
-                    decoration: const InputDecoration(
-                      labelText: '상세 내용',
-                      hintText: '필요하면 신고 내용을 적어주세요.',
+                    style: const TextStyle(
+                      color: Color(0xFF5A372F),
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '신고 내용을 자세히 적어주세요.',
+                      hintStyle: const TextStyle(color: Color(0xFFC9B8AE)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE8A58A),
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
+              actionsPadding: const EdgeInsets.only(right: 20, bottom: 12),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(dialogContext, false);
                   },
-                  child: const Text('취소'),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Color(0xFF8A756C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -392,7 +511,10 @@ class _CatPostCardState extends State<CatPostCard> {
                   },
                   child: const Text(
                     '신고',
-                    style: TextStyle(color: Colors.redAccent),
+                    style: TextStyle(
+                      color: Color(0xFFFF7A7A),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
