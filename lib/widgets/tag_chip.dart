@@ -13,10 +13,6 @@ class TagChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: isSelected ? const Color(0xFFFFE4D6) : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isSelected ? const Color(0xFFE8A58C) : Colors.transparent,
-          width: 1,
-        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
