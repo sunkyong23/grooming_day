@@ -212,18 +212,46 @@ class AlbumScreenState extends State<AlbumScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('게시글 삭제'),
-        content: Text(
-          '${selectedPostIds.length}개의 게시글을 삭제할까요?\n\n삭제 후에는 되돌릴 수 없어요.',
+        backgroundColor: const Color(0xFFFFF8F2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: const Text(
+          '게시글 삭제',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF5C4033),
+          ),
         ),
+        content: Text(
+          '${selectedPostIds.length}개의 게시글을 삭제할까요?\n'
+          '삭제 후에는 되돌릴 수 없어요.',
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.45,
+            color: Color(0xFF5A372F),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.only(right: 20, bottom: 12),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('취소'),
+            child: const Text(
+              '취소',
+              style: TextStyle(
+                color: Color(0xFF8A756C),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('삭제', style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              '삭제',
+              style: TextStyle(
+                color: Color(0xFFFF7A7A),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -552,20 +580,20 @@ class AlbumScreenState extends State<AlbumScreen> {
           }
         },
         child: Container(
-          height: 38,
+          height: 40,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFFD7B8) : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
+            color: isSelected ? const Color(0xFFFBE5D8) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
               color: isSelected
-                  ? const Color(0xFF6F3F2E)
-                  : const Color(0xFFB08678),
+                  ? const Color(0xFF3D241E)
+                  : const Color(0xFF3D241E),
             ),
           ),
         ),
@@ -576,21 +604,18 @@ class AlbumScreenState extends State<AlbumScreen> {
   Widget buildAlbumTabs() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
+      child: Container(
         width: double.infinity,
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFEFE6),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            children: [
-              buildAlbumTab(label: '내 앨범', index: 0),
-              const SizedBox(width: 4),
-              buildAlbumTab(label: '꾹꾹 앨범', index: 1),
-            ],
-          ),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            buildAlbumTab(label: '내 앨범', index: 0),
+            buildAlbumTab(label: '꾹꾹 앨범', index: 1),
+          ],
         ),
       ),
     );
@@ -617,7 +642,7 @@ class AlbumScreenState extends State<AlbumScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
             color: isSelected
                 ? const Color(0xFF6F3F2E)
@@ -631,7 +656,7 @@ class AlbumScreenState extends State<AlbumScreen> {
   Widget buildCatFilterArea() {
     if (isLoadingCats) {
       return const SizedBox(
-        height: 38,
+        height: 34,
         child: Center(
           child: SizedBox(
             width: 16,
@@ -691,7 +716,7 @@ class AlbumScreenState extends State<AlbumScreen> {
 
   Widget buildViewToggle() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 2, 20, 2),
       child: Row(
         children: [
           buildSortButton(),
@@ -835,12 +860,12 @@ class AlbumScreenState extends State<AlbumScreen> {
 
     return GridView.builder(
       controller: albumScrollController,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       itemCount: posts.length + (shouldShowLoadingFooter ? 1 : 0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 6,
-        mainAxisSpacing: 6,
+        crossAxisSpacing: 4,
+        mainAxisSpacing: 4,
         childAspectRatio: 1,
       ),
       itemBuilder: (context, index) {
@@ -1120,8 +1145,22 @@ class AlbumScreenState extends State<AlbumScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
         title: isSelectionMode
-            ? Text('${selectedPostIds.length}개 선택')
-            : const Text('나의 앨범'),
+            ? Text(
+                '${selectedPostIds.length}개 선택',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF5C4033),
+                ),
+              )
+            : const Text(
+                '나의 앨범',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
         actions: [
           if (selectedAlbumTab == 0 && isGridView)
             isSelectionMode
@@ -1135,7 +1174,13 @@ class AlbumScreenState extends State<AlbumScreen> {
                             selectedPostIds.clear();
                           });
                         },
-                        child: const Text('취소'),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(
+                            color: Color(0xFF8A756C),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                       TextButton(
                         onPressed: selectedPostIds.isEmpty
@@ -1143,7 +1188,10 @@ class AlbumScreenState extends State<AlbumScreen> {
                             : deleteSelectedPosts,
                         child: const Text(
                           '삭제',
-                          style: TextStyle(color: Colors.redAccent),
+                          style: TextStyle(
+                            color: Color(0xFFFF7A7A),
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ],
@@ -1155,13 +1203,19 @@ class AlbumScreenState extends State<AlbumScreen> {
                         selectedPostIds.clear();
                       });
                     },
-                    child: const Text('선택'),
+                    child: const Text(
+                      '선택',
+                      style: TextStyle(
+                        color: Color(0xFF8A5A44),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
         ],
       ),
       body: Column(
         children: [
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           buildAlbumTabs(),
           const SizedBox(height: 14),
           if (selectedAlbumTab == 0) buildCatFilterArea(),
