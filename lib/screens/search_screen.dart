@@ -289,7 +289,7 @@ class _SearchTabButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFFE2C6) : Colors.transparent,
+            color: isSelected ? const Color(0xFFFBE5D8) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -325,8 +325,8 @@ class _ResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -334,14 +334,14 @@ class _ResultCard extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 28,
+            radius: 22,
             backgroundColor: const Color(0xFFFFE2C6),
             backgroundImage: imageUrl.isNotEmpty
                 ? NetworkImage(imageUrl)
                 : null,
             child: imageUrl.isEmpty
                 ? fallbackAsset != null
-                      ? Image.asset(fallbackAsset!, width: 34, height: 34)
+                      ? Image.asset(fallbackAsset!, width: 28, height: 28)
                       : Icon(fallbackIcon ?? Icons.pets)
                 : null,
           ),
@@ -362,7 +362,7 @@ class _ResultCard extends StatelessWidget {
                 ),
                 if (subtitle.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       subtitle,
                       maxLines: 1,
