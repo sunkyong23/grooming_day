@@ -56,11 +56,23 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
                   leading: CircleAvatar(
                     radius: 18,
+                    backgroundColor: const Color(0xFFFFE2C6),
                     backgroundImage: cat.profileImageUrl.isNotEmpty
                         ? NetworkImage(cat.profileImageUrl)
                         : null,
                     child: cat.profileImageUrl.isEmpty
-                        ? const Icon(Icons.pets)
+                        ? (cat.isVirtualCat
+                              ? Padding(
+                                  padding: const EdgeInsets.all(5),
+                                  child: Image.asset(
+                                    'assets/icons/today_cat.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.pets,
+                                  color: Color(0xFF8A5A44),
+                                ))
                         : null,
                   ),
 
