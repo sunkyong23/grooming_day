@@ -397,8 +397,8 @@ class _UserResultCard extends StatelessWidget {
     final profileImageUrl = user['profileImageUrl'] ?? '';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -409,13 +409,17 @@ class _UserResultCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                radius: 28,
+                radius: 20,
                 backgroundColor: const Color(0xFFFFE2C6),
                 backgroundImage: profileImageUrl.isNotEmpty
                     ? NetworkImage(profileImageUrl)
                     : null,
                 child: profileImageUrl.isEmpty
-                    ? const Icon(Icons.person_rounded)
+                    ? const Icon(
+                        Icons.person_rounded,
+                        size: 24,
+                        color: Color(0xFF7B5A50),
+                      )
                     : null,
               ),
 
@@ -433,12 +437,13 @@ class _UserResultCard extends StatelessWidget {
                         color: Color(0xFF3D241E),
                       ),
                     ),
+
                     if (bio.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 2),
                         child: Text(
                           bio,
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 13,
@@ -449,22 +454,24 @@ class _UserResultCard extends StatelessWidget {
                   ],
                 ),
               ),
+
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
 
           FutureBuilder<List<CatProfile>>(
             future: CatService.loadPublicCatsByOwnerUid(uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(
-                  height: 36,
+                  height: 24,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
@@ -477,7 +484,7 @@ class _UserResultCard extends StatelessWidget {
                 return const Text(
                   '공개된 고양이 프로필이 없어요 🐾',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Color(0xFFB08678),
                     fontWeight: FontWeight.w600,
                   ),
@@ -485,8 +492,8 @@ class _UserResultCard extends StatelessWidget {
               }
 
               return Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: cats.map((cat) {
                   return GestureDetector(
                     onTap: () {
@@ -500,18 +507,17 @@ class _UserResultCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 7,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFF3E7),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: const Color(0xFFFFD7B8)),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         cat.name,
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF4A2B22),
                         ),
                       ),

@@ -205,8 +205,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   isFavoriteCat
                       ? 'assets/icons/paw_fill.png'
                       : 'assets/icons/paw_outline.png',
-                  width: 34,
-                  height: 34,
+                  width: 40,
+                  height: 40,
                 ),
               ),
             ),
@@ -285,7 +285,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
           children: [
             Center(
               child: CircleAvatar(
-                radius: 60,
+                radius: widget.cat.isVirtualCat ? 54 : 54,
                 backgroundColor: const Color(0xFFFFE2C6),
                 backgroundImage:
                     !widget.cat.isVirtualCat &&
@@ -294,7 +294,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     : null,
                 child: widget.cat.isVirtualCat
                     ? Padding(
-                        padding: const EdgeInsets.all(18),
+                        padding: const EdgeInsets.all(16),
                         child: Image.asset(
                           'assets/icons/today_cat.png',
                           fit: BoxFit.contain,
@@ -311,9 +311,10 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
             Center(
               child: Text(
                 widget.cat.name,
-                style: const TextStyle(
-                  fontSize: 28,
+                style: TextStyle(
+                  fontSize: 25,
                   fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1F1A24),
                 ),
               ),
             ),
@@ -333,26 +334,15 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
             ],
             const SizedBox(height: 8),
 
-            if (!widget.cat.isVirtualCat) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  getCatAge(widget.cat.birthDate),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF8C6A5F),
-                  ),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
 
             if (widget.cat.introduction.isNotEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -379,18 +369,17 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   children: widget.cat.personalityTags.map((tag) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 4,
+                        horizontal: 8,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFE9DE),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFF5A88B)),
                       ),
                       child: Text(
                         tag,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF8C6A5F),
                         ),
@@ -402,20 +391,21 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
               const SizedBox(height: 20),
             ],
 
-            if (!widget.cat.isVirtualCat) ...[
-              _infoTile(
-                '품종',
-                widget.cat.breed.isEmpty ? '미입력' : widget.cat.breed,
+            if (!widget.cat.isVirtualCat)
+              _catInfoCard(
+                breed: widget.cat.breed.isEmpty ? '미입력' : widget.cat.breed,
+                gender: widget.cat.gender,
+                birthDate: getBirthDateText(widget.cat.birthDate),
               ),
-              _infoTile('성별', widget.cat.gender),
-              _infoTile('생일', getBirthDateText(widget.cat.birthDate)),
-            ],
-
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
 
             const Text(
               '앨범',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1F1A24),
+              ),
             ),
 
             const SizedBox(height: 12),
@@ -498,26 +488,83 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
     );
   }
 
-  Widget _infoTile(String title, String value) {
+  Widget _catInfoCard({
+    required String breed,
+    required String gender,
+    required String birthDate,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(22),
         ),
-        child: Row(
+        child: Column(
           children: [
-            Text(
-              '$title : ',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+            _catInfoRow(icon: Icons.pets_outlined, title: '품종', value: breed),
+            _catInfoDivider(),
+            _catInfoRow(icon: Icons.male_rounded, title: '성별', value: gender),
+            _catInfoDivider(),
+            _catInfoRow(
+              icon: Icons.calendar_today_outlined,
+              title: '생일',
+              value: birthDate,
             ),
-            Expanded(child: Text(value)),
           ],
         ),
       ),
     );
+  }
+
+  Widget _catInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFF3E7),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: Color(0xFF8A5A44)),
+          ),
+          const SizedBox(width: 14),
+          SizedBox(
+            width: 52,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF4A2B22),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF3D241E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _catInfoDivider() {
+    return Container(height: 0.7, color: const Color(0xFFF1E6E1));
   }
 }

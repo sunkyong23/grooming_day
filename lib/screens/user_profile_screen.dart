@@ -30,49 +30,166 @@ class UserProfileScreen extends StatelessWidget {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            Future<void> showReasonBottomSheet() async {
+              final reason = await showModalBottomSheet<String>(
+                context: dialogContext,
+                backgroundColor: const Color(0xFFFFF8F2),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                builder: (sheetContext) {
+                  final reasons = [
+                    '불쾌한 사용자',
+                    '스팸/홍보',
+                    '비방/욕설',
+                    '개인정보 노출',
+                    '기타',
+                  ];
+
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: reasons.map((reason) {
+                          final isSelected = selectedReason == reason;
+
+                          return ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              reason,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
+                                color: const Color(0xFF5C4033),
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Color(0xFFE8A58A),
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.pop(sheetContext, reason);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                },
+              );
+
+              if (reason == null) return;
+
+              setDialogState(() {
+                selectedReason = reason;
+              });
+            }
+
             return AlertDialog(
-              title: const Text('사용자 신고'),
+              backgroundColor: const Color(0xFFFFF8F2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+              title: const Text(
+                '사용자 신고',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF5C4033),
+                ),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedReason,
-                    decoration: const InputDecoration(labelText: '신고 사유'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: '불쾌한 사용자',
-                        child: Text('불쾌한 사용자'),
+                  GestureDetector(
+                    onTap: showReasonBottomSheet,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 15,
                       ),
-                      DropdownMenuItem(value: '스팸/홍보', child: Text('스팸/홍보')),
-                      DropdownMenuItem(value: '비방/욕설', child: Text('비방/욕설')),
-                      DropdownMenuItem(value: '기타', child: Text('기타')),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-
-                      setDialogState(() {
-                        selectedReason = value;
-                      });
-                    },
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF3E3DA)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedReason,
+                              style: const TextStyle(
+                                color: Color(0xFF5C4033),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF8A756C),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(height: 16),
+
                   TextField(
                     controller: descriptionController,
+                    cursorColor: const Color(0xFF8A5A44),
                     maxLines: 3,
                     maxLength: 200,
-                    decoration: const InputDecoration(
-                      labelText: '상세 내용',
-                      hintText: '필요하면 신고 내용을 적어주세요.',
+                    style: const TextStyle(
+                      color: Color(0xFF5A372F),
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '신고 내용을 자세히 적어주세요.',
+                      hintStyle: const TextStyle(color: Color(0xFFC9B8AE)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      counterStyle: const TextStyle(color: Color(0xFF8A756C)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE8A58A),
+                          width: 2,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
+              actionsPadding: const EdgeInsets.only(right: 20, bottom: 12),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.pop(dialogContext, false);
                   },
-                  child: const Text('취소'),
+                  child: const Text(
+                    '취소',
+                    style: TextStyle(
+                      color: Color(0xFF8A756C),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {
@@ -80,7 +197,10 @@ class UserProfileScreen extends StatelessWidget {
                   },
                   child: const Text(
                     '신고',
-                    style: TextStyle(color: Colors.redAccent),
+                    style: TextStyle(
+                      color: Color(0xFFFF7A7A),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -132,17 +252,41 @@ class UserProfileScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('사용자 차단'),
-          content: Text(
-            '@$userId 사용자를 차단할까요?\n\n'
-            '차단하면 해당 사용자의 게시글과 감상평이 보이지 않게 됩니다.',
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
           ),
+          title: const Text(
+            '사용자 차단',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF5C4033),
+            ),
+          ),
+          content: Text(
+            '@$userId 님을 차단할까요?\n\n'
+            '차단하면 이 사용자의 게시글과 감상평이\n'
+            '더 이상 보이지 않아요.',
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.55,
+              color: Color(0xFF5A372F),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.only(right: 20, bottom: 12),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext, false);
               },
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A756C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -150,7 +294,10 @@ class UserProfileScreen extends StatelessWidget {
               },
               child: const Text(
                 '차단',
-                style: TextStyle(color: Colors.redAccent),
+                style: TextStyle(
+                  color: Color(0xFFFF7A7A),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -183,23 +330,80 @@ class UserProfileScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         actions: [
           if (!isMyProfile)
-            PopupMenuButton<String>(
+            IconButton(
               icon: const Icon(Icons.more_vert, color: Color(0xFF5C4033)),
-              onSelected: (value) async {
-                if (value == 'report') {
-                  await showUserReportDialog(context);
-                  return;
-                }
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: const Color(0xFFFFF8F2),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(28),
+                    ),
+                  ),
+                  builder: (bottomSheetContext) {
+                    return SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(
+                                Icons.flag_outlined,
+                                color: Color(0xFFFF7A7A),
+                              ),
+                              title: const Text(
+                                '사용자 신고',
+                                style: TextStyle(
+                                  color: Color(0xFFFF7A7A),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
 
-                if (value == 'block') {
-                  await showBlockDialog(context);
-                  return;
-                }
+                                await Future.delayed(
+                                  const Duration(milliseconds: 150),
+                                );
+
+                                if (!context.mounted) return;
+
+                                await showUserReportDialog(context);
+                              },
+                            ),
+
+                            ListTile(
+                              leading: const Icon(
+                                Icons.block_outlined,
+                                color: Color(0xFFFF7A7A),
+                              ),
+                              title: const Text(
+                                '사용자 차단',
+                                style: TextStyle(
+                                  color: Color(0xFFFF7A7A),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+
+                                await Future.delayed(
+                                  const Duration(milliseconds: 150),
+                                );
+
+                                if (!context.mounted) return;
+
+                                await showBlockDialog(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'report', child: Text('사용자 신고')),
-                PopupMenuItem(value: 'block', child: Text('사용자 차단')),
-              ],
             ),
         ],
       ),
@@ -244,7 +448,7 @@ class UserProfileScreen extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 '내 고양이',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
               ),
             ),
 
