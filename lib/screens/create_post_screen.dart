@@ -119,30 +119,34 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
     final ratio = await showModalBottomSheet<double>(
       context: context,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       builder: (bottomSheetContext) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const ListTile(
-                title: Text(
-                  '사진 비율 선택',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '사진 비율 선택',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF5C4033),
+                    ),
+                  ),
                 ),
-              ),
-              ListTile(
-                title: const Text('가로형 4:3'),
-                onTap: () => Navigator.pop(bottomSheetContext, 4 / 3),
-              ),
-              ListTile(
-                title: const Text('세로형 4:5'),
-                onTap: () => Navigator.pop(bottomSheetContext, 4 / 5),
-              ),
-              ListTile(
-                title: const Text('정사각형 1:1'),
-                onTap: () => Navigator.pop(bottomSheetContext, 1.0),
-              ),
-            ],
+                const SizedBox(height: 12),
+                _ratioTile(bottomSheetContext, '가로형 4:3', 4 / 3),
+                _ratioTile(bottomSheetContext, '세로형 4:5', 4 / 5),
+                _ratioTile(bottomSheetContext, '정사각형 1:1', 1.0),
+              ],
+            ),
           ),
         );
       },
@@ -175,6 +179,107 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
   }
 
+  Widget _ratioTile(BuildContext context, String title, double ratio) {
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF5C4033),
+        ),
+      ),
+      onTap: () => Navigator.pop(context, ratio),
+    );
+  }
+
+  Future<void> showCatSelectBottomSheet() async {
+    final cat = await showModalBottomSheet<CatProfile>(
+      context: context,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '고양이 선택',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF5C4033),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...catProfiles.map((cat) {
+                  final isSelected = selectedCatProfile?.id == cat.id;
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: const Color(0xFFFFE2C6),
+                      backgroundImage:
+                          !cat.isVirtualCat && cat.profileImageUrl.isNotEmpty
+                          ? NetworkImage(cat.profileImageUrl)
+                          : null,
+                      child: cat.isVirtualCat
+                          ? Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Image.asset(
+                                'assets/icons/today_cat.png',
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          : cat.profileImageUrl.isEmpty
+                          ? const Icon(
+                              Icons.pets,
+                              size: 20,
+                              color: Color(0xFF8A5A44),
+                            )
+                          : null,
+                    ),
+                    title: Text(
+                      cat.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF5C4033),
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFFE8A58A),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(bottomSheetContext, cat),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (cat == null) return;
+
+    setState(() {
+      selectedCatProfile = cat;
+    });
+  }
+
   Future<void> submitPost() async {
     FocusScope.of(context).unfocus();
 
@@ -183,6 +288,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     setState(() {
       isSubmitting = true;
     });
+
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -214,6 +320,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       return;
     }
+
     try {
       if (selectedImage == null) {
         ScaffoldMessenger.of(
@@ -263,14 +370,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   void toggleTag(String tag) {
-    setState(() {
-      if (selectedTags.contains(tag)) {
+    if (selectedTags.contains(tag)) {
+      setState(() {
         selectedTags.remove(tag);
-      } else {
-        if (selectedTags.length < 3) {
-          selectedTags.add(tag);
-        }
-      }
+      });
+      return;
+    }
+
+    if (selectedTags.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('태그는 최대 3개까지 선택할 수 있어요 🐾'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      selectedTags.add(tag);
     });
   }
 
@@ -281,9 +400,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('게시글 작성'),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: const Text(
+          '게시글 작성',
+          style: TextStyle(
+            color: Color(0xFF1F1A24),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -292,21 +420,22 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               GestureDetector(
                 onTap: pickImageFromGallery,
                 child: Container(
-                  constraints: BoxConstraints(
-                    minHeight: selectedImage == null ? 220 : 0,
-                    maxHeight: selectedImage == null ? 260 : double.infinity,
-                  ),
+                  height: selectedImage == null ? 200 : null,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(20),
+                    color: const Color(0xFFFFEFE6),
+                    borderRadius: BorderRadius.circular(22),
                   ),
                   child: selectedImage == null
                       ? const Center(
-                          child: Icon(Icons.add_photo_alternate, size: 60),
+                          child: Icon(
+                            Icons.add_photo_alternate_rounded,
+                            size: 58,
+                            color: Color(0xFF8A5A44),
+                          ),
                         )
                       : ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(22),
                           child: Image.file(
                             selectedImage!,
                             width: double.infinity,
@@ -326,7 +455,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,6 +472,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFE2C6),
+                            foregroundColor: const Color(0xFF5C4033),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
                           onPressed: () async {
                             await Navigator.push(
                               context,
@@ -361,74 +498,126 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 )
               else
-                DropdownButtonFormField<CatProfile>(
-                  initialValue: selectedCatProfile,
-                  decoration: InputDecoration(
-                    labelText: '고양이 선택',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                GestureDetector(
+                  onTap: showCatSelectBottomSheet,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFF3E3DA)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text(
+                          '고양이',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFB08678),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            selectedCatProfile?.name ?? '고양이 선택',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF3D241E),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF8A756C),
+                        ),
+                      ],
                     ),
                   ),
-                  items: catProfiles.map((cat) {
-                    return DropdownMenuItem<CatProfile>(
-                      value: cat,
-                      child: Text(cat.name),
-                    );
-                  }).toList(),
-                  onChanged: (cat) {
-                    setState(() {
-                      selectedCatProfile = cat;
-                    });
-                  },
                 ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               TextField(
                 controller: captionController,
-                maxLines: 3,
+                cursorColor: const Color(0xFF8A5A44),
+                maxLines: 4,
+                style: const TextStyle(color: Color(0xFF5A372F), fontSize: 16),
                 decoration: InputDecoration(
                   hintText: '소중한 순간을 남겨보아요 🐱',
+                  hintStyle: const TextStyle(color: Color(0xFFC9B8AE)),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE8A58A),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
 
-              const Text('태그 선택 (최대 3개)'),
+              const Text(
+                '태그 선택',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: tags.map((tag) {
                   final selected = selectedTags.contains(tag);
 
                   return FilterChip(
+                    visualDensity: const VisualDensity(
+                      horizontal: -2,
+                      vertical: -3,
+                    ),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     label: Text(
                       tag,
                       style: TextStyle(
                         fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+                            ? FontWeight.w800
+                            : FontWeight.w600,
                         color: selected
                             ? const Color(0xFF4A2B22)
-                            : const Color(0xFF8C6A5F),
+                            : const Color(0xFFB69788),
                       ),
                     ),
                     selected: selected,
                     showCheckmark: false,
-                    selectedColor: const Color(0xFFFFE9DE),
+                    selectedColor: const Color(0xFFFBE5D8),
                     backgroundColor: Colors.white,
-                    side: BorderSide(
-                      color: selected
-                          ? const Color(0xFFF5A88B)
-                          : const Color(0xFFE8E1DB),
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     onSelected: (_) {
                       toggleTag(tag);
@@ -437,11 +626,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 }).toList(),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
               SizedBox(
                 width: double.infinity,
+                height: 54,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFD8CC),
+                    foregroundColor: const Color(0xFF5C4033),
+                    disabledBackgroundColor: const Color(0xFFF3E8E1),
+                    disabledForegroundColor: const Color(0xFFB8A79E),
+                    elevation: 0,
+                    shadowColor: const Color(0x22000000),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
                   onPressed: isSubmitting
                       ? null
                       : () {
@@ -454,7 +655,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('게시하기'),
+                      : const Text(
+                          '게시하기',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                 ),
               ),
             ],
