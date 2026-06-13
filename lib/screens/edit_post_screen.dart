@@ -26,6 +26,72 @@ class _EditPostScreenState extends State<EditPostScreen> {
   late final TextEditingController captionController;
   late List<String> selectedTags;
 
+  void showCatSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFFF7F1),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '고양이 선택',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF3D241E),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              ...catProfiles.map(
+                (cat) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+
+                  leading: CircleAvatar(
+                    radius: 18,
+                    backgroundImage: cat.profileImageUrl.isNotEmpty
+                        ? NetworkImage(cat.profileImageUrl)
+                        : null,
+                    child: cat.profileImageUrl.isEmpty
+                        ? const Icon(Icons.pets)
+                        : null,
+                  ),
+
+                  title: Text(
+                    cat.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF3D241E),
+                    ),
+                  ),
+
+                  trailing: selectedCatProfile?.id == cat.id
+                      ? const Icon(Icons.check_circle, color: Color(0xFFE8A58A))
+                      : null,
+
+                  onTap: () {
+                    setState(() {
+                      selectedCatProfile = cat;
+                    });
+
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   List<CatProfile> catProfiles = [];
   CatProfile? selectedCatProfile;
   File? selectedImage;
@@ -88,11 +154,18 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 children: [
                   const Text(
                     '사진 비율 선택',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF3D241E),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   ListTile(
-                    leading: const Icon(Icons.crop_landscape),
+                    leading: const Icon(
+                      Icons.crop_landscape,
+                      color: Color(0xFF8A5A44),
+                    ),
                     title: const Text('가로 4:3'),
                     onTap: () {
                       Navigator.pop(
@@ -102,7 +175,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.crop_portrait),
+                    leading: const Icon(
+                      Icons.crop_portrait,
+                      color: Color(0xFF8A5A44),
+                    ),
                     title: const Text('세로 4:5'),
                     onTap: () {
                       Navigator.pop(
@@ -112,7 +188,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.crop_square),
+                    leading: const Icon(
+                      Icons.crop_square,
+                      color: Color(0xFF8A5A44),
+                    ),
                     title: const Text('정사각형 1:1'),
                     onTap: () {
                       Navigator.pop(
@@ -150,6 +229,28 @@ class _EditPostScreenState extends State<EditPostScreen> {
     });
   }
 
+  InputDecoration inputDecoration(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Color(0xFFC9B8AE), fontSize: 15),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: Color(0xFFE8A58A), width: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,6 +258,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
         elevation: 0,
+        centerTitle: true,
         title: const Text(
           '게시글 수정',
           style: TextStyle(
@@ -169,6 +271,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
             onPressed: isSaving
                 ? null
                 : () async {
+                    if (selectedCatProfile == null) return;
+
                     setState(() {
                       isSaving = true;
                     });
@@ -202,8 +306,9 @@ class _EditPostScreenState extends State<EditPostScreen> {
             child: Text(
               isSaving ? '저장 중...' : '저장',
               style: const TextStyle(
-                color: Color(0xFF8A5A44),
-                fontWeight: FontWeight.w800,
+                color: Color(0xFFE8A58A),
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
               ),
             ),
           ),
@@ -211,6 +316,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
         iconTheme: const IconThemeData(color: Color(0xFF3D241E)),
       ),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,6 +335,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           color: const Color(0xFFFFEFE6),
                           child: const CircularProgressIndicator(
                             strokeWidth: 2,
+                            color: Color(0xFFE8A58A),
                           ),
                         );
                       },
@@ -237,7 +344,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           height: 260,
                           alignment: Alignment.center,
                           color: const Color(0xFFFFEFE6),
-                          child: const Icon(Icons.broken_image),
+                          child: const Icon(
+                            Icons.broken_image,
+                            color: Color(0xFF8A756C),
+                          ),
                         );
                       },
                     )
@@ -247,18 +357,22 @@ class _EditPostScreenState extends State<EditPostScreen> {
                       fit: BoxFit.fitWidth,
                     ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Center(
               child: TextButton.icon(
                 onPressed: pickNewImage,
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('사진 변경'),
+                icon: const Icon(Icons.image_outlined, size: 20),
+                label: const Text(
+                  '사진 변경',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF8A5A44),
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
+
             const Text(
               '고양이',
               style: TextStyle(
@@ -268,33 +382,40 @@ class _EditPostScreenState extends State<EditPostScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<CatProfile>(
-                  value: selectedCatProfile,
-                  isExpanded: true,
-                  hint: const Text('고양이를 선택해주세요'),
-                  items: catProfiles.map((cat) {
-                    return DropdownMenuItem<CatProfile>(
-                      value: cat,
-                      child: Text(cat.name),
-                    );
-                  }).toList(),
-                  onChanged: (cat) {
-                    setState(() {
-                      selectedCatProfile = cat;
-                    });
-                  },
+            GestureDetector(
+              onTap: showCatSelector,
+              child: Container(
+                height: 58,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        selectedCatProfile?.name ?? '고양이를 선택해주세요',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: selectedCatProfile == null
+                              ? const Color(0xFFC9B8AE)
+                              : const Color(0xFF3D241E),
+                        ),
+                      ),
+                    ),
+
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF8A756C),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
             const Text(
               '내용',
               style: TextStyle(
@@ -304,20 +425,24 @@ class _EditPostScreenState extends State<EditPostScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: captionController,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: '게시글 내용을 입력해주세요.',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+            SizedBox(
+              height: 110,
+              child: TextField(
+                controller: captionController,
+                cursorColor: const Color(0xFF8A5A44),
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                style: const TextStyle(
+                  color: Color(0xFF5A372F),
+                  fontSize: 16,
+                  height: 1.4,
                 ),
+                decoration: inputDecoration('게시글 내용을 입력해주세요.'),
               ),
             ),
-            const SizedBox(height: 22),
+
+            const SizedBox(height: 24),
             const Text(
               '태그',
               style: TextStyle(
@@ -326,10 +451,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 color: Color(0xFF3D241E),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: tags.map((tag) {
                 final isSelected = selectedTags.contains(tag);
 
@@ -354,21 +479,27 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 14,
+                      vertical: 9,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? const Color(0xFFFFD7B8)
+                          ? const Color(0xFFFFE9DD)
                           : Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFE8A58A)
+                            : const Color(0xFFF3E3DA),
+                        width: 1,
+                      ),
                     ),
                     child: Text(
                       tag,
                       style: TextStyle(
                         color: isSelected
-                            ? const Color(0xFF8A5A44)
-                            : const Color(0xFF666666),
+                            ? const Color(0xFF5C4033)
+                            : const Color(0xFF8A756C),
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
