@@ -106,20 +106,103 @@ class _CatPostCardState extends State<CatPostCard> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('감상평 수정'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            maxLength: 200,
-            decoration: const InputDecoration(hintText: '감상평을 수정해 주세요.'),
+          backgroundColor: const Color(0xFFFFF7F1),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
+
+          title: const Text(
+            '감상평 수정',
+            style: TextStyle(
+              color: Color(0xFF5C4033),
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+            ),
+          ),
+
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+
+                    cursorColor: const Color(0xFF8A5A44),
+
+                    maxLines: 2,
+                    maxLength: 200,
+
+                    style: const TextStyle(
+                      color: Color(0xFF5A372F),
+                      fontSize: 15,
+                    ),
+
+                    onChanged: (_) {
+                      setDialogState(() {});
+                    },
+
+                    decoration: InputDecoration(
+                      hintText: '감상평을 수정해 주세요.',
+                      counterText: '',
+
+                      hintStyle: const TextStyle(color: Color(0xFFC9B8AE)),
+
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFFF3E3DA)),
+                      ),
+
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE8A58A),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${controller.text.length}/200',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A756C),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A756C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
+
             TextButton(
               onPressed: () {
                 final content = controller.text.trim();
@@ -128,7 +211,13 @@ class _CatPostCardState extends State<CatPostCard> {
 
                 Navigator.pop(dialogContext, content);
               },
-              child: const Text('수정'),
+              child: const Text(
+                '수정',
+                style: TextStyle(
+                  color: Color(0xFFE8A58A),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         );
@@ -168,20 +257,58 @@ class _CatPostCardState extends State<CatPostCard> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('감상평 삭제'),
-          content: const Text('감상평을 삭제할까요?'),
+          backgroundColor: const Color(0xFFFFF8F2),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+
+          title: const Text(
+            '감상평 삭제',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF5A372F),
+            ),
+          ),
+
+          content: const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: Text(
+              '삭제된 감상평은 복구할 수 없어요.',
+              style: TextStyle(
+                fontSize: 15,
+                color: Color(0xFF8A756C),
+                height: 1.4,
+              ),
+            ),
+          ),
+
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext, false);
               },
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A756C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
+
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext, true);
               },
-              child: const Text('삭제'),
+              child: const Text(
+                '삭제',
+                style: TextStyle(
+                  color: Color(0xFFFF7A7A),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ],
         );
@@ -476,7 +603,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                 : Icons.bookmark_border_rounded,
                             color: widget.isScrapped
                                 ? const Color(0xFFFF8A7A)
-                                : const Color(0xFFC9B8AF),
+                                : const Color(0xFFBFA79F),
                             size: 23,
                           ),
                         ),
@@ -528,7 +655,7 @@ class _CatPostCardState extends State<CatPostCard> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
@@ -536,40 +663,49 @@ class _CatPostCardState extends State<CatPostCard> {
                           Row(
                             children: [
                               Expanded(
-                                child: TextField(
-                                  controller: reviewController,
-                                  style: const TextStyle(fontSize: 13),
-                                  decoration: InputDecoration(
-                                    hintText: '감상평을 남겨보세요 ',
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
+                                child: SizedBox(
+                                  height: 42,
+                                  child: TextField(
+                                    controller: reviewController,
+                                    cursorColor: const Color(0xFF8A5A44),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF5A372F),
                                     ),
-                                    hintStyle: const TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFFBFA79F),
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFF3E3DA),
-                                        width: 1,
+                                    textAlignVertical: TextAlignVertical.center,
+                                    decoration: InputDecoration(
+                                      hintText: '감상평을 남겨보세요',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 0,
+                                          ),
+                                      hintStyle: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFC9B8AE),
                                       ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFF3E3DA),
-                                        width: 1,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFF3E3DA),
+                                          width: 1,
+                                        ),
                                       ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: const BorderSide(
-                                        color: Color(0xFFFFD7B8),
-                                        width: 1.5,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFF3E3DA),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFE8A58A),
+                                          width: 2,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -682,152 +818,220 @@ class _CatPostCardState extends State<CatPostCard> {
                           )
                         else
                           Column(
-                            children: reviews
-                                .where(
-                                  (review) => review.content.trim().isNotEmpty,
-                                )
-                                .map((review) {
-                                  final currentUid =
-                                      FirebaseAuth.instance.currentUser?.uid;
-                                  final isMyReview =
-                                      review.writerUid == currentUid;
+                            children: reviews.where((review) => review.content.trim().isNotEmpty).map((
+                              review,
+                            ) {
+                              final currentUid =
+                                  FirebaseAuth.instance.currentUser?.uid;
+                              final isMyReview = review.writerUid == currentUid;
 
-                                  return Column(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 5,
-                                        ),
-                                        child: Column(
+                              return Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 5,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: RichText(
-                                                    text: TextSpan(
-                                                      children: [
-                                                        TextSpan(
-                                                          text: review.content,
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 13,
-                                                                color: Color(
-                                                                  0xFF5A372F,
-                                                                ),
-                                                              ),
+                                            Expanded(
+                                              child: RichText(
+                                                text: TextSpan(
+                                                  children: [
+                                                    TextSpan(
+                                                      text: review.content,
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        color: Color(
+                                                          0xFF5A372F,
                                                         ),
-                                                        TextSpan(
-                                                          text:
-                                                              '  -${review.writerUserId}-',
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 11,
-                                                                color: Color(
-                                                                  0xFFBFA79F,
-                                                                ),
-                                                              ),
-                                                        ),
-                                                      ],
+                                                      ),
                                                     ),
-                                                  ),
-                                                ),
-
-                                                SizedBox(
-                                                  width: 24,
-                                                  height: 22,
-                                                  child: PopupMenuButton<String>(
-                                                    padding: EdgeInsets.zero,
-                                                    constraints:
-                                                        const BoxConstraints(
-                                                          minWidth: 28,
-                                                          minHeight: 28,
+                                                    TextSpan(
+                                                      text:
+                                                          '  -${review.writerUserId}-',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: Color(
+                                                          0xFFBFA79F,
                                                         ),
-                                                    iconSize: 14,
-                                                    icon: const Icon(
-                                                      Icons.more_vert,
-                                                      size: 14,
-                                                      color: Color(0xFFC0A39A),
+                                                      ),
                                                     ),
-                                                    onSelected: (value) async {
-                                                      await Future.delayed(
-                                                        const Duration(
-                                                          milliseconds: 150,
-                                                        ),
-                                                      );
-
-                                                      if (!mounted) return;
-
-                                                      if (value == 'edit') {
-                                                        showEditReviewDialog(
-                                                          review,
-                                                        );
-                                                      } else if (value ==
-                                                          'delete') {
-                                                        deleteReview(review);
-                                                      } else if (value ==
-                                                          'report') {
-                                                        showReviewReportDialog(
-                                                          review,
-                                                        );
-                                                      }
-                                                    },
-                                                    itemBuilder: (context) {
-                                                      if (isMyReview) {
-                                                        return const [
-                                                          PopupMenuItem(
-                                                            value: 'edit',
-                                                            child: Text('수정'),
-                                                          ),
-                                                          PopupMenuItem(
-                                                            value: 'delete',
-                                                            child: Text('삭제'),
-                                                          ),
-                                                        ];
-                                                      }
-
-                                                      return const [
-                                                        PopupMenuItem(
-                                                          value: 'report',
-                                                          child: Text('신고'),
-                                                        ),
-                                                      ];
-                                                    },
-                                                  ),
+                                                  ],
                                                 ),
-                                              ],
+                                              ),
                                             ),
 
-                                            const SizedBox(height: 3),
-
-                                            Text(
-                                              review.createdAt == null
-                                                  ? ''
-                                                  : review.updatedAt != null
-                                                  ? '${formatReviewDate(review.createdAt!)} · 수정됨'
-                                                  : formatReviewDate(
-                                                      review.createdAt!,
+                                            SizedBox(
+                                              width: 24,
+                                              height: 22,
+                                              child: GestureDetector(
+                                                behavior:
+                                                    HitTestBehavior.translucent,
+                                                onTap: () {
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    backgroundColor:
+                                                        const Color(0xFFFFF7F1),
+                                                    shape: const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                  24,
+                                                                ),
+                                                          ),
                                                     ),
-                                              style: const TextStyle(
-                                                fontSize: 9,
-                                                color: Color(0xFFC8B7AF),
+                                                    builder: (bottomSheetContext) {
+                                                      return SafeArea(
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets.fromLTRB(
+                                                                20,
+                                                                14,
+                                                                20,
+                                                                24,
+                                                              ),
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              if (isMyReview) ...[
+                                                                ListTile(
+                                                                  leading: const Icon(
+                                                                    Icons
+                                                                        .edit_outlined,
+                                                                    color: Color(
+                                                                      0xFF8A756C,
+                                                                    ),
+                                                                  ),
+                                                                  title: const Text(
+                                                                    '감상평 수정',
+                                                                    style: TextStyle(
+                                                                      color: Color(
+                                                                        0xFF5C4033,
+                                                                      ),
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                    ),
+                                                                  ),
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                      bottomSheetContext,
+                                                                    );
+                                                                    showEditReviewDialog(
+                                                                      review,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                                ListTile(
+                                                                  leading: const Icon(
+                                                                    Icons
+                                                                        .delete_outline,
+                                                                    color: Color(
+                                                                      0xFFFF7F7F,
+                                                                    ),
+                                                                  ),
+                                                                  title: const Text(
+                                                                    '감상평 삭제',
+                                                                    style: TextStyle(
+                                                                      color: Color(
+                                                                        0xFFFF7F7F,
+                                                                      ),
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                    ),
+                                                                  ),
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                      bottomSheetContext,
+                                                                    );
+                                                                    deleteReview(
+                                                                      review,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ] else ...[
+                                                                ListTile(
+                                                                  leading: const Icon(
+                                                                    Icons
+                                                                        .flag_outlined,
+                                                                    color: Color(
+                                                                      0xFFFF7F7F,
+                                                                    ),
+                                                                  ),
+                                                                  title: const Text(
+                                                                    '감상평 신고',
+                                                                    style: TextStyle(
+                                                                      color: Color(
+                                                                        0xFFFF7F7F,
+                                                                      ),
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                    ),
+                                                                  ),
+                                                                  onTap: () {
+                                                                    Navigator.pop(
+                                                                      bottomSheetContext,
+                                                                    );
+                                                                    showReviewReportDialog(
+                                                                      review,
+                                                                    );
+                                                                  },
+                                                                ),
+                                                              ],
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                                child: const Icon(
+                                                  Icons.more_vert,
+                                                  size: 16,
+                                                  color: Color(0xFFC0A39A),
+                                                ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
 
-                                      Container(
-                                        height: 0.5,
-                                        color: const Color(0xFFF1E6E1),
-                                      ),
-                                    ],
-                                  );
-                                })
-                                .toList(),
+                                        const SizedBox(height: 3),
+
+                                        Text(
+                                          review.createdAt == null
+                                              ? ''
+                                              : review.updatedAt != null
+                                              ? '${formatReviewDate(review.createdAt!)} · 수정됨'
+                                              : formatReviewDate(
+                                                  review.createdAt!,
+                                                ),
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            color: Color(0xFFC8B7AF),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  Container(
+                                    height: 0.5,
+                                    color: const Color(0xFFF1E6E1),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                           ),
                       ],
                     ),
