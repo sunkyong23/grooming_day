@@ -89,21 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     '그루밍데이',
                     style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -2,
-                      color: Color(0xFF3D241E),
+                      fontFamily: 'EastSeaDokdo',
+                      fontSize: 55,
+                      color: Color(0xFF5C4033),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
                 const Center(
                   child: Text(
                     '오늘도 너와 함께하는 하루',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF7A5B50),
                     ),
@@ -157,10 +156,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 25),
 
                 Center(
                   child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
 
@@ -173,15 +177,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: const Text(
                       '비밀번호를 잊으셨나요?',
-                      style: TextStyle(color: Color(0xFF888888), fontSize: 14),
+                      style: TextStyle(color: Color(0xFF9A8E87), fontSize: 14),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
 
                 Center(
                   child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
 
@@ -192,12 +201,26 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
-                      '처음 오셨나요? 집사 등록하기',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF8A756C),
+                    child: RichText(
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '처음 오셨나요? ',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFFB0A6A0),
+                            ),
+                          ),
+                          TextSpan(
+                            text: '집사 등록하기',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF5C4033),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

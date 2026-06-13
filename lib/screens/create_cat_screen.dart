@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../utils/cat_validator.dart';
-
 import '../services/cat_service.dart';
 
 import 'main_tab_screen.dart';
@@ -58,6 +57,24 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
   ];
 
   final List<String> selectedPersonalities = [];
+
+  InputDecoration inputDecoration(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Color(0xFFD0C2BA), fontSize: 16),
+      filled: true,
+      fillColor: const Color(0xFFFFF7F1),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Color(0xFFF0D5CA)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Color(0xFFE8A58C), width: 2),
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -215,22 +232,159 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     }
   }
 
+  Widget sectionTitle(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF5C4033),
+        ),
+      ),
+    );
+  }
+
+  Widget birthDateField() {
+    return GestureDetector(
+      onTap: pickBirthDate,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7F1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0xFFF0D5CA)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                birthDateText,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: selectedBirthDate == null
+                      ? const Color(0xFFD0C2BA)
+                      : const Color(0xFF5C4033),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.calendar_month_rounded,
+              size: 20,
+              color: Color(0xFF8A756C),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget genderDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: selectedGender,
+      dropdownColor: const Color(0xFFFFF7F1),
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: Color(0xFF8A756C),
+      ),
+      style: const TextStyle(
+        fontSize: 16,
+        color: Color(0xFF5C4033),
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: inputDecoration('성별'),
+      items: const [
+        DropdownMenuItem(value: '여아', child: Text('여아')),
+        DropdownMenuItem(value: '남아', child: Text('남아')),
+        DropdownMenuItem(value: '모름', child: Text('모름')),
+      ],
+      onChanged: (value) {
+        setState(() {
+          selectedGender = value ?? '여아';
+        });
+      },
+    );
+  }
+
+  Widget personalityChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 10,
+      children: personalityOptions.map((personality) {
+        final selected = selectedPersonalities.contains(personality);
+
+        return FilterChip(
+          label: Text(
+            personality,
+            style: TextStyle(
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              color: selected
+                  ? const Color(0xFF5C4033)
+                  : const Color(0xFF8A756C),
+            ),
+          ),
+          selected: selected,
+          showCheckmark: false,
+          selectedColor: const Color(0xFFFFD9C9),
+          backgroundColor: Colors.white,
+          side: BorderSide(
+            color: selected ? const Color(0xFFE8A58C) : const Color(0xFFE8E1DB),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          onSelected: (_) {
+            setState(() {
+              if (selected) {
+                selectedPersonalities.remove(personality);
+              } else {
+                if (selectedPersonalities.length < 5) {
+                  selectedPersonalities.add(personality);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('성격은 최대 5개까지 선택할 수 있어요.')),
+                  );
+                }
+              }
+            });
+          },
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('고양이 프로필 만들기'),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          '고양이 프로필 만들기',
+          style: TextStyle(
+            color: Color(0xFF5C4033),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
+            const SizedBox(height: 28),
+
             GestureDetector(
               onTap: pickCatImage,
               child: CircleAvatar(
-                radius: 48,
+                radius: 54,
                 backgroundColor: const Color(0xFFFFE2C6),
                 backgroundImage: selectedImage != null
                     ? FileImage(selectedImage!)
@@ -239,145 +393,90 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
                     ? const Icon(
                         Icons.add_a_photo_rounded,
                         color: Color(0xFF8A756C),
-                        size: 30,
+                        size: 32,
                       )
                     : null,
               ),
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 28),
+
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: '고양이 이름',
-                hintText: '예: 가을이',
-              ),
+              cursorColor: const Color(0xFF5C4033),
+              decoration: inputDecoration('고양이 이름'),
             ),
+
             const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              initialValue: selectedGender,
-              decoration: const InputDecoration(labelText: '성별'),
-              items: const [
-                DropdownMenuItem(value: '여아', child: Text('여아')),
-                DropdownMenuItem(value: '남아', child: Text('남아')),
-                DropdownMenuItem(value: '모름', child: Text('모름')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  selectedGender = value ?? '여아';
-                });
-              },
-            ),
+
+            genderDropdown(),
+
             const SizedBox(height: 14),
-            GestureDetector(
-              onTap: pickBirthDate,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 0,
-                  vertical: 14,
-                ),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFFBDBDBD))),
-                ),
-                child: Text(
-                  birthDateText,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: selectedBirthDate == null
-                        ? const Color(0xFF8C6A5F)
-                        : const Color(0xFF3D241E),
-                  ),
-                ),
-              ),
-            ),
+
+            birthDateField(),
+
             const SizedBox(height: 14),
+
             TextField(
               controller: breedController,
-              decoration: const InputDecoration(
-                labelText: '품종',
-                hintText: '예: 코리안숏헤어',
-              ),
+              cursorColor: const Color(0xFF5C4033),
+              decoration: inputDecoration('품종'),
             ),
-            const SizedBox(height: 18),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '성격 선택 (최대 5개)',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF4A2B22),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: personalityOptions.map((personality) {
-                final selected = selectedPersonalities.contains(personality);
 
-                return FilterChip(
-                  label: Text(
-                    personality,
-                    style: TextStyle(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      color: selected
-                          ? const Color(0xFF4A2B22)
-                          : const Color(0xFF8C6A5F),
-                    ),
-                  ),
-                  selected: selected,
-                  showCheckmark: false,
-                  selectedColor: const Color(0xFFFFE9DE),
-                  backgroundColor: Colors.white,
-                  side: BorderSide(
-                    color: selected
-                        ? const Color(0xFFF5A88B)
-                        : const Color(0xFFE8E1DB),
-                  ),
-                  onSelected: (_) {
-                    setState(() {
-                      if (selected) {
-                        selectedPersonalities.remove(personality);
-                      } else {
-                        if (selectedPersonalities.length < 5) {
-                          selectedPersonalities.add(personality);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('성격은 최대 5개까지 선택할 수 있어요.'),
-                            ),
-                          );
-                        }
-                      }
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 26),
+
+            sectionTitle('성격 선택 (최대 5개)'),
+
+            const SizedBox(height: 12),
+
+            personalityChips(),
+
+            const SizedBox(height: 26),
+
             TextField(
               controller: introductionController,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '소개',
-                hintText: '우리 고양이를 소개해주세요 🐾',
-              ),
+              cursorColor: const Color(0xFF5C4033),
+              decoration: inputDecoration('나의 고양이를 소개해주세요 🐾'),
             ),
+
             const SizedBox(height: 28),
+
             SizedBox(
               width: double.infinity,
+              height: 58,
               child: ElevatedButton(
                 onPressed: isSubmitting ? null : submitCatProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD9C9),
+                  foregroundColor: const Color(0xFF5C4033),
+                  disabledBackgroundColor: const Color(0xFFE8D8D0),
+                  disabledForegroundColor: const Color(0xFF9A8E87),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
                 child: isSubmitting
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF5C4033),
+                        ),
                       )
-                    : const Text('고양이 프로필 만들기'),
+                    : const Text(
+                        '고양이 프로필 만들기',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),

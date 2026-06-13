@@ -14,6 +14,24 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
   final introductionController = TextEditingController();
   bool isSubmitting = false;
 
+  InputDecoration inputDecoration(String hintText) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: const TextStyle(color: Color(0xFFD0C2BA), fontSize: 16),
+      filled: true,
+      fillColor: const Color(0xFFFFF7F1),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Color(0xFFF0D5CA)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Color(0xFFE8A58C), width: 2),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     introductionController.dispose();
@@ -58,15 +76,28 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('랜선집사 프로필 만들기'),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          '랜선집사 프로필 만들기',
+          style: TextStyle(
+            color: Color(0xFF5C4033),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
+            const SizedBox(height: 36),
+
             Container(
-              width: 112,
-              height: 112,
+              width: 118,
+              height: 118,
               alignment: Alignment.center,
               decoration: const BoxDecoration(
                 color: Color(0xFFFFE9DE),
@@ -80,48 +111,76 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 26),
+
             const Text(
               '랜선집사',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 30,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF4A2B22),
+                color: Color(0xFF5C4033),
               ),
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 10),
+
             const Text(
               '고양이가 없어도 괜찮아요.\n좋아하는 마음만으로도 충분해요.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 height: 1.5,
-                color: Color(0xFF8C6A5F),
+                color: Color(0xFF8A756C),
               ),
             ),
-            const SizedBox(height: 28),
+
+            const SizedBox(height: 48),
+
             TextField(
               controller: introductionController,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: '한줄 소개',
-                hintText: '예: 고양이 사진 보는 게 하루의 행복이에요 🐾',
-              ),
+              maxLines: 1,
+              cursorColor: const Color(0xFF5C4033),
+              decoration: inputDecoration('한줄 소개를 입력해주세요 🐾'),
             ),
+
             const SizedBox(height: 32),
+
             SizedBox(
               width: double.infinity,
+              height: 58,
               child: ElevatedButton(
                 onPressed: isSubmitting ? null : submitVirtualCatProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD9C9),
+                  foregroundColor: const Color(0xFF5C4033),
+                  disabledBackgroundColor: const Color(0xFFE8D8D0),
+                  disabledForegroundColor: const Color(0xFF9A8E87),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
                 child: isSubmitting
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFF5C4033),
+                        ),
                       )
-                    : const Text('랜선집사 프로필 만들기'),
+                    : const Text(
+                        '랜선집사 프로필 만들기',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
