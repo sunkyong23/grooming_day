@@ -434,27 +434,26 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
 
     return GestureDetector(
       onTap: isHandlingScrap ? null : handleScrapTap,
-      child: Container(
+      child: SizedBox(
         width: 34,
         height: 34,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF7F1),
-          borderRadius: BorderRadius.circular(12),
+        child: Center(
+          child: isHandlingScrap
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  widget.isScrapped
+                      ? Icons.bookmark_rounded
+                      : Icons.bookmark_border_rounded,
+                  size: 22,
+                  color: widget.isScrapped
+                      ? const Color(0xFFFF8A7A)
+                      : const Color(0xFFB08678),
+                ),
         ),
-        child: isHandlingScrap
-            ? const Padding(
-                padding: EdgeInsets.all(9),
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Icon(
-                widget.isScrapped
-                    ? Icons.bookmark_rounded
-                    : Icons.bookmark_border_rounded,
-                size: 22,
-                color: widget.isScrapped
-                    ? const Color(0xFFFF8A7A)
-                    : const Color(0xFFB08678),
-              ),
       ),
     );
   }
@@ -517,17 +516,16 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                         if (widget.showMoreButton)
                           GestureDetector(
                             onTap: widget.onMoreTap,
-                            child: Container(
+                            behavior: HitTestBehavior.opaque,
+                            child: const SizedBox(
                               width: 34,
                               height: 34,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF7F1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.more_horiz,
-                                size: 22,
-                                color: Color(0xFFB08678),
+                              child: Center(
+                                child: Icon(
+                                  Icons.more_horiz,
+                                  size: 22,
+                                  color: Color(0xFFB08678),
+                                ),
                               ),
                             ),
                           ),

@@ -635,14 +635,14 @@ class AlbumScreenState extends State<AlbumScreen> {
             : EdgeInsets.zero,
         decoration: isSelected
             ? BoxDecoration(
-                color: const Color(0xFFFFEFEA),
+                color: const Color(0xFFFFE4D6),
                 borderRadius: BorderRadius.circular(999),
               )
             : null,
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
             color: isSelected
                 ? const Color(0xFF6F3F2E)
@@ -945,7 +945,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                     post.ownerUid != FirebaseAuth.instance.currentUser?.uid,
                 showMoreButton: true,
                 onMoreTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(context); // 상세창 닫기
                   showPostMoreMenu(post);
                 },
                 showScrapButton: selectedAlbumTab == 1,

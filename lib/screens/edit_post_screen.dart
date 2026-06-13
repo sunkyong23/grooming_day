@@ -257,7 +257,6 @@ class _EditPostScreenState extends State<EditPostScreen> {
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
         borderSide: const BorderSide(color: Color(0xFFE8A58A), width: 2),
       ),
     );
@@ -499,12 +498,6 @@ class _EditPostScreenState extends State<EditPostScreen> {
                           ? const Color(0xFFFFE9DD)
                           : Colors.white,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFFE8A58A)
-                            : const Color(0xFFF3E3DA),
-                        width: 1,
-                      ),
                     ),
                     child: Text(
                       tag,
