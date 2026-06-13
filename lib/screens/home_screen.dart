@@ -54,6 +54,7 @@ class HomeScreenState extends State<HomeScreen> {
   final List<Post> myPosts = [];
 
   final ScrollController feedScrollController = ScrollController();
+  final ScrollController tagScrollController = ScrollController();
 
   DocumentSnapshot? _lastPostDocument;
   bool _isLoadingPosts = false;
@@ -90,6 +91,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     feedScrollController.dispose();
+    tagScrollController.dispose();
     super.dispose();
   }
 
@@ -259,6 +261,31 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void scrollToSelectedTag(String tag) {
+    final index = tags.indexOf(tag);
+
+    if (index == -1 || !tagScrollController.hasClients) return;
+
+    const estimatedChipWidth = 90.0;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final targetOffset =
+        (index * estimatedChipWidth) -
+        (screenWidth / 2) +
+        (estimatedChipWidth / 2);
+
+    final clampedOffset = targetOffset.clamp(
+      0.0,
+      tagScrollController.position.maxScrollExtent,
+    );
+
+    tagScrollController.animateTo(
+      clampedOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
   Future<void> handleTagTap(String tag) async {
     if (!mounted) return;
 
@@ -280,6 +307,7 @@ class HomeScreenState extends State<HomeScreen> {
       }
 
       scrollFeedToTop();
+      scrollToSelectedTag(tag);
     } catch (e) {
       debugPrint('태그 피드 로딩 오류: $e');
     }
@@ -815,6 +843,7 @@ class HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                         child: SingleChildScrollView(
+                          controller: tagScrollController,
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: tags.map((tag) {

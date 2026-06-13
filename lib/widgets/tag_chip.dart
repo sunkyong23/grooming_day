@@ -9,10 +9,14 @@ class TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFFF0E7) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        color: isSelected ? const Color(0xFFFFE4D6) : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? const Color(0xFFE8A58C) : Colors.transparent,
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -24,7 +28,7 @@ class TagChip extends StatelessWidget {
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
               letterSpacing: -0.3,
               color: isSelected
-                  ? const Color(0xFF3D241E)
+                  ? const Color(0xFF5C4033)
                   : const Color(0xFF6A554B),
             ),
           ),

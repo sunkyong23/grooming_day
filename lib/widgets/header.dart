@@ -23,15 +23,16 @@ class Header extends StatelessWidget {
               const Text(
                 '그루밍데이',
                 style: TextStyle(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w900,
+                  fontFamily: 'EastSeaDokdo',
+                  fontSize: 43,
                   color: Color(0xFF351A14),
+                  height: 0.9,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               const Text(
                 '오늘도 너와 함께하는 하루',
-                style: TextStyle(fontSize: 16, color: Color(0xFF5E3D35)),
+                style: TextStyle(fontSize: 14, color: Color(0xFF5E3D35)),
               ),
             ],
           ),
