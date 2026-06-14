@@ -46,7 +46,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color _primaryBrown = Color(0xFF7B5146);
   static const Color _deepBrown = Color(0xFF3D241E);
   static const Color _subBrown = Color(0xFFB08678);
-  static const Color _iconBrown = Color(0xFF8A756C);
   static const Color _softDivider = Color(0xFFEADDD5);
 
   String userId = '로딩중...';

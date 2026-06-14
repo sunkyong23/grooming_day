@@ -567,22 +567,32 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 7),
                           child: Row(
                             children: [
-                              Radio<String>(
-                                value: reason,
-                                groupValue: selectedReason,
-                                activeColor: const Color(0xFF7B61B8),
-                                visualDensity: const VisualDensity(
-                                  horizontal: -4,
-                                  vertical: -4,
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: selected
+                                        ? const Color(0xFF7B61B8)
+                                        : const Color(0xFF8A756C),
+                                    width: 2,
+                                  ),
                                 ),
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                onChanged: (value) {
-                                  setSheetState(() {
-                                    selectedReason = value!;
-                                  });
-                                },
+                                child: selected
+                                    ? Center(
+                                        child: Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFF7B61B8),
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                               ),
+                              const SizedBox(width: 12),
                               const SizedBox(width: 10),
                               Text(
                                 reason,
@@ -774,22 +784,32 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 7),
                           child: Row(
                             children: [
-                              Radio<String>(
-                                value: reason,
-                                groupValue: selectedReason,
-                                activeColor: const Color(0xFF7B61B8),
-                                visualDensity: const VisualDensity(
-                                  horizontal: -4,
-                                  vertical: -4,
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: selected
+                                        ? const Color(0xFF7B61B8)
+                                        : const Color(0xFF8A756C),
+                                    width: 2,
+                                  ),
                                 ),
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                onChanged: (value) {
-                                  setSheetState(() {
-                                    selectedReason = value!;
-                                  });
-                                },
+                                child: selected
+                                    ? Center(
+                                        child: Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Color(0xFF7B61B8),
+                                          ),
+                                        ),
+                                      )
+                                    : null,
                               ),
+                              const SizedBox(width: 12),
                               const SizedBox(width: 10),
                               Text(
                                 reason,
