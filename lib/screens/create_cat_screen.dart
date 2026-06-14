@@ -61,17 +61,21 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
   InputDecoration inputDecoration(String hintText) {
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: Color(0xFFD0C2BA), fontSize: 16),
+      hintStyle: const TextStyle(
+        color: Color(0xFFD0C2BA),
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+      ),
       filled: true,
-      fillColor: const Color(0xFFFFF7F1),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      fillColor: Colors.white.withValues(alpha: 0.9),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFF0D5CA)),
+        borderRadius: BorderRadius.circular(22),
+        borderSide: const BorderSide(color: Color(0xFFFFE4D6)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFE8A58C), width: 2),
+        borderRadius: BorderRadius.circular(22),
+        borderSide: const BorderSide(color: Color(0xFFFFB199), width: 1.4),
       ),
     );
   }
@@ -95,6 +99,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     );
 
     if (croppedFile == null) return;
+    if (!mounted) return;
 
     setState(() {
       selectedImage = File(croppedFile.path);
@@ -110,6 +115,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     );
 
     if (pickedDate == null) return;
+    if (!mounted) return;
 
     setState(() {
       selectedBirthDate = pickedDate;
@@ -125,21 +131,17 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
   }
 
   Future<void> submitCatProfile() async {
+    if (isSubmitting) return;
+
     final name = nameController.text.trim();
     final breed = breedController.text.trim();
 
     if (selectedImage == null) {
-      setState(() {
-        isSubmitting = false;
-      });
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('고양이 대표 사진을 선택해주세요.')));
       return;
     }
-
-    if (isSubmitting) return;
 
     setState(() {
       isSubmitting = true;
@@ -239,9 +241,29 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
         text,
         style: const TextStyle(
           fontSize: 15,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w900,
           color: Color(0xFF5C4033),
         ),
+      ),
+    );
+  }
+
+  Widget buildCatImagePicker() {
+    return GestureDetector(
+      onTap: pickCatImage,
+      child: CircleAvatar(
+        radius: 50,
+        backgroundColor: const Color(0xFFFFE2C6),
+        backgroundImage: selectedImage != null
+            ? FileImage(selectedImage!)
+            : null,
+        child: selectedImage == null
+            ? const Icon(
+                Icons.add_a_photo_rounded,
+                color: Color(0xFF8A756C),
+                size: 30,
+              )
+            : null,
       ),
     );
   }
@@ -251,11 +273,11 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
       onTap: pickBirthDate,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF7F1),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: const Color(0xFFF0D5CA)),
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFFFE4D6)),
         ),
         child: Row(
           children: [
@@ -263,7 +285,8 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
               child: Text(
                 birthDateText,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: selectedBirthDate == null
                       ? const Color(0xFFD0C2BA)
                       : const Color(0xFF5C4033),
@@ -290,9 +313,9 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
         color: Color(0xFF8A756C),
       ),
       style: const TextStyle(
-        fontSize: 16,
+        fontSize: 15,
         color: Color(0xFF5C4033),
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
       decoration: inputDecoration('성별'),
       items: const [
@@ -310,15 +333,18 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
 
   Widget personalityChips() {
     return Wrap(
-      spacing: 8,
-      runSpacing: 10,
+      spacing: 10,
+      runSpacing: 8,
       children: personalityOptions.map((personality) {
         final selected = selectedPersonalities.contains(personality);
 
         return FilterChip(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: const VisualDensity(horizontal: -1, vertical: -1),
           label: Text(
             personality,
             style: TextStyle(
+              fontSize: 13,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               color: selected
                   ? const Color(0xFF5C4033)
@@ -335,7 +361,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           onSelected: (_) {
             setState(() {
               if (selected) {
@@ -356,6 +382,39 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     );
   }
 
+  Widget buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: isSubmitting ? null : submitCatProfile,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFFA997),
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: const Color(0xFFE8D6CF),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        child: isSubmitting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                '고양이 프로필 만들기',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -368,36 +427,20 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
           '고양이 프로필 만들기',
           style: TextStyle(
             color: Color(0xFF5C4033),
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
           ),
         ),
         iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 40),
         child: Column(
           children: [
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
-            GestureDetector(
-              onTap: pickCatImage,
-              child: CircleAvatar(
-                radius: 54,
-                backgroundColor: const Color(0xFFFFE2C6),
-                backgroundImage: selectedImage != null
-                    ? FileImage(selectedImage!)
-                    : null,
-                child: selectedImage == null
-                    ? const Icon(
-                        Icons.add_a_photo_rounded,
-                        color: Color(0xFF8A756C),
-                        size: 32,
-                      )
-                    : null,
-              ),
-            ),
+            buildCatImagePicker(),
 
             const SizedBox(height: 28),
 
@@ -431,50 +474,18 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
 
             personalityChips(),
 
-            const SizedBox(height: 26),
+            const SizedBox(height: 24),
 
             TextField(
               controller: introductionController,
-              maxLines: 3,
+              maxLines: 2,
               cursorColor: const Color(0xFF5C4033),
               decoration: inputDecoration('나의 고양이를 소개해주세요 🐾'),
             ),
 
             const SizedBox(height: 28),
 
-            SizedBox(
-              width: double.infinity,
-              height: 58,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : submitCatProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD9C9),
-                  foregroundColor: const Color(0xFF5C4033),
-                  disabledBackgroundColor: const Color(0xFFE8D8D0),
-                  disabledForegroundColor: const Color(0xFF9A8E87),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF5C4033),
-                        ),
-                      )
-                    : const Text(
-                        '고양이 프로필 만들기',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-              ),
-            ),
+            buildSubmitButton(),
 
             const SizedBox(height: 40),
           ],

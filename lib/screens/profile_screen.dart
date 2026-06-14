@@ -43,6 +43,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const Color _primaryBrown = Color(0xFF7B5146);
+  static const Color _deepBrown = Color(0xFF3D241E);
+  static const Color _subBrown = Color(0xFFB08678);
+  static const Color _iconBrown = Color(0xFF8A756C);
+  static const Color _softDivider = Color(0xFFEADDD5);
+
   String userId = '로딩중...';
 
   String profileImageUrl = '';
@@ -121,6 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final imageUrl = await UserService.updateProfileImage(file);
 
     if (imageUrl == null) return null;
+    if (!mounted) return null;
 
     setState(() {
       selectedProfileImage = file;
@@ -247,46 +254,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Widget _sectionDivider() {
+    return const Divider(height: 30, thickness: 1, color: _softDivider);
+  }
+
+  Widget _profileMenuItem({
+    required IconData icon,
+    required String title,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, color: iconColor, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: _deepBrown,
+                ),
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: _subBrown),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('프로필'),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          '프로필',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF3D241E),
+          ),
+        ),
       ),
-
       body: ListView(
         padding: const EdgeInsets.all(22),
         children: [
-          ProfileHeader(
-            userId: userId,
-            bio: bio,
-            profileImageUrl: profileImageUrl,
-            postCount: postCount,
-            onEditTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditProfileScreen(
-                    currentUserId: userId,
-                    currentBio: bio,
-                    currentProfileImageUrl: profileImageUrl,
-                    onProfileImageTap: uploadProfileImage,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: ProfileHeader(
+              userId: userId,
+              bio: bio,
+              profileImageUrl: profileImageUrl,
+              postCount: postCount,
+              onEditTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditProfileScreen(
+                      currentUserId: userId,
+                      currentBio: bio,
+                      currentProfileImageUrl: profileImageUrl,
+                      onProfileImageTap: uploadProfileImage,
+                    ),
                   ),
-                ),
-              );
+                );
 
-              if (result != null) {
-                setState(() {
-                  userId = result['userId'];
-                  bio = result['bio'];
-                });
-              }
-            },
+                if (result != null) {
+                  setState(() {
+                    userId = result['userId'];
+                    bio = result['bio'];
+                  });
+                }
+              },
+            ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -296,6 +354,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
               TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: _primaryBrown,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                ),
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,
@@ -312,7 +374,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                 },
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('추가'),
+                label: const Text(
+                  '추가',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -322,113 +387,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
           catProfiles.isEmpty
               ? const Text(
                   '등록된 고양이 프로필이 없어요 🐾',
-                  style: TextStyle(color: Color(0xFFB08678)),
+                  style: TextStyle(color: _subBrown),
                 )
               : Column(
                   children: catProfiles.map((cat) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: CatProfileCard(
-                        cat: cat,
-                        onChanged: () async {
-                          await loadCatProfiles();
-                          await loadMyPostCount();
-                          widget.onRefreshPosts?.call();
-                        },
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        height: 82,
+                        child: CatProfileCard(
+                          cat: cat,
+                          onChanged: () async {
+                            await loadCatProfiles();
+                            await loadMyPostCount();
+                            widget.onRefreshPosts?.call();
+                          },
+                        ),
                       ),
                     );
                   }).toList(),
                 ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
 
-          const SizedBox(height: 20),
+          _sectionDivider(),
 
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
+          _profileMenuItem(
+            icon: Icons.pets_rounded,
+            title: '꾹꾹 고양이',
+            iconColor: _iconBrown,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const FavoriteCatsScreen()),
               );
             },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.pets_rounded,
-                    color: Color(0xFF8A756C),
-                    size: 24,
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  const Expanded(
-                    child: Text(
-                      '꾹꾹 고양이',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3D241E),
-                      ),
-                    ),
-                  ),
-
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFFB08678),
-                  ),
-                ],
-              ),
-            ),
           ),
 
           const SizedBox(height: 8),
 
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
+          _profileMenuItem(
+            icon: Icons.auto_awesome_rounded,
+            title: '무지개별',
+            iconColor: const Color(0xFF9B7C6F),
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const RainbowScreen()),
               );
             },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Color(0xFF7E6BC4),
-                    size: 24,
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  const Expanded(
-                    child: Text(
-                      '무지개별',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF3D241E),
-                      ),
-                    ),
-                  ),
-
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: Color(0xFFB08678),
-                  ),
-                ],
-              ),
-            ),
           ),
 
-          const SizedBox(height: 20),
-
-          const SizedBox(height: 20),
+          _sectionDivider(),
 
           SettingsTile(
             icon: Icons.settings_rounded,
@@ -444,6 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             },
           ),
+
           const SizedBox(height: 60),
         ],
       ),

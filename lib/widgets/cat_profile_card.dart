@@ -23,7 +23,7 @@ class CatProfileCard extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(22),
@@ -31,7 +31,7 @@ class CatProfileCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              radius: 28,
+              radius: 24,
               backgroundColor: const Color(0xFFFFE2C6),
               backgroundImage:
                   !cat.isVirtualCat && cat.profileImageUrl.isNotEmpty
@@ -39,7 +39,7 @@ class CatProfileCard extends StatelessWidget {
                   : null,
               child: cat.isVirtualCat
                   ? Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(11),
                       child: Image.asset(
                         'assets/icons/today_cat.png',
                         fit: BoxFit.contain,
@@ -62,7 +62,7 @@ class CatProfileCard extends StatelessWidget {
                         child: Text(
                           cat.name,
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -92,7 +92,7 @@ class CatProfileCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
 
                   Text(
                     cat.introduction.isNotEmpty
@@ -102,7 +102,7 @@ class CatProfileCard extends StatelessWidget {
                         : '오늘도 귀여움으로 하루를 채우는 고양이 🐾',
                     style: const TextStyle(
                       color: Color(0xFF8C6A5F),
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ],

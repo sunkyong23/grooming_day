@@ -341,7 +341,7 @@ class _ResultCard extends StatelessWidget {
                 : null,
             child: imageUrl.isEmpty
                 ? fallbackAsset != null
-                      ? Image.asset(fallbackAsset!, width: 28, height: 28)
+                      ? Image.asset(fallbackAsset!, width: 24, height: 24)
                       : Icon(fallbackIcon ?? Icons.pets)
                 : null,
           ),

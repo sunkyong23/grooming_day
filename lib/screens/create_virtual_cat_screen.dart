@@ -26,7 +26,6 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
         borderSide: const BorderSide(color: Color(0xFFF0D5CA)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
         borderSide: const BorderSide(color: Color(0xFFE8A58C), width: 2),
       ),
     );

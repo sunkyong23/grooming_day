@@ -294,7 +294,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     : null,
                 child: widget.cat.isVirtualCat
                     ? Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(11),
                         child: Image.asset(
                           'assets/icons/today_cat.png',
                           fit: BoxFit.contain,

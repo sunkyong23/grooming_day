@@ -104,30 +104,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFFB08678), size: 20),
+      prefixIcon: Icon(icon, color: const Color(0xFFB08678), size: 21),
       labelStyle: const TextStyle(
         color: Color(0xFF8C6A5F),
         fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
       hintStyle: const TextStyle(color: Color(0xFFC7ADA4), fontSize: 13),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Colors.white.withValues(alpha: 0.9),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         borderSide: const BorderSide(color: Color(0xFFFFE4D6)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         borderSide: const BorderSide(color: Color(0xFFFFB199), width: 1.4),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         borderSide: const BorderSide(color: Colors.redAccent),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         borderSide: const BorderSide(color: Colors.redAccent),
       ),
     );
@@ -149,30 +149,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Stack(
             alignment: Alignment.bottomRight,
             children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
-                ),
-                child: CircleAvatar(
-                  radius: 54,
-                  backgroundColor: const Color(0xFFFFE2C6),
-                  backgroundImage: profileImageUrl.isNotEmpty
-                      ? NetworkImage(profileImageUrl)
-                      : null,
-                  child: profileImageUrl.isEmpty
-                      ? const Icon(
-                          Icons.person_rounded,
-                          color: Color(0xFFFFA756),
-                          size: 42,
-                        )
-                      : null,
-                ),
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: const Color(0xFFFFE2C6),
+                backgroundImage: profileImageUrl.isNotEmpty
+                    ? NetworkImage(profileImageUrl)
+                    : null,
+                child: profileImageUrl.isEmpty
+                    ? const Icon(
+                        Icons.person_rounded,
+                        color: Color(0xFFFFA756),
+                        size: 38,
+                      )
+                    : null,
               ),
               Container(
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFB199),
                   shape: BoxShape.circle,
@@ -180,17 +173,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: const Icon(
                   Icons.camera_alt_rounded,
-                  size: 17,
+                  size: 16,
                   color: Colors.white,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           const Text(
             '프로필 사진 변경',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               color: Color(0xFF8C6A5F),
               fontWeight: FontWeight.w700,
             ),
@@ -200,56 +193,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget buildFormCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFFE4D6)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8A5A44).withValues(alpha: 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          TextField(
-            controller: userIdController,
-            readOnly: true,
-            enableInteractiveSelection: false,
-            decoration:
-                buildInputDecoration(
-                  label: '집사 아이디',
-                  hint: '집사 아이디는 변경할 수 없어요',
-                  icon: Icons.alternate_email_rounded,
-                ).copyWith(
-                  filled: true,
-                  fillColor: const Color(0xFFFFF3E7),
-                  suffixIcon: const Icon(
-                    Icons.lock_rounded,
-                    size: 18,
-                    color: Color(0xFFB08678),
-                  ),
+  Widget buildFormSection() {
+    return Column(
+      children: [
+        TextField(
+          controller: userIdController,
+          readOnly: true,
+          enableInteractiveSelection: false,
+          decoration:
+              buildInputDecoration(
+                label: '집사 아이디',
+                hint: '집사 아이디는 변경할 수 없어요',
+                icon: Icons.alternate_email_rounded,
+              ).copyWith(
+                fillColor: const Color(0xFFFFF3E7),
+                suffixIcon: const Icon(
+                  Icons.lock_rounded,
+                  size: 18,
+                  color: Color(0xFFB08678),
                 ),
+              ),
+        ),
+
+        const SizedBox(height: 18),
+
+        TextField(
+          controller: bioController,
+          maxLength: 50,
+          maxLines: 2,
+          decoration: buildInputDecoration(
+            label: '소개글',
+            hint: '한줄 소개를 입력해주세요',
+            icon: Icons.edit_note_rounded,
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: bioController,
-            maxLength: 50,
-            maxLines: 2,
-            decoration: buildInputDecoration(
-              label: '소개글',
-              hint: '한줄 소개를 입력해주세요',
-              icon: Icons.edit_note_rounded,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -261,11 +239,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         onPressed: isSaving ? null : saveProfile,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: const Color(0xFFFFB199),
+          backgroundColor: const Color(0xFFFFA997),
           disabledBackgroundColor: const Color(0xFFE8D6CF),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: isSaving
@@ -297,10 +275,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFFFFF7F1),
           elevation: 0,
+          centerTitle: true,
+          iconTheme: const IconThemeData(color: Color(0xFF3D241E)),
           title: const Text(
             '프로필 편집',
             style: TextStyle(
               color: Color(0xFF3D241E),
+              fontSize: 21,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -312,9 +293,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 buildProfileImageSection(),
-                const SizedBox(height: 26),
-                buildFormCard(),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 34),
+
+                buildFormSection(),
+
+                const SizedBox(height: 28),
+
                 buildSaveButton(),
               ],
             ),

@@ -591,7 +591,7 @@ class _CatPostCardState extends State<CatPostCard> {
                   child: widget.catProfileImageUrl.isEmpty
                       ? (widget.isVirtualCat
                             ? Padding(
-                                padding: const EdgeInsets.all(5),
+                                padding: const EdgeInsets.all(8),
                                 child: Image.asset(
                                   'assets/icons/today_cat.png',
                                   fit: BoxFit.contain,
