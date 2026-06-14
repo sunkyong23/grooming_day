@@ -50,7 +50,7 @@ class BottomNavBar extends StatelessWidget {
             onTap: () => onTap(1),
             child: NavItem(
               icon: Icons.search_rounded,
-              label: '탐색',
+              label: '검색',
               active: currentIndex == 1,
             ),
           ),

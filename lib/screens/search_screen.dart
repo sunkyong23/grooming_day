@@ -127,7 +127,16 @@ class _SearchScreenState extends State<SearchScreen> {
           backgroundColor: const Color(0xFFFFF7F1),
           appBar: AppBar(
             backgroundColor: const Color(0xFFFFF7F1),
-            title: const Text('검색'),
+            centerTitle: true,
+            elevation: 0,
+            title: const Text(
+              '검색',
+              style: TextStyle(
+                color: Color(0xFF4A2F26),
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
           body: Padding(
             padding: const EdgeInsets.all(20),

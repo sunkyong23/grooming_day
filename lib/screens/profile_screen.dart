@@ -415,7 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _profileMenuItem(
             icon: Icons.pets_rounded,
             title: '꾹꾹 고양이',
-            iconColor: _iconBrown,
+            iconColor: const Color.fromARGB(255, 70, 44, 40),
             onTap: () {
               Navigator.push(
                 context,
@@ -429,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _profileMenuItem(
             icon: Icons.auto_awesome_rounded,
             title: '무지개별',
-            iconColor: const Color(0xFF9B7C6F),
+            iconColor: const Color.fromARGB(255, 70, 44, 40),
             onTap: () {
               Navigator.push(
                 context,

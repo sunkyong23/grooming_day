@@ -271,7 +271,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    '🌈 무지개별',
+                    '무지개별',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
@@ -296,10 +296,10 @@ class _RainbowScreenState extends State<RainbowScreen> {
                 overflow: TextOverflow.visible,
                 softWrap: true,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   height: 1.45,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFFFE1A8),
+                  color: Color(0xFFF3D8A4),
                 ),
               ),
             ),
@@ -318,12 +318,20 @@ class _RainbowScreenState extends State<RainbowScreen> {
         floatingActionButton: FloatingActionButton.extended(
           backgroundColor: const Color(0xFFFFDCA8),
           foregroundColor: const Color(0xFF3D241E),
-          elevation: 4,
-          icon: const Icon(Icons.edit_note_rounded),
+          elevation: 3,
+
+          extendedPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 0,
+          ),
+
+          icon: const Icon(Icons.edit_note_rounded, size: 20),
+
           label: const Text(
             '편지 쓰기',
-            style: TextStyle(fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
           ),
+
           onPressed: openCreateLetterScreen,
         ),
         body: Column(
@@ -486,13 +494,13 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: cardPadding,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF4F7),
+              color: const Color(0xFFFFF4F7).withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.16),
+                  color: Colors.black.withValues(alpha: 0.10),
                   blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
