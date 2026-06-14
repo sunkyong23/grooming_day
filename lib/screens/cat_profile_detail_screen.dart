@@ -36,6 +36,129 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
     loadFavoriteState();
   }
 
+  Future<void> _showOwnerMenu() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 38,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7D6CE),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+
+                _ownerMenuItem(
+                  icon: Icons.edit_rounded,
+                  title: '프로필 수정',
+                  onTap: () => Navigator.pop(sheetContext, 'edit'),
+                ),
+
+                _ownerMenuItem(
+                  icon: widget.cat.isHidden
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
+                  title: widget.cat.isHidden ? '숨김 해제' : '숨기기',
+                  onTap: () => Navigator.pop(
+                    sheetContext,
+                    widget.cat.isHidden ? 'unhide' : 'hide',
+                  ),
+                ),
+
+                const Divider(height: 20, color: Color(0xFFEADDD5)),
+
+                _ownerMenuItem(
+                  icon: Icons.delete_outline_rounded,
+                  title: '프로필 삭제',
+                  color: Colors.redAccent,
+                  onTap: () => Navigator.pop(sheetContext, 'delete'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (result == null) return;
+    if (!mounted) return;
+
+    final navigator = Navigator.of(context);
+
+    if (result == 'edit') {
+      final editResult = await navigator.push(
+        MaterialPageRoute(
+          builder: (_) => EditCatProfileScreen(cat: widget.cat),
+        ),
+      );
+
+      if (editResult == true) {
+        if (!mounted) return;
+        navigator.pop(true);
+      }
+    }
+
+    if (result == 'hide') {
+      final confirm = await _showHideConfirmDialog();
+      if (!confirm) return;
+
+      await CatService.hideCatProfile(widget.cat.id);
+
+      if (!mounted) return;
+      navigator.pop(true);
+    }
+
+    if (result == 'unhide') {
+      await CatService.unhideCatProfile(widget.cat.id);
+
+      if (!mounted) return;
+      navigator.pop(true);
+    }
+
+    if (result == 'delete') {
+      final confirm = await _showDeleteConfirmDialog();
+      if (!confirm) return;
+
+      await CatService.deleteCatProfile(widget.cat.id);
+
+      if (!mounted) return;
+      navigator.pop(true);
+    }
+  }
+
+  Widget _ownerMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color color = const Color(0xFF4A2B22),
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: color),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
   Future<void> toggleFavoriteCat() async {
     if (isFavoriteLoading) return;
 
@@ -139,16 +262,47 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('고양이 프로필 숨기기'),
-          content: const Text('이 고양이 프로필을 숨길까요?'),
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          title: const Text(
+            '고양이 프로필 숨기기',
+            style: TextStyle(
+              color: Color(0xFF4A2B22),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: const Text(
+            '숨긴 프로필은 홈과 검색에서 보이지 않아요.\n언제든 다시 표시할 수 있어요.',
+            style: TextStyle(
+              color: Color(0xFF6F5A52),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8C6A5F),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('숨기기'),
+              child: const Text(
+                '숨기기',
+                style: TextStyle(
+                  color: Color(0xFF7B5146),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ],
         );
@@ -163,16 +317,47 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('고양이 프로필 삭제'),
-          content: const Text('정말 이 고양이 프로필을 삭제할까요?\n삭제된 프로필은 목록에서 보이지 않아요.'),
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          title: const Text(
+            '고양이 프로필 삭제',
+            style: TextStyle(
+              color: Color(0xFF4A2B22),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: const Text(
+            '정말 삭제할까요?\n삭제 후에는 다시 복구할 수 없어요.',
+            style: TextStyle(
+              color: Color(0xFF6F5A52),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('취소'),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8C6A5F),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('삭제', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                '삭제',
+                style: TextStyle(
+                  color: Color(0xFFFF6B6B),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ],
         );
@@ -212,80 +397,25 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
             ),
 
           if (isOwner)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_horiz),
-              onSelected: (value) async {
-                final navigator = Navigator.of(context);
-
-                if (value == 'edit') {
-                  final result = await navigator.push(
-                    MaterialPageRoute(
-                      builder: (_) => EditCatProfileScreen(cat: widget.cat),
-                    ),
-                  );
-
-                  if (result == true) {
-                    if (!mounted) return;
-
-                    navigator.pop(true);
-                  }
-                }
-
-                if (value == 'hide') {
-                  final confirm = await _showHideConfirmDialog();
-
-                  if (!confirm) return;
-
-                  await CatService.hideCatProfile(widget.cat.id);
-
-                  if (!mounted) return;
-
-                  navigator.pop(true);
-                }
-
-                if (value == 'unhide') {
-                  await CatService.unhideCatProfile(widget.cat.id);
-
-                  if (!mounted) return;
-
-                  navigator.pop(true);
-                }
-
-                if (value == 'delete') {
-                  final confirm = await _showDeleteConfirmDialog();
-
-                  if (!confirm) return;
-
-                  await CatService.deleteCatProfile(widget.cat.id);
-
-                  if (!mounted) return;
-
-                  // delete 안
-                  navigator.pop(true);
-                }
+            IconButton(
+              icon: const Icon(
+                Icons.more_horiz_rounded,
+                color: Color(0xFF5C4033),
+              ),
+              onPressed: () {
+                _showOwnerMenu();
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('프로필 수정')),
-                PopupMenuItem(
-                  value: widget.cat.isHidden ? 'unhide' : 'hide',
-                  child: Text(widget.cat.isHidden ? '숨김 해제' : '숨기기'),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('프로필 삭제', style: TextStyle(color: Colors.red)),
-                ),
-              ],
             ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: CircleAvatar(
-                radius: widget.cat.isVirtualCat ? 54 : 54,
+                radius: 46,
                 backgroundColor: const Color(0xFFFFE2C6),
                 backgroundImage:
                     !widget.cat.isVirtualCat &&
@@ -294,33 +424,33 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     : null,
                 child: widget.cat.isVirtualCat
                     ? Padding(
-                        padding: const EdgeInsets.all(11),
+                        padding: const EdgeInsets.all(20),
                         child: Image.asset(
                           'assets/icons/today_cat.png',
                           fit: BoxFit.contain,
                         ),
                       )
                     : widget.cat.profileImageUrl.isEmpty
-                    ? const Icon(Icons.pets, size: 40)
+                    ? const Icon(Icons.pets, size: 36)
                     : null,
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
 
             Center(
               child: Text(
                 widget.cat.name,
-                style: TextStyle(
-                  fontSize: 25,
+                style: const TextStyle(
+                  fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  color: const Color(0xFF1F1A24),
+                  color: Color(0xFF1F1A24),
                 ),
               ),
             ),
 
             if (widget.cat.ownerUserId.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Center(
                 child: Text(
                   '@${widget.cat.ownerUserId}',
@@ -332,18 +462,17 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 8),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
 
             if (widget.cat.introduction.isNotEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 10,
+                  vertical: 9,
                 ),
-                margin: const EdgeInsets.only(bottom: 16),
+                margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
@@ -353,7 +482,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15,
-                    height: 1.5,
+                    height: 1.4,
                     color: Color(0xFF4A2B22),
                     fontWeight: FontWeight.w500,
                   ),
@@ -388,7 +517,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   }).toList(),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
 
             if (!widget.cat.isVirtualCat)
@@ -397,7 +526,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 gender: widget.cat.gender,
                 birthDate: getBirthDateText(widget.cat.birthDate),
               ),
-            const SizedBox(height: 26),
+
+            const SizedBox(height: 18),
 
             const Text(
               '앨범',
@@ -408,11 +538,11 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             catPosts.isEmpty
                 ? Container(
-                    height: 160,
+                    height: 150,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -427,8 +557,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          crossAxisSpacing: 6,
-                          mainAxisSpacing: 6,
+                          crossAxisSpacing: 5,
+                          mainAxisSpacing: 5,
                         ),
                     itemBuilder: (context, index) {
                       final post = catPosts[index];

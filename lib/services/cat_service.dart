@@ -129,6 +129,7 @@ class CatService {
     required String catId,
     required String name,
     required String breed,
+    required String gender,
     required DateTime? birthDate,
     required String introduction,
     required List<String> personalityTags,
@@ -155,6 +156,7 @@ class CatService {
         .update({
           'name': name,
           'breed': breed,
+          'gender': gender,
           'birthDate': birthDate,
           'introduction': introduction,
           'personalityTags': personalityTags,
