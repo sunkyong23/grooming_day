@@ -138,7 +138,7 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
         catNameController.text.trim().isEmpty ||
         contentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('제목, 아이 이름, 내용을 모두 입력해주세요.')),
+        const SnackBar(content: Text('제목, 고양이 이름, 내용을 모두 입력해주세요.')),
       );
       return;
     }
@@ -284,40 +284,74 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B113A),
         foregroundColor: Colors.white,
-        title: const Text('추억 남기기'),
+        centerTitle: true,
+        elevation: 0,
+        title: const Text(
+          '추억 남기기',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
         children: [
           _InputField(
             controller: titleController,
             label: '제목',
             hintText: '가을이에게',
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 14,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
           _InputField(
             controller: catNameController,
             label: '고양이 이름',
             hintText: '가을이',
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 14,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              '내용',
+              style: TextStyle(
+                color: Color(0xFFFFDCA8),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
           _InputField(
             controller: contentController,
-            label: '내용',
+            label: '',
             hintText: '오늘도 네 생각이 났어.',
-            maxLines: 12,
+            maxLines: 10,
           ),
+
           const SizedBox(height: 16),
           buildImagePicker(),
+
           const SizedBox(height: 16),
           buildVisibilitySelector(),
+
           const SizedBox(height: 28),
           ElevatedButton(
             onPressed: isSubmitting ? null : submitLetter,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFDCA8),
               foregroundColor: const Color(0xFF3D241E),
+              elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
             ),
             child: isSubmitting
                 ? const SizedBox(
@@ -326,8 +360,8 @@ class _CreateRainbowLetterScreenState extends State<CreateRainbowLetterScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text(
-                    '무지개별에 남기기',
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    '편지 남기기',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                   ),
           ),
         ],
@@ -413,12 +447,16 @@ class _InputField extends StatelessWidget {
   final String label;
   final String hintText;
   final int maxLines;
+  final EdgeInsetsGeometry? contentPadding;
+  final TextAlignVertical? textAlignVertical;
 
   const _InputField({
     required this.controller,
     required this.label,
     required this.hintText,
     this.maxLines = 1,
+    this.contentPadding,
+    this.textAlignVertical,
   });
 
   @override
@@ -426,8 +464,12 @@ class _InputField extends StatelessWidget {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      textAlignVertical: textAlignVertical,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
+        contentPadding:
+            contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         labelText: label,
         hintText: hintText,
         labelStyle: const TextStyle(color: Color(0xFFFFDCA8)),

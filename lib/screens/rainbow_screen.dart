@@ -154,6 +154,9 @@ class _RainbowScreenState extends State<RainbowScreen> {
             title: letter.title,
             preview: letter.content,
             todakCount: letter.todakCount,
+
+            isMyLetter: false,
+            catName: letter.catName,
           ),
         );
       },
@@ -197,6 +200,9 @@ class _RainbowScreenState extends State<RainbowScreen> {
             title: letter.title,
             preview: letter.content,
             todakCount: letter.todakCount,
+
+            isMyLetter: true,
+            catName: letter.catName,
           ),
         );
       },
@@ -393,6 +399,8 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
   final String title;
   final String preview;
   final int todakCount;
+  final bool isMyLetter;
+  final String catName;
 
   const _RainbowLetterPreviewCard({
     required this.showDate,
@@ -402,10 +410,18 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
     required this.title,
     required this.preview,
     required this.todakCount,
+    required this.isMyLetter,
+    required this.catName,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cardPadding = isMyLetter
+        ? const EdgeInsets.fromLTRB(18, 14, 18, 10)
+        : const EdgeInsets.fromLTRB(18, 16, 18, 14);
+
+    final lineHeight = isMyLetter ? 46.0 : 56.0;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -457,7 +473,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
               const Text('⭐', style: TextStyle(fontSize: 17)),
               Container(
                 width: 1,
-                height: 56,
+                height: lineHeight,
                 margin: const EdgeInsets.only(top: 4),
                 color: Colors.white.withValues(alpha: 0.22),
               ),
@@ -468,7 +484,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
         Expanded(
           child: Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+            padding: cardPadding,
             decoration: BoxDecoration(
               color: const Color(0xFFFFF4F7),
               borderRadius: BorderRadius.circular(18),
@@ -503,27 +519,40 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  preview,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF302D50),
-                    fontSize: 14,
-                    height: 1.45,
-                    fontWeight: FontWeight.w500,
+
+                SizedBox(height: isMyLetter ? 6 : 8),
+
+                if (isMyLetter)
+                  Text(
+                    '$catName에게',
+                    style: const TextStyle(
+                      color: Color(0xFF7A7695),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                else ...[
+                  Text(
+                    preview,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF302D50),
+                      fontSize: 14,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  todakCount == 0 ? '토닥토닥' : '토닥토닥 $todakCount개',
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 186, 162, 213),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: 10),
+                  Text(
+                    todakCount == 0 ? '토닥토닥' : '토닥토닥 $todakCount개',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 186, 162, 213),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
