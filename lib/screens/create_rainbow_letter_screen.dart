@@ -448,7 +448,6 @@ class _InputField extends StatelessWidget {
   final String hintText;
   final int maxLines;
   final EdgeInsetsGeometry? contentPadding;
-  final TextAlignVertical? textAlignVertical;
 
   const _InputField({
     required this.controller,
@@ -456,7 +455,6 @@ class _InputField extends StatelessWidget {
     required this.hintText,
     this.maxLines = 1,
     this.contentPadding,
-    this.textAlignVertical,
   });
 
   @override
@@ -464,7 +462,7 @@ class _InputField extends StatelessWidget {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      textAlignVertical: textAlignVertical,
+
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         contentPadding:
