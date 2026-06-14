@@ -315,7 +315,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
           elevation: 4,
           icon: const Icon(Icons.edit_note_rounded),
           label: const Text(
-            '추억 남기기',
+            '편지 쓰기',
             style: TextStyle(fontWeight: FontWeight.w900),
           ),
           onPressed: openCreateLetterScreen,
@@ -450,14 +450,14 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
               : const SizedBox(),
         ),
         SizedBox(
-          width: 30,
+          width: 26,
           child: Column(
             children: [
               const SizedBox(height: 12),
-              const Text('⭐', style: TextStyle(fontSize: 21)),
+              const Text('⭐', style: TextStyle(fontSize: 17)),
               Container(
                 width: 1,
-                height: 76,
+                height: 56,
                 margin: const EdgeInsets.only(top: 4),
                 color: Colors.white.withValues(alpha: 0.22),
               ),
@@ -467,8 +467,8 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
             decoration: BoxDecoration(
               color: const Color(0xFFFFF4F7),
               borderRadius: BorderRadius.circular(18),
@@ -501,14 +501,9 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(
-                      Icons.more_vert_rounded,
-                      size: 22,
-                      color: Color(0xFF9B83B5),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   preview,
                   maxLines: 2,
@@ -520,7 +515,7 @@ class _RainbowLetterPreviewCard extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 Text(
                   todakCount == 0 ? '토닥토닥' : '토닥토닥 $todakCount개',
                   style: const TextStyle(

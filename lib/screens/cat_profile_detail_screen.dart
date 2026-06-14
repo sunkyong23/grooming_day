@@ -184,6 +184,22 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
       setState(() {
         isFavoriteCat = !isFavoriteCat;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isFavoriteCat
+                ? '꾹꾹 완료! 내 프로필의 꾹꾹 고양이에서 확인할 수 있어요 🐾'
+                : '꾹꾹을 취소했어요.',
+          ),
+          backgroundColor: const Color(0xFF333333),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {

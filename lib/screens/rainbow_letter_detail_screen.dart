@@ -136,26 +136,86 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   }
 
   Future<void> showDeleteDialog() async {
-    final result = await showDialog<bool>(
+    final result = await showModalBottomSheet<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('편지 삭제'),
-          content: const Text('정말 삭제하시겠어요?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text('취소'),
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5D6CF),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '편지 삭제',
+                    style: TextStyle(
+                      color: Color(0xFF4A2B22),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '정말 삭제하시겠어요?',
+                    style: TextStyle(
+                      color: Color(0xFF6F5548),
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(bottomSheetContext, false);
+                        },
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(color: Color(0xFFB08678)),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(bottomSheetContext, true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: const Color(0xFFFFDCA8),
+                          foregroundColor: const Color(0xFF3D241E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('삭제하기'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('삭제'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -195,7 +255,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -207,8 +267,8 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                   const SizedBox(height: 14),
                   _EditField(
                     controller: catNameController,
-                    label: '아이 이름',
-                    hintText: '아이 이름을 입력해주세요.',
+                    label: '고양이 이름',
+                    hintText: '고양이 이름을 입력해주세요.',
                   ),
                   const SizedBox(height: 14),
                   _EditField(
@@ -313,7 +373,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -426,13 +486,13 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
     }
   }
 
-  Future<void> showReportDialog() async {
+  Future<void> showReportDialogWithReason(String reason) async {
     try {
       await ReportService.createReport(
         targetType: 'rainbowLetter',
         targetId: widget.letter.id,
         targetOwnerUid: widget.letter.ownerUid,
-        reason: '무지개별 편지 신고',
+        reason: reason,
         letterId: widget.letter.id,
       );
 
@@ -452,6 +512,181 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+
+  Future<void> showRainbowReportDialog() async {
+    String selectedReason = '불쾌한 내용';
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5D6CF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      '편지 신고',
+                      style: TextStyle(
+                        color: Color(0xFF4A2B22),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    ...['불쾌한 내용', '부적절한 표현', '스팸/광고', '기타'].map((reason) {
+                      final selected = selectedReason == reason;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setSheetState(() {
+                            selectedReason = reason;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          child: Row(
+                            children: [
+                              Radio<String>(
+                                value: reason,
+                                groupValue: selectedReason,
+                                activeColor: const Color(0xFF7B61B8),
+                                visualDensity: const VisualDensity(
+                                  horizontal: -4,
+                                  vertical: -4,
+                                ),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: (value) {
+                                  setSheetState(() {
+                                    selectedReason = value!;
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                reason,
+                                style: TextStyle(
+                                  color: const Color(0xFF3D241E),
+                                  fontSize: 15,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 10),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(bottomSheetContext, false);
+                            },
+                            child: const Text(
+                              '취소',
+                              style: TextStyle(color: Color(0xFFB08678)),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(bottomSheetContext, true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: const Color(0xFFFFDCA8),
+                              foregroundColor: const Color(0xFF3D241E),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('신고하기'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    await showReportDialogWithReason(selectedReason);
+  }
+
+  Future<void> showBlockOwnerConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            '작성자 차단',
+            style: TextStyle(
+              color: Color(0xFF4A2B22),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: const Text(
+            '이 작성자의 편지와 토닥토닥이 보이지 않아요.\n차단할까요?',
+            style: TextStyle(color: Color(0xFF6F5A52), height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text(
+                '차단하기',
+                style: TextStyle(color: Color(0xFFFF5A5A)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    await blockLetterOwner();
   }
 
   Future<void> blockLetterOwner() async {
@@ -484,13 +719,149 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text('작성자를 차단했어요.')));
   }
 
-  Future<void> reportTodakComment(TodakComment comment) async {
+  Future<void> showTodakReportDialog(TodakComment comment) async {
+    String selectedReason = '불쾌한 내용';
+
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5D6CF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+
+                    const Text(
+                      '토닥토닥 신고',
+                      style: TextStyle(
+                        color: Color(0xFF4A2B22),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    ...['불쾌한 내용', '부적절한 표현', '스팸/광고', '기타'].map((reason) {
+                      final selected = selectedReason == reason;
+
+                      return GestureDetector(
+                        onTap: () {
+                          setSheetState(() {
+                            selectedReason = reason;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          child: Row(
+                            children: [
+                              Radio<String>(
+                                value: reason,
+                                groupValue: selectedReason,
+                                activeColor: const Color(0xFF7B61B8),
+                                visualDensity: const VisualDensity(
+                                  horizontal: -4,
+                                  vertical: -4,
+                                ),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: (value) {
+                                  setSheetState(() {
+                                    selectedReason = value!;
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                reason,
+                                style: TextStyle(
+                                  color: const Color(0xFF3D241E),
+                                  fontSize: 15,
+                                  fontWeight: selected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pop(bottomSheetContext, false);
+                            },
+                            child: const Text(
+                              '취소',
+                              style: TextStyle(color: Color(0xFFB08678)),
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(bottomSheetContext, true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              elevation: 0,
+                              backgroundColor: const Color(0xFFFFDCA8),
+                              foregroundColor: const Color(0xFF3D241E),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('신고하기'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result != true) return;
+
+    await reportTodakComment(comment, selectedReason);
+  }
+
+  Future<void> reportTodakComment(TodakComment comment, String reason) async {
     try {
       await ReportService.createReport(
         targetType: 'todakComment',
         targetId: comment.id,
         targetOwnerUid: comment.writerUid,
-        reason: '토닥토닥 신고',
+        reason: reason,
         letterId: widget.letter.id,
         commentId: comment.id,
       );
@@ -516,34 +887,96 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   Future<void> showEditTodakDialog(TodakComment comment) async {
     final controller = TextEditingController(text: comment.content);
 
-    final editedContent = await showDialog<String>(
+    final editedContent = await showModalBottomSheet<String>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('토닥토닥 수정'),
-          content: TextField(
-            controller: controller,
-            maxLines: 3,
-            maxLength: 200,
-            decoration: const InputDecoration(hintText: '토닥토닥을 수정해 주세요.'),
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              22,
+              14,
+              22,
+              MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5D6CF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const Text(
+                  '토닥토닥 수정',
+                  style: TextStyle(
+                    color: Color(0xFF4A2B22),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  maxLines: 3,
+                  maxLength: 200,
+                  decoration: InputDecoration(
+                    hintText: '토닥토닥을 수정해 주세요.',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.all(16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(color: Color(0xFFB08678)),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final content = controller.text.trim();
+                          if (content.isEmpty) return;
+                          Navigator.pop(bottomSheetContext, content);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: const Color(0xFFFFDCA8),
+                          foregroundColor: const Color(0xFF3D241E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('수정하기'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                final content = controller.text.trim();
-                if (content.isEmpty) return;
-
-                Navigator.pop(dialogContext, content);
-              },
-              child: const Text('수정'),
-            ),
-          ],
         );
       },
     );
@@ -566,26 +999,84 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
   }
 
   Future<void> deleteTodakComment(TodakComment comment) async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showModalBottomSheet<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('토닥토닥 삭제'),
-          content: const Text('토닥토닥을 삭제할까요?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text('취소'),
+      backgroundColor: const Color(0xFFFFF8F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5D6CF),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '토닥토닥 삭제',
+                    style: TextStyle(
+                      color: Color(0xFF4A2B22),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '토닥토닥을 삭제할까요?',
+                    style: TextStyle(
+                      color: Color(0xFF6F5548),
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () =>
+                            Navigator.pop(bottomSheetContext, false),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(color: Color(0xFFB08678)),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () =>
+                            Navigator.pop(bottomSheetContext, true),
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: const Color(0xFFFFDCA8),
+                          foregroundColor: const Color(0xFF3D241E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text('삭제하기'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              child: const Text('삭제'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -672,9 +1163,9 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
 
   Widget buildTodakSection() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
       ),
@@ -689,19 +1180,19 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           if (isLoadingComments)
             const Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 14),
                 child: CircularProgressIndicator(color: Color(0xFFFFDCA8)),
               ),
             )
           else if (comments.isEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: 6),
               child: Text(
-                '아직 남겨진 토닥토닥이 없어요.',
+                '첫 번째 토닥토닥을 남겨주세요.',
                 style: TextStyle(color: Color(0xFFB8BDD8), fontSize: 14),
               ),
             )
@@ -712,7 +1203,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                 final isMyComment = comment.writerUid == currentUid;
 
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Column(
                     children: [
                       Row(
@@ -755,53 +1246,104 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                               ],
                             ),
                           ),
-                          PopupMenuButton<String>(
+                          IconButton(
                             padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
                             icon: const Icon(
                               Icons.more_vert,
-                              size: 16,
+                              size: 15,
                               color: Color(0xFF9EA3C7),
                             ),
-                            onSelected: (value) async {
-                              if (value == 'edit') {
-                                await showEditTodakDialog(comment);
-                              } else if (value == 'delete') {
-                                await deleteTodakComment(comment);
-                              } else if (value == 'report') {
-                                await reportTodakComment(comment);
-                              } else if (value == 'block') {
-                                await blockTodakWriter(comment);
-                              }
-                            },
-                            itemBuilder: (context) {
-                              if (isMyComment) {
-                                return const [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text('수정'),
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: const Color(0xFFFFF8F2),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(28),
                                   ),
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Text('삭제'),
-                                  ),
-                                ];
-                              }
+                                ),
+                                builder: (bottomSheetContext) {
+                                  return SafeArea(
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        22,
+                                        14,
+                                        22,
+                                        24,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 42,
+                                            height: 5,
+                                            margin: const EdgeInsets.only(
+                                              bottom: 18,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFE5D6CF),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                          ),
 
-                              return const [
-                                PopupMenuItem(
-                                  value: 'report',
-                                  child: Text('신고'),
-                                ),
-                                PopupMenuItem(
-                                  value: 'block',
-                                  child: Text('작성자 차단'),
-                                ),
-                              ];
+                                          if (isMyComment) ...[
+                                            _BottomSheetAction(
+                                              icon: Icons.edit_rounded,
+                                              label: '토닥토닥 수정',
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  bottomSheetContext,
+                                                );
+                                                await showEditTodakDialog(
+                                                  comment,
+                                                );
+                                              },
+                                            ),
+                                            const Divider(
+                                              height: 22,
+                                              color: Color(0xFFEADCD5),
+                                            ),
+                                            _BottomSheetAction(
+                                              icon:
+                                                  Icons.delete_outline_rounded,
+                                              label: '토닥토닥 삭제',
+                                              color: Color(0xFFFF5A5A),
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  bottomSheetContext,
+                                                );
+                                                await deleteTodakComment(
+                                                  comment,
+                                                );
+                                              },
+                                            ),
+                                          ] else ...[
+                                            _BottomSheetAction(
+                                              icon: Icons.flag_outlined,
+                                              label: '신고하기',
+                                              onTap: () async {
+                                                Navigator.pop(
+                                                  bottomSheetContext,
+                                                );
+                                                await showTodakReportDialog(
+                                                  comment,
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
                             },
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 1),
                       Divider(
                         color: Colors.white.withValues(alpha: 0.08),
                         height: 1,
@@ -811,7 +1353,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                 );
               }).toList(),
             ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -822,7 +1364,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                   maxLines: 3,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: '따뜻한 토닥토닥을 남겨주세요.',
+                    hintText: '따뜻한 마음을 남겨주세요.',
                     hintStyle: const TextStyle(
                       color: Color(0xFF8F95B8),
                       fontSize: 13,
@@ -831,7 +1373,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                     fillColor: Colors.white.withValues(alpha: 0.08),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
-                      vertical: 12,
+                      vertical: 10,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -848,7 +1390,7 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
                   foregroundColor: const Color(0xFF3D241E),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
-                    vertical: 13,
+                    vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -881,54 +1423,90 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
         foregroundColor: Colors.white,
         title: const Text('무지개별 편지'),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'edit') {
-                await showEditLetterDialog();
-              } else if (value == 'image') {
-                await updateLetterImage();
-              } else if (value == 'delete') {
-                await showDeleteDialog();
-              } else if (value == 'report') {
-                await showReportDialog();
-              } else if (value == 'block') {
-                await blockLetterOwner();
-              }
-            },
-            itemBuilder: (context) {
-              if (isMyLetter) {
-                return const [
-                  PopupMenuItem(value: 'edit', child: Text('수정')),
-                  PopupMenuItem(value: 'image', child: Text('사진 수정')),
-                  PopupMenuItem(value: 'delete', child: Text('삭제')),
-                ];
-              }
+          IconButton(
+            icon: const Icon(Icons.more_horiz_rounded),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: const Color(0xFFFFF8F2),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                ),
+                builder: (bottomSheetContext) {
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 5,
+                            margin: const EdgeInsets.only(bottom: 18),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5D6CF),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
 
-              return const [
-                PopupMenuItem(value: 'report', child: Text('신고')),
-                PopupMenuItem(value: 'block', child: Text('작성자 차단')),
-              ];
+                          if (isMyLetter) ...[
+                            _BottomSheetAction(
+                              icon: Icons.edit_rounded,
+                              label: '편지 수정',
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+                                await showEditLetterDialog();
+                              },
+                            ),
+                            _BottomSheetAction(
+                              icon: Icons.image_rounded,
+                              label: '사진 수정',
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+                                await updateLetterImage();
+                              },
+                            ),
+                            const Divider(height: 22, color: Color(0xFFEADCD5)),
+                            _BottomSheetAction(
+                              icon: Icons.delete_outline_rounded,
+                              label: '편지 삭제',
+                              color: Color(0xFFFF5A5A),
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+                                await showDeleteDialog();
+                              },
+                            ),
+                          ] else ...[
+                            _BottomSheetAction(
+                              icon: Icons.flag_outlined,
+                              label: '신고하기',
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+                                await showRainbowReportDialog();
+                              },
+                            ),
+                            _BottomSheetAction(
+                              icon: Icons.block_rounded,
+                              label: '작성자 차단',
+                              onTap: () async {
+                                Navigator.pop(bottomSheetContext);
+                                await showBlockOwnerConfirmDialog();
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
             },
           ),
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.fromLTRB(22, 18, 22, 34),
         children: [
-          Text(
-            '@${widget.letter.ownerUserId}',
-            style: const TextStyle(
-              color: Color(0xFFFFDCA8),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            formatDateTime(widget.letter.createdAt),
-            style: const TextStyle(color: Color(0xFF9EA3C7), fontSize: 13),
-          ),
-          const SizedBox(height: 24),
           Text(
             currentTitle,
             style: const TextStyle(
@@ -937,7 +1515,9 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               fontWeight: FontWeight.w900,
             ),
           ),
+
           const SizedBox(height: 8),
+
           Text(
             '$currentCatName에게',
             style: const TextStyle(
@@ -946,8 +1526,11 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
+
           buildLetterImage(),
-          const SizedBox(height: 28),
+
+          const SizedBox(height: 22),
+
           Text(
             currentContent,
             style: const TextStyle(
@@ -956,7 +1539,36 @@ class _RainbowLetterDetailScreenState extends State<RainbowLetterDetailScreen> {
               height: 1.7,
             ),
           ),
-          const SizedBox(height: 36),
+
+          const SizedBox(height: 22),
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '- ${widget.letter.ownerUserId} -',
+                  style: const TextStyle(
+                    color: Color(0xFFFFDCA8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formatDateTime(widget.letter.createdAt),
+                  style: const TextStyle(
+                    color: Color(0xFF9EA3C7),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
           buildTodakSection(),
         ],
       ),
@@ -997,6 +1609,45 @@ class _EditField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomSheetAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Future<void> Function() onTap;
+
+  const _BottomSheetAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color = const Color(0xFF4A2B22),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
