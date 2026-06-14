@@ -907,7 +907,7 @@ class _CatPostCardState extends State<CatPostCard> {
                             ],
                           ),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                         ],
 
                         if (isLoadingReviews)
@@ -951,7 +951,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      vertical: 4,
+                                      vertical: 2,
                                     ),
                                     child: Column(
                                       crossAxisAlignment:
@@ -972,6 +972,7 @@ class _CatPostCardState extends State<CatPostCard> {
                                                         color: Color(
                                                           0xFF5A372F,
                                                         ),
+                                                        height: 1.2,
                                                       ),
                                                     ),
                                                     TextSpan(
@@ -982,16 +983,16 @@ class _CatPostCardState extends State<CatPostCard> {
                                                         color: Color(
                                                           0xFFBFA79F,
                                                         ),
+                                                        height: 1.2,
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
                                             ),
-
                                             SizedBox(
                                               width: 24,
-                                              height: 22,
+                                              height: 20,
                                               child: GestureDetector(
                                                 behavior:
                                                     HitTestBehavior.translucent,
@@ -1128,8 +1129,6 @@ class _CatPostCardState extends State<CatPostCard> {
                                           ],
                                         ),
 
-                                        const SizedBox(height: 1),
-
                                         Text(
                                           review.createdAt == null
                                               ? ''
@@ -1141,15 +1140,23 @@ class _CatPostCardState extends State<CatPostCard> {
                                           style: const TextStyle(
                                             fontSize: 9,
                                             color: Color(0xFFC8B7AF),
+                                            height: 1.15,
                                           ),
                                         ),
+
+                                        const SizedBox(height: 4),
                                       ],
                                     ),
                                   ),
 
-                                  Container(
-                                    height: 0.5,
-                                    color: const Color(0xFFF1E6E1),
+                                  Column(
+                                    children: [
+                                      Container(
+                                        height: 0.5,
+                                        color: const Color(0xFFF7EFEB),
+                                      ),
+                                      const SizedBox(height: 8),
+                                    ],
                                   ),
                                 ],
                               );
