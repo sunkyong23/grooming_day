@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../debug/reset_test_data.dart';
 import '../services/admin_service.dart';
 import 'admin_report_list_screen.dart';
 import 'admin_user_report_list_screen.dart';
@@ -261,6 +262,60 @@ class _AdminScreenState extends State<AdminScreen> {
                     count: userReportCount,
                     icon: Icons.person_off_outlined,
                     onTap: openUserReportList,
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    '🛠 개발자 메뉴',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF3D241E),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 52),
+                    ),
+                    onPressed: () async {
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('주의'),
+                          content: const Text(
+                            '관리자 계정을 제외한 모든 테스트 데이터를 삭제할까요?\n\n이 작업은 되돌릴 수 없습니다.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('취소'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('삭제'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (result != true) return;
+
+                      await ResetTestData.run();
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('테스트 데이터 삭제 완료')),
+                      );
+
+                      await loadStats();
+                    },
+                    child: const Text('전체 테스트 데이터 삭제'),
                   ),
                 ],
               ),
