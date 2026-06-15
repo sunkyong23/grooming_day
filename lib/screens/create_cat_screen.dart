@@ -466,7 +466,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
               decoration: inputDecoration('품종'),
             ),
 
-            const SizedBox(height: 26),
+            const SizedBox(height: 35),
 
             sectionTitle('성격 선택 (최대 5개)'),
 
@@ -474,7 +474,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
 
             personalityChips(),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 35),
 
             TextField(
               controller: introductionController,

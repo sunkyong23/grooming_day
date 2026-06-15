@@ -102,7 +102,7 @@ class _FavoriteCatsScreenState extends State<FavoriteCatsScreen> {
           : favoriteCats.isEmpty
           ? const Center(
               child: Text(
-                '아직 꾹꾹한 고양이가 없어요 🐾',
+                '아직 꾹꾹한 고양이가 없어요 🐾\n검색창에서 고양이 프로필을 검색 후\n발자국 아이콘을 클릭해보세요.',
                 style: TextStyle(
                   fontSize: 15,
                   color: Color(0xFF8C6A5F),

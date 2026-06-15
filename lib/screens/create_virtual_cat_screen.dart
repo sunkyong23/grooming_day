@@ -63,9 +63,10 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
       context,
     ).showSnackBar(const SnackBar(content: Text('랜선집사 프로필이 등록되었어요 😺')));
 
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const MainTabScreen()),
+      (route) => false,
     );
   }
 

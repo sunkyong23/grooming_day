@@ -27,7 +27,7 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
 
               const Text(
                 '그루밍데이는 고양이를 키우는 집사도,\n고양이를 좋아하는 랜선집사도 함께할 수 있어요.',
@@ -38,11 +38,12 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 40),
 
               _typeCard(
                 context: context,
-                emoji: '🐱',
+                imagePath: 'assets/icons/catcatcat.png',
+                imageSize: 65,
                 title: '나의 고양이',
                 subtitle: '반려중인 고양이 이름, 생일, 성격을 직접 등록해요.',
                 onTap: () {
@@ -57,7 +58,8 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
 
               _typeCard(
                 context: context,
-                emoji: '💻',
+                imagePath: 'assets/icons/today_cat.png',
+                imageSize: 38,
                 title: '랜선집사',
                 subtitle: '고양이가 없어도 그루밍데이를 함께 즐길 수 있어요.',
                 onTap: () {
@@ -78,7 +80,8 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
 
   Widget _typeCard({
     required BuildContext context,
-    required String emoji,
+    required String imagePath,
+    required double imageSize,
     required String title,
     required String subtitle,
     required VoidCallback onTap,
@@ -109,9 +112,16 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
                 color: Color(0xFFFFE9DE),
                 shape: BoxShape.circle,
               ),
-              child: Text(emoji, style: const TextStyle(fontSize: 34)),
+              child: Image.asset(
+                imagePath,
+                width: imageSize,
+                height: imageSize,
+                fit: BoxFit.contain,
+              ),
             ),
+
             const SizedBox(width: 18),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +134,9 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
                       color: Color(0xFF4A2B22),
                     ),
                   ),
+
                   const SizedBox(height: 6),
+
                   Text(
                     subtitle,
                     style: const TextStyle(
@@ -136,6 +148,7 @@ class CatProfileTypeSelectScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             const Icon(Icons.chevron_right_rounded, color: Color(0xFFB08678)),
           ],
         ),

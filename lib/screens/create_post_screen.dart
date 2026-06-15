@@ -577,7 +577,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 35),
 
               const Text(
                 '태그 선택',
@@ -639,7 +639,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 }).toList(),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
               SizedBox(
                 width: double.infinity,
