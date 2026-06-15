@@ -668,7 +668,7 @@ class _CatPostCardState extends State<CatPostCard>
                         fit: BoxFit.contain,
                         placeholder: (context, url) {
                           return const Center(
-                            child: const CircularProgressIndicator(
+                            child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Color(0xFFFFD8CC),
                             ),
