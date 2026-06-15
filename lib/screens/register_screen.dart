@@ -44,6 +44,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  bool isValidPassword(String password) {
+    final passwordRegex = RegExp(
+      r'^(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/`~]).{8,}$',
+    );
+
+    return passwordRegex.hasMatch(password);
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -95,7 +103,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ).showSnackBar(const SnackBar(content: Text('비밀번호를 입력해주세요.')));
       return;
     }
-
+    if (!isValidPassword(password)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요.')),
+      );
+      return;
+    }
     if (confirmPassword.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -157,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else if (e.code == 'email-already-in-use') {
         message = '이미 사용 중인 이메일입니다.';
       } else if (e.code == 'weak-password') {
-        message = '비밀번호는 6자 이상 입력해주세요.';
+        message = '비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요.';
       }
 
       if (!mounted) return;
@@ -266,7 +279,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: passwordController,
                 obscureText: true,
                 cursorColor: const Color(0xFF5C4033),
-                decoration: inputDecoration('비밀번호 (6자 이상)'),
+                decoration: inputDecoration('비밀번호 (영문+숫자+특수문자 8자 이상)'),
               ),
 
               const SizedBox(height: 14),

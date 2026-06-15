@@ -16,6 +16,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   bool isLoading = false;
 
+  bool isValidPassword(String password) {
+    final passwordRegex = RegExp(
+      r'^(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/`~]).{8,}$',
+    );
+
+    return passwordRegex.hasMatch(password);
+  }
+
   @override
   void dispose() {
     currentPasswordController.dispose();
@@ -38,10 +46,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       return;
     }
 
-    if (newPassword.length < 6) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('새 비밀번호는 6자 이상이어야 합니다.')));
+    if (!isValidPassword(newPassword)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('새 비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요.'),
+        ),
+      );
       return;
     }
 
@@ -75,7 +85,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         message = '현재 비밀번호가 올바르지 않습니다.';
       } else if (e.code == 'weak-password') {
-        message = '새 비밀번호가 너무 약합니다.';
+        message = '새 비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상 입력해주세요.';
       } else if (e.code == 'requires-recent-login') {
         message = '보안을 위해 다시 로그인 후 시도해주세요.';
       }
@@ -179,7 +189,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             _passwordField(
               controller: newPasswordController,
               label: '새 비밀번호',
-              hintText: '6자 이상 입력해주세요',
+              hintText: '영문+숫자+특수문자 8자 이상',
             ),
             const SizedBox(height: 20),
             _passwordField(

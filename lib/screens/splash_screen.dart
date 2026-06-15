@@ -59,12 +59,12 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
 
                 Transform.translate(
-                  offset: const Offset(0, -18), // ← 위로 끌어올리기
+                  offset: const Offset(0, -16), // ← 위로 끌어올리기
                   child: const Text(
                     '오늘도 너와 함께하는 하루',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       shadows: [
                         Shadow(

@@ -343,7 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          const SizedBox(height: 22),
+          const SizedBox(height: 34),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -381,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           catProfiles.isEmpty
               ? const Text(
@@ -409,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }).toList(),
                 ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 15),
 
           _sectionDivider(),
 
@@ -425,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 15),
 
           _profileMenuItem(
             icon: Icons.auto_awesome_rounded,
@@ -440,6 +440,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           _sectionDivider(),
+
+          const SizedBox(height: 20),
 
           SettingsTile(
             icon: Icons.settings_rounded,

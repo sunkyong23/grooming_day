@@ -514,8 +514,8 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                   children: widget.cat.personalityTags.map((tag) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                        horizontal: 11,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFE9DE),
@@ -524,7 +524,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                       child: Text(
                         tag,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF8C6A5F),
                         ),

@@ -79,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const SizedBox(height: 60),
 
             const Text(
-              '가입한 이메일을 입력해주세요.\n비밀번호 재설정 링크를\n이메일로 보내드릴게요.',
+              '가입한 이메일을 입력해주세요.\n비밀번호 재설정 링크를\n이메일로 보내드릴게요.\n\n새 비밀번호는 영문, 숫자, 특수문자를 포함해\n8자 이상으로 설정해주세요.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,

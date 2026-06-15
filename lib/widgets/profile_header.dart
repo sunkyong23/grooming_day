@@ -49,7 +49,7 @@ class ProfileHeader extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
                     Text(
                       bio.isEmpty ? '소개글을 작성해주세요 🐾' : bio,
