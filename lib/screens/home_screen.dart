@@ -30,7 +30,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final List<String> tags = const [
     '오늘의',
     '아깽이',
@@ -62,6 +63,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   static const int _postPageLimit = 20;
 
+  late final AnimationController _loadingController;
+
   void scrollFeedToTop() {
     if (!feedScrollController.hasClients) return;
 
@@ -76,6 +79,10 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
     loadInitialData();
 
     feedScrollController.addListener(() {
@@ -90,6 +97,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _loadingController.dispose();
     feedScrollController.dispose();
     tagScrollController.dispose();
     super.dispose();
@@ -1277,61 +1285,117 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                controller: feedScrollController,
-                padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
-                itemCount: filteredPosts.length + 1 + (_hasMorePosts ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return const SizedBox(height: 24);
-                  }
+              child: _isLoadingPosts && posts.isEmpty
+                  ? Center(
+                      child: ThreeDotLoading(controller: _loadingController),
+                    )
+                  : ListView.builder(
+                      controller: feedScrollController,
+                      padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
+                      itemCount:
+                          filteredPosts.length + 1 + (_hasMorePosts ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return const SizedBox(height: 24);
+                        }
 
-                  final postIndex = index - 1;
+                        final postIndex = index - 1;
 
-                  if (postIndex >= filteredPosts.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  }
+                        if (postIndex >= filteredPosts.length) {
+                          if (!_hasMorePosts) {
+                            return const SizedBox.shrink();
+                          }
 
-                  final post = filteredPosts[postIndex];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: ThreeDotLoading(
+                                controller: _loadingController,
+                              ),
+                            ),
+                          );
+                        }
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 18),
-                    child: CatPostCard(
-                      imagePath: post.imageUrl,
-                      caption: post.caption,
-                      catProfileImageUrl: post.catProfileImageUrl,
-                      isVirtualCat: post.isVirtualCat,
-                      scrapCount: post.scrapCount,
-                      tagText: post.tags.map((tag) => '#$tag').join('   '),
-                      createdAt: post.createdAt ?? DateTime.now(),
-                      catName: post.catName,
-                      userId: post.userId,
-                      commentCount: post.commentCount,
-                      postId: post.id,
-                      canWriteReview: post.ownerUid != currentUid,
-                      isScrapped: scrappedPostIds.contains(post.id),
-                      onScrapTap: post.ownerUid == currentUid
-                          ? null
-                          : () {
-                              toggleScrap(post);
+                        final post = filteredPosts[postIndex];
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: CatPostCard(
+                            imagePath: post.imageUrl,
+                            caption: post.caption,
+                            catProfileImageUrl: post.catProfileImageUrl,
+                            isVirtualCat: post.isVirtualCat,
+                            scrapCount: post.scrapCount,
+                            tagText: post.tags
+                                .map((tag) => '#$tag')
+                                .join('   '),
+                            createdAt: post.createdAt ?? DateTime.now(),
+                            catName: post.catName,
+                            userId: post.userId,
+                            commentCount: post.commentCount,
+                            postId: post.id,
+                            canWriteReview: post.ownerUid != currentUid,
+                            isScrapped: scrappedPostIds.contains(post.id),
+                            onScrapTap: post.ownerUid == currentUid
+                                ? null
+                                : () {
+                                    toggleScrap(post);
+                                  },
+                            showMoreButton: true,
+                            onMoreTap: () {
+                              showPostMoreMenu(post);
                             },
-                      showMoreButton: true,
-                      onMoreTap: () {
-                        showPostMoreMenu(post);
+                          ),
+                        );
                       },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class ThreeDotLoading extends StatelessWidget {
+  final AnimationController controller;
+
+  const ThreeDotLoading({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final activeIndex = (controller.value * 3).floor() % 3;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isActive = index == activeIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 10 : 8,
+              height: isActive ? 10 : 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

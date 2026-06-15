@@ -49,11 +49,14 @@ class CatPostCard extends StatefulWidget {
   State<CatPostCard> createState() => _CatPostCardState();
 }
 
-class _CatPostCardState extends State<CatPostCard> {
+class _CatPostCardState extends State<CatPostCard>
+    with SingleTickerProviderStateMixin {
   bool isReviewExpanded = false;
   bool isSubmittingReview = false;
   bool isLoadingReviews = false;
   late int currentCommentCount;
+
+  late final AnimationController _loadingController;
 
   List<Review> reviews = [];
   final TextEditingController reviewController = TextEditingController();
@@ -61,6 +64,12 @@ class _CatPostCardState extends State<CatPostCard> {
   @override
   void initState() {
     super.initState();
+
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+
     currentCommentCount = widget.commentCount;
   }
 
@@ -75,6 +84,7 @@ class _CatPostCardState extends State<CatPostCard> {
 
   @override
   void dispose() {
+    _loadingController.dispose();
     reviewController.dispose();
     super.dispose();
   }
@@ -609,7 +619,7 @@ class _CatPostCardState extends State<CatPostCard> {
                         widget.catName,
                         style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFF3D241E),
                         ),
                       ),
@@ -658,7 +668,10 @@ class _CatPostCardState extends State<CatPostCard> {
                         fit: BoxFit.contain,
                         placeholder: (context, url) {
                           return const Center(
-                            child: CircularProgressIndicator(),
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFFFFD8CC),
+                            ),
                           );
                         },
                         errorWidget: (context, url, error) {
@@ -684,7 +697,10 @@ class _CatPostCardState extends State<CatPostCard> {
                   height: 260,
                   alignment: Alignment.center,
                   color: const Color(0xFFFFF3E7),
-                  child: const CircularProgressIndicator(),
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFFFFD8CC),
+                  ),
                 );
               },
               errorWidget: (context, url, error) {
@@ -911,9 +927,13 @@ class _CatPostCardState extends State<CatPostCard> {
                         ],
 
                         if (isLoadingReviews)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8),
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Center(
+                              child: ThreeDotLoading(
+                                controller: _loadingController,
+                              ),
+                            ),
                           )
                         else if (reviews
                             .where((review) => review.content.trim().isNotEmpty)
@@ -1171,6 +1191,49 @@ class _CatPostCardState extends State<CatPostCard> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ThreeDotLoading extends StatelessWidget {
+  final AnimationController controller;
+
+  const ThreeDotLoading({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final activeIndex = (controller.value * 3).floor() % 3;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isActive = index == activeIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 10 : 8,
+              height: isActive ? 10 : 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

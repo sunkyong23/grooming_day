@@ -532,7 +532,7 @@ class UserProfileScreen extends StatelessWidget {
                                 cat.name,
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w700,
                                   color: Color(0xFF3D241E),
                                 ),
                               ),

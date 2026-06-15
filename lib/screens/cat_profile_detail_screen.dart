@@ -431,7 +431,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
           children: [
             Center(
               child: CircleAvatar(
-                radius: 46,
+                radius: 65,
                 backgroundColor: const Color(0xFFFFE2C6),
                 backgroundImage:
                     !widget.cat.isVirtualCat &&
@@ -459,7 +459,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 widget.cat.name,
                 style: const TextStyle(
                   fontSize: 24,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                   color: Color(0xFF1F1A24),
                 ),
               ),

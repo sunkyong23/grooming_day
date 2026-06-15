@@ -394,13 +394,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: SizedBox(
                         height: 82,
-                        child: CatProfileCard(
-                          cat: cat,
-                          onChanged: () async {
-                            await loadCatProfiles();
-                            await loadMyPostCount();
-                            widget.onRefreshPosts?.call();
-                          },
+                        child: Center(
+                          child: CatProfileCard(
+                            cat: cat,
+                            onChanged: () async {
+                              await loadCatProfiles();
+                              await loadMyPostCount();
+                              widget.onRefreshPosts?.call();
+                            },
+                          ),
                         ),
                       ),
                     );

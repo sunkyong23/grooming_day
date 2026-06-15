@@ -49,7 +49,7 @@ class ProfileHeader extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
 
                     Text(
                       bio.isEmpty ? '소개글을 작성해주세요 🐾' : bio,
@@ -62,7 +62,7 @@ class ProfileHeader extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
 
                     Text(
                       '게시글 $postCount개',

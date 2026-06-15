@@ -29,6 +29,7 @@ class CatProfileCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(
               radius: 24,
@@ -54,6 +55,7 @@ class CatProfileCard extends StatelessWidget {
 
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -63,7 +65,7 @@ class CatProfileCard extends StatelessWidget {
                           cat.name,
                           style: const TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -104,6 +106,8 @@ class CatProfileCard extends StatelessWidget {
                       color: Color(0xFF8C6A5F),
                       fontSize: 13,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

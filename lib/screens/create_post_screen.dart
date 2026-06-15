@@ -253,7 +253,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       cat.name,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: Color(0xFF5C4033),
                       ),
                     ),
@@ -575,7 +575,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               ),
 
-              const SizedBox(height: 22),
+              const SizedBox(height: 28),
 
               const Text(
                 '태그 선택',
@@ -586,7 +586,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
+
+              Text(
+                '태그를 선택하면 홈 피드에 공개돼요 🐾\n선택하지 않으면 내 앨범에만 저장돼요.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFB08678),
+                  height: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 18),
 
               Wrap(
                 spacing: 10,
@@ -596,8 +607,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
                   return FilterChip(
                     visualDensity: const VisualDensity(
-                      horizontal: -2,
-                      vertical: -3,
+                      horizontal: 4,
+                      vertical: 2,
                     ),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     label: Text(

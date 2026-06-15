@@ -16,8 +16,11 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends State<SearchScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController searchController = TextEditingController();
+
+  late final AnimationController _loadingController;
 
   Timer? _debounce;
   int selectedTabIndex = 0;
@@ -27,14 +30,19 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Map<String, dynamic>> searchedUsers = [];
 
   @override
-  void deactivate() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    super.deactivate();
+  void initState() {
+    super.initState();
+
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _loadingController.dispose();
     searchController.dispose();
     super.dispose();
   }
@@ -194,9 +202,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 const SizedBox(height: 16),
 
                 if (isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: CircularProgressIndicator(),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 46),
+                    child: Center(
+                      child: ThreeDotLoading(controller: _loadingController),
+                    ),
                   )
                 else if (!hasResult)
                   const Padding(
@@ -538,6 +548,49 @@ class _UserResultCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class ThreeDotLoading extends StatelessWidget {
+  final AnimationController controller;
+
+  const ThreeDotLoading({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final activeIndex = (controller.value * 3).floor() % 3;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isActive = index == activeIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 10 : 8,
+              height: isActive ? 10 : 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }
