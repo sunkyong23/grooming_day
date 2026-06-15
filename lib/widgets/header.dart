@@ -23,7 +23,7 @@ class Header extends StatelessWidget {
               const Text(
                 '그루밍데이',
                 style: TextStyle(
-                  fontFamily: 'EastSeaDokdo',
+                  fontFamily: 'Dongle',
                   fontSize: 43,
                   color: Color(0xFF351A14),
                   height: 0.9,

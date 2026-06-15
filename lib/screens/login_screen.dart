@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     '그루밍데이',
                     style: TextStyle(
-                      fontFamily: 'EastSeaDokdo',
+                      fontFamily: 'Dongle',
                       fontSize: 55,
                       color: Color(0xFF5C4033),
                     ),
