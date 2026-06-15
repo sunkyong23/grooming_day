@@ -42,7 +42,8 @@ class PostDetailDialog extends StatefulWidget {
   State<PostDetailDialog> createState() => _PostDetailDialogState();
 }
 
-class _PostDetailDialogState extends State<PostDetailDialog> {
+class _PostDetailDialogState extends State<PostDetailDialog>
+    with SingleTickerProviderStateMixin {
   final TextEditingController reviewController = TextEditingController();
 
   List<Review> reviews = [];
@@ -50,14 +51,23 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
   bool isSubmittingReview = false;
   bool isHandlingScrap = false;
 
+  late final AnimationController _loadingController;
+
   @override
   void initState() {
     super.initState();
+
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+
     loadReviews();
   }
 
   @override
   void dispose() {
+    _loadingController.dispose();
     reviewController.dispose();
     super.dispose();
   }
@@ -207,10 +217,14 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                 borderRadius: BorderRadius.circular(14),
               ),
               child: isSubmittingReview
-                  ? const SizedBox(
-                      width: 14,
+                  ? SizedBox(
+                      width: 28,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: ThreeDotLoading(
+                        controller: _loadingController,
+                        dotSize: 5,
+                        spacing: 2,
+                      ),
                     )
                   : const Text(
                       '등록',
@@ -476,7 +490,7 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
 
   Widget buildReviewList() {
     if (isLoadingReviews) {
-      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      return Center(child: ThreeDotLoading(controller: _loadingController));
     }
 
     if (reviews.isEmpty) {
@@ -654,10 +668,14 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
         height: 34,
         child: Center(
           child: isHandlingScrap
-              ? const SizedBox(
-                  width: 16,
+              ? SizedBox(
+                  width: 28,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: ThreeDotLoading(
+                    controller: _loadingController,
+                    dotSize: 5,
+                    spacing: 2,
+                  ),
                 )
               : Icon(
                   widget.isScrapped
@@ -697,7 +715,7 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
                     height: 260,
                     alignment: Alignment.center,
                     color: const Color(0xFFFFF3E7),
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+                    child: ThreeDotLoading(controller: _loadingController),
                   ),
                   errorWidget: (context, url, error) => Container(
                     height: 260,
@@ -810,6 +828,57 @@ class _PostDetailDialogState extends State<PostDetailDialog> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class ThreeDotLoading extends StatelessWidget {
+  final AnimationController controller;
+  final double dotSize;
+  final double spacing;
+
+  const ThreeDotLoading({
+    super.key,
+    required this.controller,
+    this.dotSize = 8,
+    this.spacing = 4,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final activeIndex = (controller.value * 3).floor() % 3;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(3, (index) {
+            final isActive = index == activeIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: EdgeInsets.symmetric(horizontal: spacing),
+              width: isActive ? dotSize + 2 : dotSize,
+              height: isActive ? dotSize + 2 : dotSize,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

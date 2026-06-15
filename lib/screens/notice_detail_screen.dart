@@ -20,14 +20,22 @@ class NoticeDetailScreen extends StatelessWidget {
         title: Text(title, style: const TextStyle(color: Color(0xFF5C4033))),
         iconTheme: const IconThemeData(color: Color(0xFF5C4033)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(
-          content,
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.6,
-            color: Color(0xFF5C4033),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Text(
+            content,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.8,
+              color: Color(0xFF5C4033),
+            ),
           ),
         ),
       ),

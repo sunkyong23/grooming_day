@@ -175,7 +175,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
           child: const SizedBox(
             width: 14,
             height: 14,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFFFFD8CC),
+            ),
           ),
         );
       },
@@ -231,7 +234,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
           if (snapshot.connectionState == ConnectionState.waiting &&
               notifications.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFFD8CC)),
+            );
           }
 
           if (notifications.isEmpty) {

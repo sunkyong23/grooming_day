@@ -71,7 +71,9 @@ class UpdateScreen extends StatelessWidget {
         stream: UpdateService.updates(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFFD8CC)),
+            );
           }
 
           final updates = snapshot.data!.docs;

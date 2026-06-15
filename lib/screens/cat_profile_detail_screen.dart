@@ -612,6 +612,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                                   height: 16,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
+                                    color: Color(0xFFFFD8CC),
                                   ),
                                 ),
                               );

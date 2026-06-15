@@ -96,7 +96,9 @@ class _FavoriteCatsScreenState extends State<FavoriteCatsScreen> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFFD8CC)),
+            )
           : favoriteCats.isEmpty
           ? const Center(
               child: Text(
@@ -142,7 +144,7 @@ class _FavoriteCatsScreenState extends State<FavoriteCatsScreen> {
                                 cat.catName,
                                 style: const TextStyle(
                                   fontSize: 17,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w700,
                                   color: Color(0xFF1F1A24),
                                 ),
                               ),

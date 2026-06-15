@@ -448,7 +448,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               const SizedBox(height: 20),
 
               if (isLoadingCats)
-                const Center(child: CircularProgressIndicator())
+                const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFFFD8CC)),
+                )
               else if (catProfiles.isEmpty)
                 Container(
                   width: double.infinity,
@@ -664,7 +666,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text(
                           '게시하기',

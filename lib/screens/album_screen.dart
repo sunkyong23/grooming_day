@@ -23,7 +23,8 @@ class AlbumScreen extends StatefulWidget {
   State<AlbumScreen> createState() => AlbumScreenState();
 }
 
-class AlbumScreenState extends State<AlbumScreen> {
+class AlbumScreenState extends State<AlbumScreen>
+    with SingleTickerProviderStateMixin {
   List<Post> myPosts = [];
   List<CatProfile> catProfiles = [];
 
@@ -51,9 +52,16 @@ class AlbumScreenState extends State<AlbumScreen> {
 
   static const int albumPageLimit = 20;
 
+  late final AnimationController _loadingController;
+
   @override
   void initState() {
     super.initState();
+
+    _loadingController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
 
     loadMyPosts();
     loadCatProfiles();
@@ -71,6 +79,7 @@ class AlbumScreenState extends State<AlbumScreen> {
 
   @override
   void dispose() {
+    _loadingController.dispose();
     albumScrollController.dispose();
     super.dispose();
   }
@@ -860,15 +869,9 @@ class AlbumScreenState extends State<AlbumScreen> {
 
   Widget buildCatFilterArea() {
     if (isLoadingCats) {
-      return const SizedBox(
+      return SizedBox(
         height: 34,
-        child: Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+        child: Center(child: ThreeDotLoading(controller: _loadingController)),
       );
     }
 
@@ -1075,13 +1078,7 @@ class AlbumScreenState extends State<AlbumScreen> {
       ),
       itemBuilder: (context, index) {
         if (index >= posts.length) {
-          return const Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          );
+          return Center(child: ThreeDotLoading(controller: _loadingController));
         }
 
         final post = posts[index];
@@ -1193,11 +1190,7 @@ class AlbumScreenState extends State<AlbumScreen> {
                       return Container(
                         color: const Color(0xFFFFEFE6),
                         alignment: Alignment.center,
-                        child: const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
+                        child: ThreeDotLoading(controller: _loadingController),
                       );
                     },
                     errorWidget: (context, url, error) {
@@ -1258,9 +1251,11 @@ class AlbumScreenState extends State<AlbumScreen> {
       itemCount: posts.length + (shouldShowLoadingFooter ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= posts.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: ThreeDotLoading(controller: _loadingController),
+            ),
           );
         }
 
@@ -1308,11 +1303,11 @@ class AlbumScreenState extends State<AlbumScreen> {
 
   Widget buildAlbumContent(List<Post> posts) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: ThreeDotLoading(controller: _loadingController));
     }
 
     if (selectedAlbumTab == 1 && isLoadingScraps) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(child: ThreeDotLoading(controller: _loadingController));
     }
 
     final visiblePosts = selectedAlbumTab == 1
@@ -1430,6 +1425,49 @@ class AlbumScreenState extends State<AlbumScreen> {
           Expanded(child: buildAlbumContent(posts)),
         ],
       ),
+    );
+  }
+}
+
+class ThreeDotLoading extends StatelessWidget {
+  final AnimationController controller;
+
+  const ThreeDotLoading({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final activeIndex = (controller.value * 3).floor() % 3;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isActive = index == activeIndex;
+
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 10 : 8,
+              height: isActive ? 10 : 8,
+              decoration: BoxDecoration(
+                color: isActive
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.45),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

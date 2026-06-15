@@ -34,7 +34,10 @@ class ProfilePostGrid extends StatelessWidget {
                 child: const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFFFFD8CC),
+                  ),
                 ),
               );
             },
