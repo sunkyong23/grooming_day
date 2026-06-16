@@ -79,7 +79,9 @@ class _SearchScreenState extends State<SearchScreen>
       final results = await CatService.searchCatsByName(keyword);
 
       final visibleCats = results.where((cat) {
-        return !blockedUids.contains(cat.ownerUid);
+        return cat.isDeleted == false &&
+            cat.isHidden == false &&
+            !blockedUids.contains(cat.ownerUid);
       }).toList();
 
       if (!mounted) return;
@@ -93,7 +95,9 @@ class _SearchScreenState extends State<SearchScreen>
 
       final visibleUsers = results.where((user) {
         final uid = user['uid'] as String? ?? '';
-        return !blockedUids.contains(uid);
+        final isDeleted = user['isDeleted'] == true;
+
+        return !isDeleted && !blockedUids.contains(uid);
       }).toList();
 
       if (!mounted) return;

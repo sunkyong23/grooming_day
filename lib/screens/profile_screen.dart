@@ -5,32 +5,25 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/post.dart';
+import '../models/cat_profile.dart';
+
 import 'settings_screen.dart';
-
-import 'login_screen.dart';
 import 'edit_profile_screen.dart';
-import '../widgets/profile_header.dart';
+import 'delete_account_screen.dart';
+import 'create_cat_screen.dart';
+import 'cat_profile_type_select_screen.dart';
+import 'favorite_cats_screen.dart';
+import 'rainbow_screen.dart';
 
+import '../widgets/profile_header.dart';
 import '../widgets/settings_tile.dart';
 import '../widgets/cat_profile_card.dart';
 
 import '../services/user_service.dart';
 import '../services/post_service.dart';
-import '../widgets/delete_account_dialog.dart';
-import '../widgets/reauth_dialog.dart';
-
-import '../models/cat_profile.dart';
 import '../services/cat_service.dart';
-
-import 'create_cat_screen.dart';
-
-import 'cat_profile_type_select_screen.dart';
-import 'favorite_cats_screen.dart';
-
-import 'rainbow_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final List<Post> posts;
@@ -171,6 +164,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     await UserService.updateBio(newBio);
 
+    if (!mounted) return;
+
     setState(() {
       bio = newBio;
     });
@@ -188,69 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bio = data['bio'] ?? '';
       email = data['email'] ?? '';
     });
-  }
-
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return DeleteAccountDialog(onConfirm: _showReauthDialog);
-      },
-    );
-  }
-
-  void _showReauthDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return ReauthDialog(
-          onConfirm: (password) async {
-            final user = FirebaseAuth.instance.currentUser;
-
-            if (user == null) return;
-
-            final credential = EmailAuthProvider.credential(
-              email: user.email!,
-              password: password,
-            );
-
-            final messenger = ScaffoldMessenger.of(context);
-
-            try {
-              await user.reauthenticateWithCredential(credential);
-              await _deleteAccount();
-            } catch (e) {
-              if (!mounted) return;
-
-              messenger.showSnackBar(
-                const SnackBar(content: Text('비밀번호가 올바르지 않습니다.')),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteAccount() async {
-    try {
-      await UserService.deleteCurrentUserAccount();
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      debugPrint('계정 탈퇴 오류: $e');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('계정 탈퇴 중 오류가 발생했어요: $e')));
-    }
   }
 
   Widget _sectionDivider() {
@@ -286,6 +218,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _openDeleteAccountScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => DeleteAccountScreen(email: email)),
     );
   }
 
@@ -451,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 MaterialPageRoute(
                   builder: (_) => SettingsScreen(
                     email: email,
-                    onDeleteAccountTap: _showDeleteAccountDialog,
+                    onDeleteAccountTap: _openDeleteAccountScreen,
                   ),
                 ),
               );

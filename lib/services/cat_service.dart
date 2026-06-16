@@ -248,12 +248,31 @@ class CatService {
         .limit(20)
         .get();
 
-    return snapshot.docs
-        .where((doc) => doc.data()['ownerUid'] != user?.uid)
-        .map((doc) {
-          return CatProfile.fromMap(doc.data());
-        })
-        .toList();
+    final cats = <CatProfile>[];
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+
+      if (data['ownerUid'] == user?.uid) continue;
+
+      final ownerUid = data['ownerUid'] ?? '';
+
+      if (ownerUid.toString().isEmpty) continue;
+
+      final ownerDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerUid)
+          .get();
+
+      final ownerData = ownerDoc.data();
+
+      if (ownerData == null) continue;
+      if (ownerData['isDeleted'] == true) continue;
+
+      cats.add(CatProfile.fromMap(data));
+    }
+
+    return cats;
   }
 
   static Future<List<CatProfile>> loadPublicCatsByOwnerUid(
