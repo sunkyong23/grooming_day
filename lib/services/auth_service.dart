@@ -60,6 +60,7 @@ class AuthService {
       'updatedAt': FieldValue.serverTimestamp(),
       'isDeleted': false,
       'isSuspended': false,
+      'hasSeenOnboarding': false,
     });
 
     batch.set(userIdRef, {

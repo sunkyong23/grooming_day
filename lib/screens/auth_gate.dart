@@ -4,11 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'login_screen.dart';
 import 'main_tab_screen.dart';
+import 'onboarding_screen.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
-  Future<bool> isSuspendedUser(User user) async {
+  Future<Map<String, bool>> loadUserState(User user) async {
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -16,7 +17,10 @@ class AuthGate extends StatelessWidget {
 
     final data = userDoc.data();
 
-    return data?['isSuspended'] == true;
+    return {
+      'isSuspended': data?['isSuspended'] == true,
+      'hasSeenOnboarding': data?['hasSeenOnboarding'] == true,
+    };
   }
 
   Future<void> signOutSuspendedUser() async {
@@ -43,10 +47,10 @@ class AuthGate extends StatelessWidget {
           return const LoginScreen();
         }
 
-        return FutureBuilder<bool>(
-          future: isSuspendedUser(user),
-          builder: (context, suspendedSnapshot) {
-            if (suspendedSnapshot.connectionState == ConnectionState.waiting) {
+        return FutureBuilder<Map<String, bool>>(
+          future: loadUserState(user),
+          builder: (context, userStateSnapshot) {
+            if (userStateSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: Color(0xFFFFF7F1),
                 body: Center(
@@ -55,7 +59,10 @@ class AuthGate extends StatelessWidget {
               );
             }
 
-            final isSuspended = suspendedSnapshot.data == true;
+            final userState = userStateSnapshot.data ?? {};
+
+            final isSuspended = userState['isSuspended'] == true;
+            final hasSeenOnboarding = userState['hasSeenOnboarding'] == true;
 
             if (isSuspended) {
               WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -69,6 +76,10 @@ class AuthGate extends StatelessWidget {
               });
 
               return const LoginScreen();
+            }
+
+            if (!hasSeenOnboarding) {
+              return const OnboardingScreen();
             }
 
             return const MainTabScreen();
