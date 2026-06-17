@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.groomingDay</string>
+	<string>com.sunkyong.groomingday</string>
 	<key>PROJECT_ID</key>
 	<string>grooming-day-49863</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:683237863646:ios:e36688954730471b1a124f</string>
+	<string>1:683237863646:ios:c4c9b08785f04c751a124f</string>
 </dict>
 </plist>
