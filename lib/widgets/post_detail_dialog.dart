@@ -218,7 +218,7 @@ class _PostDetailDialogState extends State<PostDetailDialog>
               ),
               child: isSubmittingReview
                   ? SizedBox(
-                      width: 28,
+                      width: 34,
                       height: 14,
                       child: ThreeDotLoading(
                         controller: _loadingController,
@@ -669,7 +669,7 @@ class _PostDetailDialogState extends State<PostDetailDialog>
         child: Center(
           child: isHandlingScrap
               ? SizedBox(
-                  width: 28,
+                  width: 34,
                   height: 16,
                   child: ThreeDotLoading(
                     controller: _loadingController,

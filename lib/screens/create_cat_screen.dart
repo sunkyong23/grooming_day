@@ -7,7 +7,7 @@ import 'package:image_cropper/image_cropper.dart';
 import '../utils/cat_validator.dart';
 import '../services/cat_service.dart';
 
-import 'main_tab_screen.dart';
+import 'onboarding_screen.dart';
 
 class CreateCatScreen extends StatefulWidget {
   final bool isFromProfile;
@@ -228,7 +228,7 @@ class _CreateCatScreenState extends State<CreateCatScreen> {
     } else {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const MainTabScreen()),
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
         (route) => false,
       );
     }

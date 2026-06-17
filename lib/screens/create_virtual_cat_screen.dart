@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/cat_service.dart';
 import 'main_tab_screen.dart';
 
+import 'onboarding_screen.dart';
+
 class CreateVirtualCatScreen extends StatefulWidget {
   const CreateVirtualCatScreen({super.key});
 
@@ -65,7 +67,7 @@ class _CreateVirtualCatScreenState extends State<CreateVirtualCatScreen> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const MainTabScreen()),
+      MaterialPageRoute(builder: (_) => const OnboardingScreen()),
       (route) => false,
     );
   }
