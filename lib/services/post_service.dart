@@ -99,13 +99,7 @@ class PostService {
       query = query.where('tags', arrayContains: tag);
     }
 
-    if (tag == '오늘의') {
-      query = query
-          .orderBy('scrapCount', descending: true)
-          .orderBy('createdAt', descending: true);
-    } else {
-      query = query.orderBy('createdAt', descending: true);
-    }
+    query = query.orderBy('createdAt', descending: true);
 
     if (lastDocument != null) {
       query = query.startAfterDocument(lastDocument);

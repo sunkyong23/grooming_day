@@ -1,4 +1,4 @@
-package com.example.grooming_day
+package com.sunkyong.groomingday
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -329,9 +329,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : Column(
                   children: catProfiles.map((cat) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 2),
                       child: SizedBox(
-                        height: 82,
+                        height: 76,
                         child: Center(
                           child: CatProfileCard(
                             cat: cat,

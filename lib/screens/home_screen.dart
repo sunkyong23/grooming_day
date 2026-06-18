@@ -1156,9 +1156,7 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final filteredPosts = selectedFeedTag == '오늘의'
-        ? ([...posts]..sort((a, b) => b.scrapCount.compareTo(a.scrapCount)))
-        : [...posts];
+    final filteredPosts = [...posts];
 
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
 

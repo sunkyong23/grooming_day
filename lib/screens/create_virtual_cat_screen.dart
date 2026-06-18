@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../services/cat_service.dart';
-import 'main_tab_screen.dart';
 
 import 'onboarding_screen.dart';
 

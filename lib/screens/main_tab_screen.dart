@@ -34,6 +34,15 @@ class _MainTabScreenState extends State<MainTabScreen> {
     ];
   }
 
+  void refreshAlbum() {
+    albumKey.currentState?.loadMyPosts();
+    albumKey.currentState?.loadCatProfiles();
+
+    if (albumKey.currentState?.selectedAlbumTab == 1) {
+      albumKey.currentState?.loadMyScrappedPosts();
+    }
+  }
+
   void changeTab(int index) {
     setState(() {
       currentIndex = index;
@@ -44,19 +53,24 @@ class _MainTabScreenState extends State<MainTabScreen> {
     }
 
     if (index == 2) {
-      albumKey.currentState?.loadMyPosts();
-      albumKey.currentState?.loadMyScrappedPosts();
+      refreshAlbum();
     }
   }
 
   void handlePostCreated(Post post, bool isAlbumOnlyPost) {
     homeKey.currentState?.addPost(post);
     albumKey.currentState?.loadMyPosts();
+    albumKey.currentState?.loadCatProfiles();
 
     if (isAlbumOnlyPost) {
       setState(() {
         currentIndex = 2;
       });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        refreshAlbum();
+      });
+
       return;
     }
 

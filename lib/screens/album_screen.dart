@@ -180,8 +180,9 @@ class AlbumScreenState extends State<AlbumScreen>
       setState(() {
         catProfiles = loadedCats;
 
-        if (loadedCats.isNotEmpty && selectedCatProfileId == null) {
-          selectedCatProfileId = loadedCats.first.id;
+        if (selectedCatProfileId != null &&
+            !loadedCats.any((cat) => cat.id == selectedCatProfileId)) {
+          selectedCatProfileId = null;
         }
 
         isLoadingCats = false;
