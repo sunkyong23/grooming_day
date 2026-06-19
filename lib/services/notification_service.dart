@@ -216,4 +216,29 @@ class NotificationService {
 
     await batch.commit();
   }
+
+  Future<void> deleteNotification(String notificationId) async {
+    if (notificationId.isEmpty) return;
+
+    await _firestore.collection('notifications').doc(notificationId).delete();
+  }
+
+  Future<void> deleteAllNotifications(String uid) async {
+    if (uid.isEmpty) return;
+
+    final snapshot = await _firestore
+        .collection('notifications')
+        .where('receiverUid', isEqualTo: uid)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }

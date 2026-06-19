@@ -37,6 +37,92 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
   }
 
+  Future<void> markAllAsRead(String uid) async {
+    await notificationService.markAllAsRead(uid);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('모든 알림을 읽음 처리했어요.')));
+  }
+
+  Future<void> deleteNotification(AppNotification notification) async {
+    await notificationService.deleteNotification(notification.id);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('알림을 삭제했어요.')));
+  }
+
+  Future<void> deleteAllNotifications(String uid) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          title: const Text(
+            '모든 알림 삭제',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF5A372F),
+            ),
+          ),
+          content: const Text(
+            '삭제된 알림은 다시 복구할 수 없어요.',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF8A756C),
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A756C),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text(
+                '삭제',
+                style: TextStyle(
+                  color: Color(0xFFFF7A7A),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    await notificationService.deleteAllNotifications(uid);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('모든 알림을 삭제했어요.')));
+  }
+
   Future<void> handleNotificationTap(AppNotification notification) async {
     if (notification.type == 'notice') {
       final noticeData = await NoticeService.loadNoticeById(
@@ -209,7 +295,53 @@ class _NotificationScreenState extends State<NotificationScreen> {
       backgroundColor: const Color(0xFFFFF7F1),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFF7F1),
-        title: const Text('알림'),
+        elevation: 0,
+        title: const Text(
+          '알림',
+          style: TextStyle(
+            color: Color(0xFF3D241E),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Color(0xFF3D241E)),
+        actions: [
+          TextButton(
+            onPressed: () => markAllAsRead(uid),
+            child: const Text(
+              '모두 읽음',
+              style: TextStyle(
+                color: Color(0xFF8A5A44),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            color: const Color(0xFFFFF8F2),
+            icon: const Icon(
+              Icons.more_horiz_rounded,
+              color: Color(0xFF8A5A44),
+            ),
+            onSelected: (value) {
+              if (value == 'deleteAll') {
+                deleteAllNotifications(uid);
+              }
+            },
+            itemBuilder: (context) {
+              return const [
+                PopupMenuItem(
+                  value: 'deleteAll',
+                  child: Text(
+                    '모든 알림 삭제',
+                    style: TextStyle(
+                      color: Color(0xFFFF7A7A),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<List<AppNotification>>(
         stream: notificationService.watchMyNotifications(uid),
@@ -255,24 +387,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
             itemBuilder: (context, index) {
               final notification = notifications[index];
 
-              return GestureDetector(
-                onTap: () async {
-                  await handleNotificationTap(notification);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
+              return Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        await handleNotificationTap(notification);
+                      },
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: buildNotificationImage(notification),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () async {
+                          await handleNotificationTap(notification);
+                        },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -295,8 +433,36 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 6),
+                    PopupMenuButton<String>(
+                      color: const Color(0xFFFFF8F2),
+                      icon: const Icon(
+                        Icons.more_horiz_rounded,
+                        color: Color(0xFFC0A39A),
+                        size: 20,
+                      ),
+                      onSelected: (value) {
+                        if (value == 'delete') {
+                          deleteNotification(notification);
+                        }
+                      },
+                      itemBuilder: (context) {
+                        return const [
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              '삭제',
+                              style: TextStyle(
+                                color: Color(0xFFFF7A7A),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ];
+                      },
+                    ),
+                  ],
                 ),
               );
             },

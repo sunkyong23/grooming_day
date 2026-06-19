@@ -719,6 +719,7 @@ class _CatPostCardState extends State<CatPostCard>
             child: Column(
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(

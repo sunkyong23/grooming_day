@@ -19,6 +19,8 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
   final GlobalKey<HomeScreenState> homeKey = GlobalKey<HomeScreenState>();
   final GlobalKey<AlbumScreenState> albumKey = GlobalKey<AlbumScreenState>();
+  final GlobalKey<ProfileScreenState> profileKey =
+      GlobalKey<ProfileScreenState>();
 
   late final List<Widget> screens;
 
@@ -30,7 +32,11 @@ class _MainTabScreenState extends State<MainTabScreen> {
       HomeScreen(key: homeKey, onPostCreatedFromHome: handlePostCreated),
       const SearchScreen(),
       AlbumScreen(key: albumKey),
-      ProfileScreen(posts: const [], onRefreshPosts: refreshHomePosts),
+      ProfileScreen(
+        key: profileKey,
+        posts: const [],
+        onRefreshPosts: refreshHomePosts,
+      ),
     ];
   }
 
@@ -41,6 +47,12 @@ class _MainTabScreenState extends State<MainTabScreen> {
     if (albumKey.currentState?.selectedAlbumTab == 1) {
       albumKey.currentState?.loadMyScrappedPosts();
     }
+  }
+
+  void refreshProfile() {
+    profileKey.currentState?.loadUser();
+    profileKey.currentState?.loadCatProfiles();
+    profileKey.currentState?.loadMyPostCount();
   }
 
   void changeTab(int index) {
@@ -55,12 +67,18 @@ class _MainTabScreenState extends State<MainTabScreen> {
     if (index == 2) {
       refreshAlbum();
     }
+
+    if (index == 3) {
+      refreshProfile();
+    }
   }
 
   void handlePostCreated(Post post, bool isAlbumOnlyPost) {
     homeKey.currentState?.addPost(post);
     albumKey.currentState?.loadMyPosts();
     albumKey.currentState?.loadCatProfiles();
+    profileKey.currentState?.loadMyPostCount();
+    profileKey.currentState?.loadCatProfiles();
 
     if (isAlbumOnlyPost) {
       setState(() {
@@ -69,6 +87,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         refreshAlbum();
+        refreshProfile();
       });
 
       return;
@@ -80,6 +99,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       homeKey.currentState?.scrollFeedToTop();
+      refreshProfile();
     });
   }
 

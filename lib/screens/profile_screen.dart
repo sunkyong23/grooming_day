@@ -32,10 +32,10 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.posts, this.onRefreshPosts});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   static const Color _primaryBrown = Color(0xFF7B5146);
   static const Color _deepBrown = Color(0xFF3D241E);
   static const Color _subBrown = Color(0xFFB08678);
