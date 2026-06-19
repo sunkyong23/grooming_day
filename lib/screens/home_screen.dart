@@ -53,6 +53,7 @@ class HomeScreenState extends State<HomeScreen>
 
   final List<Post> posts = [];
   final List<Post> myPosts = [];
+  final Map<String, int> commentCountOverrides = {};
 
   final ScrollController feedScrollController = ScrollController();
   final ScrollController tagScrollController = ScrollController();
@@ -334,6 +335,14 @@ class HomeScreenState extends State<HomeScreen>
       } else {
         scrappedPostIds.add(post.id);
       }
+    });
+  }
+
+  void updatePostCommentCount(String postId, int commentCount) {
+    if (!mounted) return;
+
+    setState(() {
+      commentCountOverrides[postId] = commentCount;
     });
   }
 
@@ -1330,10 +1339,15 @@ class HomeScreenState extends State<HomeScreen>
                             createdAt: post.createdAt ?? DateTime.now(),
                             catName: post.catName,
                             userId: post.userId,
-                            commentCount: post.commentCount,
+                            commentCount:
+                                commentCountOverrides[post.id] ??
+                                post.commentCount,
                             postId: post.id,
                             canWriteReview: post.ownerUid != currentUid,
                             isScrapped: scrappedPostIds.contains(post.id),
+                            onReviewChanged: (commentCount) {
+                              updatePostCommentCount(post.id, commentCount);
+                            },
                             onScrapTap: post.ownerUid == currentUid
                                 ? null
                                 : () {

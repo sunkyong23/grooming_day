@@ -24,6 +24,7 @@ class CatPostCard extends StatefulWidget {
   final int commentCount;
   final String postId;
   final bool canWriteReview;
+  final void Function(int commentCount)? onReviewChanged;
 
   const CatPostCard({
     super.key,
@@ -43,6 +44,7 @@ class CatPostCard extends StatefulWidget {
     required this.commentCount,
     required this.postId,
     this.canWriteReview = true,
+    this.onReviewChanged,
   });
 
   @override
@@ -333,13 +335,14 @@ class _CatPostCardState extends State<CatPostCard>
     );
 
     if (!mounted) return;
-
     setState(() {
       reviews.removeWhere((item) => item.id == review.id);
       currentCommentCount = currentCommentCount > 0
           ? currentCommentCount - 1
           : 0;
     });
+
+    widget.onReviewChanged?.call(currentCommentCount);
   }
 
   Future<void> showReviewReportDialog(Review review) async {
@@ -881,6 +884,10 @@ class _CatPostCardState extends State<CatPostCard>
                                             currentCommentCount += 1;
                                             reviews.insert(0, newReview);
                                           });
+
+                                          widget.onReviewChanged?.call(
+                                            currentCommentCount,
+                                          );
 
                                           ScaffoldMessenger.of(
                                             context,
