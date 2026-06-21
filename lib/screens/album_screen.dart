@@ -16,6 +16,11 @@ import 'home_screen.dart';
 import '../services/report_service.dart';
 import '../services/block_service.dart';
 
+import '../widgets/album/album_tabs.dart';
+
+import '../widgets/album/cat_filter_area.dart';
+import '../widgets/album/album_toolbar.dart';
+
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
 
@@ -776,293 +781,6 @@ class AlbumScreenState extends State<AlbumScreen>
     }
   }
 
-  Widget buildAlbumTab({required String label, required int index}) {
-    final isSelected = selectedAlbumTab == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () async {
-          setState(() {
-            selectedAlbumTab = index;
-            isSelectionMode = false;
-            selectedPostIds.clear();
-          });
-
-          scrollAlbumToTop();
-
-          if (index == 1) {
-            await loadMyScrappedPosts();
-          }
-        },
-        child: Container(
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFFBE5D8) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: isSelected
-                  ? const Color(0xFF3D241E)
-                  : const Color(0xFF3D241E),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildAlbumTabs() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: [
-            buildAlbumTab(label: '내 앨범', index: 0),
-            buildAlbumTab(label: '꾹꾹 앨범', index: 1),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget buildCatFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 10),
-        padding: isSelected
-            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 7)
-            : EdgeInsets.zero,
-        decoration: isSelected
-            ? BoxDecoration(
-                color: const Color(0xFFFFE4D6),
-                borderRadius: BorderRadius.circular(999),
-              )
-            : null,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-            color: isSelected
-                ? const Color(0xFF6F3F2E)
-                : const Color(0xFFC0A39A),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildCatFilterArea() {
-    if (isLoadingCats) {
-      return SizedBox(
-        height: 34,
-        child: Center(child: ThreeDotLoading(controller: _loadingController)),
-      );
-    }
-
-    return SizedBox(
-      height: 38,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          children: [
-            buildCatFilterChip(
-              label: '전체',
-              isSelected: selectedCatProfileId == null,
-              onTap: () async {
-                setState(() {
-                  selectedCatProfileId = null;
-                  isSelectionMode = false;
-                  selectedPostIds.clear();
-                });
-                scrollAlbumToTop();
-              },
-            ),
-            ...catProfiles.map((cat) {
-              return buildCatFilterChip(
-                label: cat.name,
-                isSelected: selectedCatProfileId == cat.id,
-                onTap: () async {
-                  setState(() {
-                    selectedCatProfileId = cat.id;
-                    isSelectionMode = false;
-                    selectedPostIds.clear();
-                  });
-                  scrollAlbumToTop();
-                },
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String get selectedSortLabel {
-    if (selectedSort == 'latest') return '최신순';
-    if (selectedSort == 'oldest') return '오래된 순';
-    if (selectedSort == 'scrap') return '스크랩 많은 순';
-    if (selectedSort == 'review') return '감상평 많은 순';
-    return '최신순';
-  }
-
-  Widget buildViewToggle() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 2, 20, 2),
-      child: Row(
-        children: [
-          buildSortButton(),
-          const Spacer(),
-          GestureDetector(
-            onTap: () async {
-              setState(() {
-                isGridView = true;
-              });
-            },
-            child: Icon(
-              Icons.grid_view_rounded,
-              size: 22,
-              color: isGridView
-                  ? const Color(0xFF8A5A44)
-                  : const Color(0xFFC9B8AF),
-            ),
-          ),
-          const SizedBox(width: 14),
-          GestureDetector(
-            onTap: () async {
-              setState(() {
-                isGridView = false;
-                isSelectionMode = false;
-                selectedPostIds.clear();
-              });
-            },
-            child: Icon(
-              Icons.view_agenda_outlined,
-              size: 22,
-              color: !isGridView
-                  ? const Color(0xFF8A5A44)
-                  : const Color(0xFFC9B8AF),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildSortButton() {
-    return GestureDetector(
-      onTap: () async {
-        showModalBottomSheet(
-          context: context,
-          backgroundColor: const Color(0xFFFFF7F1),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          builder: (bottomSheetContext) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    buildSortOption(
-                      label: '최신순',
-                      value: 'latest',
-                      bottomSheetContext: bottomSheetContext,
-                    ),
-                    buildSortOption(
-                      label: '오래된 순',
-                      value: 'oldest',
-                      bottomSheetContext: bottomSheetContext,
-                    ),
-                    buildSortOption(
-                      label: '스크랩 많은 순',
-                      value: 'scrap',
-                      bottomSheetContext: bottomSheetContext,
-                    ),
-                    buildSortOption(
-                      label: '감상평 많은 순',
-                      value: 'review',
-                      bottomSheetContext: bottomSheetContext,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            selectedSortLabel,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF9A6B60),
-            ),
-          ),
-          const SizedBox(width: 3),
-          const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            size: 18,
-            color: Color(0xFF9A6B60),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildSortOption({
-    required String label,
-    required String value,
-    required BuildContext bottomSheetContext,
-  }) {
-    final isSelected = selectedSort == value;
-
-    return ListTile(
-      title: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-          color: isSelected ? const Color(0xFF6F3F2E) : const Color(0xFF8A5A44),
-        ),
-      ),
-      trailing: isSelected
-          ? const Icon(Icons.check_rounded, color: Color(0xFFFF8A7A))
-          : null,
-      onTap: () async {
-        setState(() {
-          selectedSort = value;
-          isSelectionMode = false;
-          selectedPostIds.clear();
-        });
-
-        Navigator.pop(bottomSheetContext);
-        scrollAlbumToTop();
-      },
-    );
-  }
-
   Widget buildGridView(List<Post> posts) {
     final shouldShowLoadingFooter =
         selectedAlbumTab == 0 && hasMoreMyPosts && selectedCatProfileId == null;
@@ -1421,11 +1139,63 @@ class AlbumScreenState extends State<AlbumScreen>
       body: Column(
         children: [
           const SizedBox(height: 6),
-          buildAlbumTabs(),
+          AlbumTabs(
+            selectedAlbumTab: selectedAlbumTab,
+            onTabSelected: (index) async {
+              setState(() {
+                selectedAlbumTab = index;
+                isSelectionMode = false;
+                selectedPostIds.clear();
+              });
+
+              scrollAlbumToTop();
+
+              if (index == 1) {
+                await loadMyScrappedPosts();
+              }
+            },
+          ),
           const SizedBox(height: 14),
-          if (selectedAlbumTab == 0) buildCatFilterArea(),
+          if (selectedAlbumTab == 0)
+            CatFilterArea(
+              isLoadingCats: isLoadingCats,
+              loadingController: _loadingController,
+              catProfiles: catProfiles,
+              selectedCatProfileId: selectedCatProfileId,
+              onCatSelected: (catId) {
+                setState(() {
+                  selectedCatProfileId = catId;
+                  isSelectionMode = false;
+                  selectedPostIds.clear();
+                });
+
+                scrollAlbumToTop();
+              },
+            ),
           if (selectedAlbumTab == 0) const SizedBox(height: 6),
-          buildViewToggle(),
+          AlbumToolbar(
+            selectedSort: selectedSort,
+            isGridView: isGridView,
+            onSortSelected: (value) {
+              setState(() {
+                selectedSort = value;
+                isSelectionMode = false;
+                selectedPostIds.clear();
+              });
+
+              scrollAlbumToTop();
+            },
+            onViewChanged: (grid) {
+              setState(() {
+                isGridView = grid;
+
+                if (!grid) {
+                  isSelectionMode = false;
+                  selectedPostIds.clear();
+                }
+              });
+            },
+          ),
           const SizedBox(height: 4),
           Expanded(child: buildAlbumContent(posts)),
         ],
