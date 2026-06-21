@@ -10,9 +10,6 @@ import '../models/post.dart';
 import 'create_post_screen.dart';
 import 'edit_post_screen.dart';
 
-import '../widgets/tag_chip.dart';
-import '../widgets/header.dart';
-
 import '../services/post_service.dart';
 import '../services/block_service.dart';
 
@@ -23,9 +20,10 @@ import '../widgets/report/block_user_confirm_dialog.dart';
 
 import '../widgets/post/post_more_menu.dart' as post_menu;
 
-import '../widgets/home/tag_bottom_sheet.dart';
 import '../widgets/post/crop_ratio_bottom_sheet.dart';
 import '../widgets/home/home_feed_list.dart';
+
+import '../widgets/home/home_tag_header.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -487,68 +485,12 @@ class HomeScreenState extends State<HomeScreen>
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Header(onCameraTap: openCameraAndCreatePost),
-                  const SizedBox(height: 14),
-                  const Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: Color(0xFFF0E3DC),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: tagScrollController,
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: tags.map((tag) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 14),
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
-                                  onTap: () async {
-                                    await handleTagTap(tag);
-                                  },
-                                  child: TagChip(
-                                    key: ValueKey(tag),
-                                    text: tag,
-                                    isSelected: selectedFeedTag == tag,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          showTagBottomSheet(
-                            context: context,
-                            tags: tags,
-                            selectedTag: selectedFeedTag,
-                            onTagTap: handleTagTap,
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.grid_view_rounded,
-                            size: 20,
-                            color: Color(0xFF8A756C),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            HomeTagHeader(
+              tags: tags,
+              selectedFeedTag: selectedFeedTag,
+              tagScrollController: tagScrollController,
+              onCameraTap: openCameraAndCreatePost,
+              onTagTap: handleTagTap,
             ),
             const SizedBox(height: 16),
             Expanded(
