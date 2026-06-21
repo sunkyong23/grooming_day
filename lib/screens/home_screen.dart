@@ -10,10 +10,8 @@ import '../models/post.dart';
 import 'create_post_screen.dart';
 import 'edit_post_screen.dart';
 
-import '../widgets/cat_post_card.dart' hide ThreeDotLoading;
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
-import '../widgets/common/three_dot_loading.dart';
 
 import '../services/post_service.dart';
 import '../services/block_service.dart';
@@ -27,6 +25,7 @@ import '../widgets/post/post_more_menu.dart' as post_menu;
 
 import '../widgets/home/tag_bottom_sheet.dart';
 import '../widgets/post/crop_ratio_bottom_sheet.dart';
+import '../widgets/home/home_feed_list.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -483,10 +482,6 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final filteredPosts = [...posts];
-
-    final currentUid = FirebaseAuth.instance.currentUser?.uid;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       body: SafeArea(
@@ -557,79 +552,18 @@ class HomeScreenState extends State<HomeScreen>
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoadingPosts && posts.isEmpty
-                  ? Center(
-                      child: ThreeDotLoading(controller: _loadingController),
-                    )
-                  : ListView.builder(
-                      controller: feedScrollController,
-                      padding: const EdgeInsets.fromLTRB(22, 0, 22, 120),
-                      itemCount:
-                          filteredPosts.length + 1 + (_hasMorePosts ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return const SizedBox(height: 24);
-                        }
-
-                        final postIndex = index - 1;
-
-                        if (postIndex >= filteredPosts.length) {
-                          if (!_hasMorePosts) {
-                            return const SizedBox.shrink();
-                          }
-
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: Center(
-                              child: ThreeDotLoading(
-                                controller: _loadingController,
-                              ),
-                            ),
-                          );
-                        }
-
-                        final post = filteredPosts[postIndex];
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 18),
-                          child: CatPostCard(
-                            imagePath: post.thumbnailUrl.isNotEmpty
-                                ? post.thumbnailUrl
-                                : post.imageUrl,
-
-                            originalImagePath: post.imageUrl,
-                            caption: post.caption,
-                            catProfileImageUrl: post.catProfileImageUrl,
-                            isVirtualCat: post.isVirtualCat,
-                            scrapCount: post.scrapCount,
-                            tagText: post.tags
-                                .map((tag) => '#$tag')
-                                .join('   '),
-                            createdAt: post.createdAt ?? DateTime.now(),
-                            catName: post.catName,
-                            userId: post.userId,
-                            commentCount:
-                                commentCountOverrides[post.id] ??
-                                post.commentCount,
-                            postId: post.id,
-                            canWriteReview: post.ownerUid != currentUid,
-                            isScrapped: scrappedPostIds.contains(post.id),
-                            onReviewChanged: (commentCount) {
-                              updatePostCommentCount(post.id, commentCount);
-                            },
-                            onScrapTap: post.ownerUid == currentUid
-                                ? null
-                                : () {
-                                    toggleScrap(post);
-                                  },
-                            showMoreButton: true,
-                            onMoreTap: () {
-                              showPostMoreMenu(post);
-                            },
-                          ),
-                        );
-                      },
-                    ),
+              child: HomeFeedList(
+                isLoadingPosts: _isLoadingPosts,
+                hasMorePosts: _hasMorePosts,
+                posts: posts,
+                feedScrollController: feedScrollController,
+                loadingController: _loadingController,
+                commentCountOverrides: commentCountOverrides,
+                scrappedPostIds: scrappedPostIds,
+                onScrapTap: toggleScrap,
+                onMoreTap: showPostMoreMenu,
+                onReviewChanged: updatePostCommentCount,
+              ),
             ),
           ],
         ),
