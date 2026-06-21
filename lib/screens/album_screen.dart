@@ -5,14 +5,14 @@ import '../models/cat_profile.dart';
 import '../models/post.dart';
 import '../services/cat_service.dart';
 import '../services/post_service.dart';
-import '../widgets/cat_post_card.dart';
+import '../widgets/cat_post_card.dart' hide ThreeDotLoading;
 import 'edit_post_screen.dart';
-import '../widgets/post_detail_dialog.dart';
+import '../widgets/post_detail_dialog.dart' hide ThreeDotLoading;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'home_screen.dart';
+import 'home_screen.dart' hide ThreeDotLoading;
 import '../services/block_service.dart';
 
 import '../widgets/album/album_tabs.dart';
@@ -20,6 +20,7 @@ import '../widgets/album/album_tabs.dart';
 import '../widgets/album/cat_filter_area.dart';
 import '../widgets/album/album_toolbar.dart';
 import '../widgets/report/post_report_dialog.dart';
+import '../widgets/common/three_dot_loading.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -968,49 +969,6 @@ class AlbumScreenState extends State<AlbumScreen>
           Expanded(child: buildAlbumContent(posts)),
         ],
       ),
-    );
-  }
-}
-
-class ThreeDotLoading extends StatelessWidget {
-  final AnimationController controller;
-
-  const ThreeDotLoading({super.key, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        final activeIndex = (controller.value * 3).floor() % 3;
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            final isActive = index == activeIndex;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: isActive ? 10 : 8,
-              height: isActive ? 10 : 8,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.45),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            );
-          }),
-        );
-      },
     );
   }
 }
