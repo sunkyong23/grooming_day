@@ -1265,7 +1265,11 @@ class AlbumScreenState extends State<AlbumScreen>
         return Padding(
           padding: const EdgeInsets.only(bottom: 18),
           child: CatPostCard(
-            imagePath: post.imageUrl,
+            imagePath: post.thumbnailUrl.isNotEmpty
+                ? post.thumbnailUrl
+                : post.imageUrl,
+
+            originalImagePath: post.imageUrl,
             caption: post.caption,
             scrapCount: post.scrapCount,
             tagText: post.tags.map((tag) => '#$tag').join('   '),

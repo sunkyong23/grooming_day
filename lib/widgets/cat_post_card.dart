@@ -9,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 class CatPostCard extends StatefulWidget {
   final String imagePath;
+  final String originalImagePath;
   final String caption;
   final String tagText;
   final DateTime createdAt;
@@ -29,6 +30,7 @@ class CatPostCard extends StatefulWidget {
   const CatPostCard({
     super.key,
     required this.imagePath,
+    required this.originalImagePath,
     required this.caption,
     required this.tagText,
     required this.scrapCount,
@@ -667,7 +669,7 @@ class _CatPostCardState extends State<CatPostCard>
                       minScale: 1.0,
                       maxScale: 4.0,
                       child: CachedNetworkImage(
-                        imageUrl: widget.imagePath,
+                        imageUrl: widget.originalImagePath,
                         fit: BoxFit.contain,
                         placeholder: (context, url) {
                           return const Center(
