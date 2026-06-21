@@ -10,14 +10,17 @@ import '../models/post.dart';
 import 'create_post_screen.dart';
 import 'edit_post_screen.dart';
 
-import '../widgets/cat_post_card.dart';
+import '../widgets/cat_post_card.dart' hide ThreeDotLoading;
 import '../widgets/tag_chip.dart';
 import '../widgets/header.dart';
+import '../widgets/common/three_dot_loading.dart';
 
 import '../services/post_service.dart';
 import '../services/report_service.dart';
 import '../services/block_service.dart';
 import '../services/user_report_service.dart';
+
+import '../widgets/post/delete_post_dialog.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -1001,64 +1004,9 @@ class HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> showDeletePostDialog(Post post) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFFFFF8F2),
+    final shouldDelete = await showDeletePostConfirmDialog(context: context);
 
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-
-          actionsPadding: EdgeInsets.only(right: 20, bottom: 12),
-
-          title: const Text(
-            '게시글 삭제',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF5A372F),
-            ),
-          ),
-
-          content: const Text(
-            '삭제 후에는 되돌릴 수 없어요.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Color(0xFF8A756C),
-              height: 1.5,
-            ),
-          ),
-
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text(
-                '취소',
-                style: TextStyle(
-                  color: Color(0xFF8A756C),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text(
-                '삭제',
-                style: TextStyle(
-                  color: Color(0xFFFF7A7A),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) return;
+    if (!shouldDelete) return;
 
     try {
       await PostService.deletePost(post);
@@ -1369,49 +1317,6 @@ class HomeScreenState extends State<HomeScreen>
           ],
         ),
       ),
-    );
-  }
-}
-
-class ThreeDotLoading extends StatelessWidget {
-  final AnimationController controller;
-
-  const ThreeDotLoading({super.key, required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        final activeIndex = (controller.value * 3).floor() % 3;
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            final isActive = index == activeIndex;
-
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: isActive ? 10 : 8,
-              height: isActive ? 10 : 8,
-              decoration: BoxDecoration(
-                color: isActive
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.45),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            );
-          }),
-        );
-      },
     );
   }
 }

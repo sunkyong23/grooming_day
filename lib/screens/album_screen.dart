@@ -12,7 +12,7 @@ import '../widgets/post_detail_dialog.dart' hide ThreeDotLoading;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'home_screen.dart' hide ThreeDotLoading;
+import 'home_screen.dart';
 import '../services/block_service.dart';
 
 import '../widgets/album/album_tabs.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/cat_profile.dart';
-import '../../screens/home_screen.dart';
+import '../common/three_dot_loading.dart';
 
 class CatFilterArea extends StatelessWidget {
   final bool isLoadingCats;
