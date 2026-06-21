@@ -25,6 +25,9 @@ import '../widgets/report/block_user_confirm_dialog.dart';
 
 import '../widgets/post/post_more_menu.dart' as post_menu;
 
+import '../widgets/home/tag_bottom_sheet.dart';
+import '../widgets/post/crop_ratio_bottom_sheet.dart';
+
 Set<String> scrappedPostIds = {};
 
 class HomeScreen extends StatefulWidget {
@@ -453,59 +456,7 @@ class HomeScreenState extends State<HomeScreen>
     if (image == null) return;
     if (!mounted) return;
 
-    final CropAspectRatio? selectedRatio =
-        await showModalBottomSheet<CropAspectRatio>(
-          context: context,
-          backgroundColor: const Color(0xFFFFF7F1),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          builder: (bottomSheetContext) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 34),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    '사진 비율 선택',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 18),
-                  ListTile(
-                    leading: const Icon(Icons.crop_landscape),
-                    title: const Text('가로 4:3'),
-                    onTap: () {
-                      Navigator.pop(
-                        bottomSheetContext,
-                        const CropAspectRatio(ratioX: 4, ratioY: 3),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.crop_portrait),
-                    title: const Text('세로 4:5'),
-                    onTap: () {
-                      Navigator.pop(
-                        bottomSheetContext,
-                        const CropAspectRatio(ratioX: 4, ratioY: 5),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.crop_square),
-                    title: const Text('정사각형 1:1'),
-                    onTap: () {
-                      Navigator.pop(
-                        bottomSheetContext,
-                        const CropAspectRatio(ratioX: 1, ratioY: 1),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+    final selectedRatio = await showCropRatioBottomSheet(context: context);
 
     if (selectedRatio == null) return;
 
@@ -583,64 +534,11 @@ class HomeScreenState extends State<HomeScreen>
                       const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () {
-                          showModalBottomSheet(
+                          showTagBottomSheet(
                             context: context,
-                            backgroundColor: const Color(0xFFFFF7F1),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(28),
-                              ),
-                            ),
-                            builder: (bottomSheetContext) {
-                              return Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  22,
-                                  20,
-                                  22,
-                                  30,
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      '태그 전체보기',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF3D241E),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    GridView.count(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      crossAxisCount: 3,
-                                      crossAxisSpacing: 8,
-                                      mainAxisSpacing: 10,
-                                      childAspectRatio: 2.5,
-                                      children: tags.map((tag) {
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            await handleTagTap(tag);
-
-                                            if (bottomSheetContext.mounted) {
-                                              Navigator.pop(bottomSheetContext);
-                                            }
-                                          },
-                                          child: TagChip(
-                                            key: ValueKey('sheet_$tag'),
-                                            text: tag,
-                                            isSelected: selectedFeedTag == tag,
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                            tags: tags,
+                            selectedTag: selectedFeedTag,
+                            onTagTap: handleTagTap,
                           );
                         },
                         child: Container(
