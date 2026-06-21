@@ -23,6 +23,8 @@ import '../widgets/report/post_report_dialog.dart';
 import '../widgets/report/user_report_dialog.dart';
 import '../widgets/report/block_user_confirm_dialog.dart';
 
+import '../widgets/post/post_more_menu.dart' as post_menu;
+
 Set<String> scrappedPostIds = {};
 
 class HomeScreen extends StatefulWidget {
@@ -352,135 +354,70 @@ class HomeScreenState extends State<HomeScreen>
 
   Future<void> showPostMoreMenu(Post post) async {
     final currentUid = FirebaseAuth.instance.currentUser?.uid;
-
     final isMyPost = post.ownerUid == currentUid;
 
-    showModalBottomSheet(
+    await post_menu.showPostMoreMenu(
       context: context,
-      backgroundColor: const Color(0xFFFFF7F1),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (bottomSheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isMyPost) ...[
-                  ListTile(
-                    leading: const Icon(Icons.edit_outlined),
-                    title: const Text('수정'),
-                    textColor: const Color(0xFF5A372F),
-                    iconColor: const Color(0xFF9A6B60),
-                    onTap: () async {
-                      Navigator.pop(bottomSheetContext);
-
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => EditPostScreen(post: post),
-                        ),
-                      );
-
-                      if (result == 'album') {
-                        await refreshPostLists();
-                      } else if (result == 'home') {
-                        setState(() {
-                          selectedFeedTag = null;
-                        });
-
-                        await refreshPostLists();
-                      }
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.delete_outline),
-                    title: const Text('삭제'),
-                    textColor: Colors.redAccent,
-                    iconColor: Colors.redAccent,
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-                      showDeletePostDialog(post);
-                    },
-                  ),
-                ] else ...[
-                  ListTile(
-                    leading: const Icon(Icons.flag_outlined),
-                    title: const Text('게시글 신고'),
-                    textColor: Colors.redAccent,
-                    iconColor: Colors.redAccent,
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-
-                      Future.delayed(const Duration(milliseconds: 150), () {
-                        if (!mounted) return;
-                        showPostReportDialog(context: context, post: post);
-                      });
-                    },
-                  ),
-
-                  ListTile(
-                    leading: const Icon(Icons.person_outline),
-                    title: const Text('사용자 신고'),
-                    textColor: Colors.redAccent,
-                    iconColor: Colors.redAccent,
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-
-                      Future.delayed(const Duration(milliseconds: 150), () {
-                        if (!mounted) return;
-                        showUserReportDialog(context: context, post: post);
-                      });
-                    },
-                  ),
-
-                  ListTile(
-                    leading: const Icon(Icons.person_off_outlined),
-                    title: const Text('사용자 차단'),
-                    textColor: Colors.redAccent,
-                    iconColor: Colors.redAccent,
-                    onTap: () async {
-                      Navigator.pop(bottomSheetContext);
-
-                      await Future.delayed(const Duration(milliseconds: 150));
-
-                      if (!mounted) return;
-
-                      final confirm = await showBlockUserConfirmDialog(
-                        context: context,
-                        userId: post.userId,
-                      );
-
-                      if (!confirm) return;
-
-                      await BlockService.blockUser(
-                        blockedUid: post.ownerUid,
-                        blockedUserId: post.userId,
-                      );
-
-                      if (!mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('@${post.userId} 사용자를 차단했습니다.')),
-                      );
-
-                      setState(() {
-                        posts.removeWhere(
-                          (item) => item.ownerUid == post.ownerUid,
-                        );
-                        myPosts.removeWhere(
-                          (item) => item.ownerUid == post.ownerUid,
-                        );
-                      });
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
+      post: post,
+      isMyPost: isMyPost,
+      onEditTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => EditPostScreen(post: post)),
         );
+
+        if (result == 'album') {
+          await refreshPostLists();
+        } else if (result == 'home') {
+          setState(() {
+            selectedFeedTag = null;
+          });
+
+          await refreshPostLists();
+        }
+      },
+      onDeleteTap: () {
+        showDeletePostDialog(post);
+      },
+      onReportTap: () {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (!mounted) return;
+          showPostReportDialog(context: context, post: post);
+        });
+      },
+      onUserReportTap: () {
+        Future.delayed(const Duration(milliseconds: 150), () {
+          if (!mounted) return;
+          showUserReportDialog(context: context, post: post);
+        });
+      },
+      onBlockTap: () async {
+        await Future.delayed(const Duration(milliseconds: 150));
+
+        if (!mounted) return;
+
+        final confirm = await showBlockUserConfirmDialog(
+          context: context,
+          userId: post.userId,
+        );
+
+        if (!confirm) return;
+
+        await BlockService.blockUser(
+          blockedUid: post.ownerUid,
+          blockedUserId: post.userId,
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('@${post.userId} 사용자를 차단했습니다.')));
+
+        setState(() {
+          posts.removeWhere((item) => item.ownerUid == post.ownerUid);
+          myPosts.removeWhere((item) => item.ownerUid == post.ownerUid);
+        });
       },
     );
   }
