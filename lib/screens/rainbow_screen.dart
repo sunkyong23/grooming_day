@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../models/rainbow_letter.dart';
+import '../services/block_service.dart';
+import '../services/rainbow_bgm_service.dart';
 import '../services/rainbow_service.dart';
 import 'create_rainbow_letter_screen.dart';
 import 'rainbow_letter_detail_screen.dart';
-
-import '../services/block_service.dart';
 
 class RainbowScreen extends StatefulWidget {
   const RainbowScreen({super.key});
@@ -20,6 +20,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
   bool isLoading = true;
   bool showMessage = false;
   late String selectedMessage;
+  bool _bgmEnabled = false;
 
   final List<String> comfortMessages = [
     '오늘도 무지개별에서 평온한 하루를 보냈어요.',
@@ -60,6 +61,10 @@ class _RainbowScreenState extends State<RainbowScreen> {
     });
 
     loadLetters();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeBgm();
+    });
   }
 
   Future<void> loadLetters() async {
@@ -91,6 +96,146 @@ class _RainbowScreenState extends State<RainbowScreen> {
       myLetters = loadedMyLetters;
       isLoading = false;
     });
+  }
+
+  Future<void> _initializeBgm() async {
+    final initialized = await RainbowBgmService.isInitialized();
+
+    if (!initialized && mounted) {
+      await _showBgmDialog();
+    }
+
+    final enabled = await RainbowBgmService.isEnabled();
+
+    if (!mounted) return;
+
+    setState(() {
+      _bgmEnabled = enabled;
+    });
+
+    if (enabled) {
+      await RainbowBgmService.play();
+    }
+  }
+
+  Future<void> _toggleBgm() async {
+    final nextEnabled = !_bgmEnabled;
+
+    setState(() {
+      _bgmEnabled = nextEnabled;
+    });
+
+    await RainbowBgmService.saveSetting(nextEnabled);
+
+    if (nextEnabled) {
+      await RainbowBgmService.play();
+    } else {
+      await RainbowBgmService.stop();
+    }
+  }
+
+  Future<void> _showBgmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 34),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 22),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF8F2),
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '무지개별 배경음악',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF5C4033),
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  '잔잔한 음악과 함께\n소중한 추억을 떠올려보세요.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF7A5A4A),
+                    fontSize: 15,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF8A5A44),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(dialogContext, false);
+                        },
+                        child: const Text(
+                          '수동 재생',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFD9C9),
+                          foregroundColor: const Color(0xFF5C4033),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pop(dialogContext, true);
+                        },
+                        child: const Text(
+                          '자동 재생',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    await RainbowBgmService.saveSetting(result ?? false);
   }
 
   Future<void> openCreateLetterScreen() async {
@@ -278,6 +423,25 @@ class _RainbowScreenState extends State<RainbowScreen> {
                       color: Colors.white,
                     ),
                   ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _toggleBgm,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _bgmEnabled
+                            ? Icons.music_note_rounded
+                            : Icons.music_off_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -307,6 +471,12 @@ class _RainbowScreenState extends State<RainbowScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    RainbowBgmService.stop();
+    super.dispose();
   }
 
   @override
