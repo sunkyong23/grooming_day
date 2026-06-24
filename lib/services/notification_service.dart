@@ -28,6 +28,7 @@ class NotificationService {
       'title': '새 감상평이 도착했어요',
       'body': '@$senderUserId 님이 내 게시글에 감상평을 남겼어요.',
       'isRead': false,
+      'isDeleted': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -75,6 +76,7 @@ class NotificationService {
         'title': '$catName의 새 글이 올라왔어요',
         'body': '@$postOwnerUserId 님이 $catName의 새 게시글을 올렸어요.',
         'isRead': false,
+        'isDeleted': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
@@ -102,6 +104,7 @@ class NotificationService {
 
       if (receiverUid.isEmpty) continue;
       if (receiverUid == currentUser.uid) continue;
+
       final notificationRef = _firestore.collection('notifications').doc();
 
       batch.set(notificationRef, {
@@ -116,42 +119,12 @@ class NotificationService {
         'title': '새 공지가 올라왔어요',
         'body': noticeTitle,
         'isRead': false,
+        'isDeleted': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
 
     await batch.commit();
-  }
-
-  Stream<List<AppNotification>> watchMyNotifications(String uid) {
-    if (uid.isEmpty) {
-      return Stream.value([]);
-    }
-
-    return _firestore
-        .collection('notifications')
-        .where('receiverUid', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => AppNotification.fromDoc(doc))
-              .toList();
-        });
-  }
-
-  Stream<bool> hasUnreadNotification(String uid) {
-    if (uid.isEmpty) {
-      return Stream.value(false);
-    }
-
-    return _firestore
-        .collection('notifications')
-        .where('receiverUid', isEqualTo: uid)
-        .where('isRead', isEqualTo: false)
-        .limit(1)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 
   Future<void> createUpdateNotifications({
@@ -190,11 +163,51 @@ class NotificationService {
         'title': '새 업데이트 소식이 있어요',
         'body': '$version · $updateTitle',
         'isRead': false,
+        'isDeleted': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
 
     await batch.commit();
+  }
+
+  Stream<List<AppNotification>> watchMyNotifications(String uid) {
+    if (uid.isEmpty) {
+      return Stream.value([]);
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('receiverUid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .where((doc) {
+                final data = doc.data();
+                return data['isDeleted'] != true;
+              })
+              .map((doc) => AppNotification.fromDoc(doc))
+              .toList();
+        });
+  }
+
+  Stream<bool> hasUnreadNotification(String uid) {
+    if (uid.isEmpty) {
+      return Stream.value(false);
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('receiverUid', isEqualTo: uid)
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.any((doc) {
+            final data = doc.data();
+            return data['isDeleted'] != true;
+          });
+        });
   }
 
   Future<void> markAllAsRead(String uid) async {
@@ -211,6 +224,10 @@ class NotificationService {
     final batch = _firestore.batch();
 
     for (final doc in snapshot.docs) {
+      final data = doc.data();
+
+      if (data['isDeleted'] == true) continue;
+
       batch.update(doc.reference, {'isRead': true});
     }
 
@@ -220,7 +237,11 @@ class NotificationService {
   Future<void> deleteNotification(String notificationId) async {
     if (notificationId.isEmpty) return;
 
-    await _firestore.collection('notifications').doc(notificationId).delete();
+    await _firestore.collection('notifications').doc(notificationId).update({
+      'isDeleted': true,
+      'isRead': true,
+      'deletedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<void> deleteAllNotifications(String uid) async {
@@ -236,7 +257,15 @@ class NotificationService {
     final batch = _firestore.batch();
 
     for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
+      final data = doc.data();
+
+      if (data['isDeleted'] == true) continue;
+
+      batch.update(doc.reference, {
+        'isDeleted': true,
+        'isRead': true,
+        'deletedAt': FieldValue.serverTimestamp(),
+      });
     }
 
     await batch.commit();
