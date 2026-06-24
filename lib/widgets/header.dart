@@ -10,7 +10,15 @@ import '../screens/notification_screen.dart';
 class Header extends StatelessWidget {
   final VoidCallback onCameraTap;
 
-  const Header({super.key, required this.onCameraTap});
+  final bool communityBgmEnabled;
+  final VoidCallback onCommunityBgmTap;
+
+  const Header({
+    super.key,
+    required this.onCameraTap,
+    required this.communityBgmEnabled,
+    required this.onCommunityBgmTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +28,36 @@ class Header extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '그루밍데이',
-                style: TextStyle(
-                  fontFamily: 'Dongle',
-                  fontSize: 43,
-                  color: Color(0xFF351A14),
-                  height: 0.9,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '그루밍데이',
+                    style: TextStyle(
+                      fontFamily: 'Dongle',
+                      fontSize: 43,
+                      color: Color(0xFF351A14),
+                      height: 0.9,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: onCommunityBgmTap,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: AnimatedOpacity(
+                        opacity: communityBgmEnabled ? 1.0 : 0.28,
+                        duration: const Duration(milliseconds: 180),
+                        child: const Icon(
+                          Icons.music_note_rounded,
+                          size: 22,
+                          color: Color(0xFF5E3D35),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               const Text(
@@ -38,7 +68,6 @@ class Header extends StatelessWidget {
           ),
         ),
 
-        // 알림 아이콘 (배경 없음)
         SizedBox(
           width: 42,
           height: 42,
@@ -68,7 +97,6 @@ class Header extends StatelessWidget {
                       size: 28,
                       color: Color(0xFF5E3D35),
                     ),
-
                     if (hasUnread)
                       Positioned(
                         top: 2,
@@ -90,7 +118,6 @@ class Header extends StatelessWidget {
         ),
         const SizedBox(width: 10),
 
-        // 카메라 아이콘 (기존 핑크 박스 유지)
         HeaderIcon(icon: Icons.photo_camera_outlined, onTap: onCameraTap),
       ],
     );

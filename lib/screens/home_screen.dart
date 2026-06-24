@@ -24,6 +24,7 @@ import '../widgets/post/crop_ratio_bottom_sheet.dart';
 import '../widgets/home/home_feed_list.dart';
 
 import '../widgets/home/home_tag_header.dart';
+import '../services/community_bgm_service.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -64,6 +65,8 @@ class HomeScreenState extends State<HomeScreen>
   final ScrollController feedScrollController = ScrollController();
   final ScrollController tagScrollController = ScrollController();
 
+  bool _communityBgmEnabled = false;
+
   DocumentSnapshot? _lastPostDocument;
   bool _isLoadingPosts = false;
   bool _hasMorePosts = true;
@@ -86,6 +89,8 @@ class HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
 
+    _initializeCommunityBgm();
+
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -104,10 +109,42 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    CommunityBgmService.stop();
+
     _loadingController.dispose();
     feedScrollController.dispose();
     tagScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeCommunityBgm() async {
+    final enabled = await CommunityBgmService.isEnabled();
+
+    if (!mounted) return;
+
+    setState(() {
+      _communityBgmEnabled = enabled;
+    });
+
+    if (enabled) {
+      await CommunityBgmService.play();
+    }
+  }
+
+  Future<void> _toggleCommunityBgm() async {
+    final nextEnabled = !_communityBgmEnabled;
+
+    setState(() {
+      _communityBgmEnabled = nextEnabled;
+    });
+
+    await CommunityBgmService.saveSetting(nextEnabled);
+
+    if (nextEnabled) {
+      await CommunityBgmService.play();
+    } else {
+      await CommunityBgmService.stop();
+    }
   }
 
   Future<void> loadInitialData() async {
@@ -491,6 +528,8 @@ class HomeScreenState extends State<HomeScreen>
               tagScrollController: tagScrollController,
               onCameraTap: openCameraAndCreatePost,
               onTagTap: handleTagTap,
+              communityBgmEnabled: _communityBgmEnabled,
+              onCommunityBgmTap: _toggleCommunityBgm,
             ),
             const SizedBox(height: 16),
             Expanded(

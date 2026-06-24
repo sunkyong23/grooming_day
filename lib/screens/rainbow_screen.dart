@@ -7,6 +7,8 @@ import '../services/rainbow_service.dart';
 import 'create_rainbow_letter_screen.dart';
 import 'rainbow_letter_detail_screen.dart';
 
+import '../services/community_bgm_service.dart';
+
 class RainbowScreen extends StatefulWidget {
   const RainbowScreen({super.key});
 
@@ -99,6 +101,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
   }
 
   Future<void> _initializeBgm() async {
+    await CommunityBgmService.stop();
     final initialized = await RainbowBgmService.isInitialized();
 
     if (!initialized && mounted) {
@@ -476,6 +479,7 @@ class _RainbowScreenState extends State<RainbowScreen> {
   @override
   void dispose() {
     RainbowBgmService.stop();
+    CommunityBgmService.playIfEnabled();
     super.dispose();
   }
 

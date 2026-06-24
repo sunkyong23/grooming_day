@@ -11,6 +11,9 @@ class HomeTagHeader extends StatelessWidget {
   final VoidCallback onCameraTap;
   final Future<void> Function(String tag) onTagTap;
 
+  final bool communityBgmEnabled;
+  final VoidCallback onCommunityBgmTap;
+
   const HomeTagHeader({
     super.key,
     required this.tags,
@@ -18,6 +21,8 @@ class HomeTagHeader extends StatelessWidget {
     required this.tagScrollController,
     required this.onCameraTap,
     required this.onTagTap,
+    required this.communityBgmEnabled,
+    required this.onCommunityBgmTap,
   });
 
   @override
@@ -27,7 +32,11 @@ class HomeTagHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Header(onCameraTap: onCameraTap),
+          Header(
+            onCameraTap: onCameraTap,
+            communityBgmEnabled: communityBgmEnabled,
+            onCommunityBgmTap: onCommunityBgmTap,
+          ),
           const SizedBox(height: 14),
           const Divider(height: 1, thickness: 0.5, color: Color(0xFFF0E3DC)),
           const SizedBox(height: 12),

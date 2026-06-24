@@ -22,6 +22,7 @@ import '../widgets/album/album_toolbar.dart';
 import '../widgets/report/post_report_dialog.dart';
 import '../widgets/common/three_dot_loading.dart';
 import '../widgets/album/delete_posts_confirm_dialog.dart';
+import '../services/community_bgm_service.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -65,6 +66,8 @@ class AlbumScreenState extends State<AlbumScreen>
   void initState() {
     super.initState();
 
+    CommunityBgmService.playIfEnabled();
+
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -86,6 +89,8 @@ class AlbumScreenState extends State<AlbumScreen>
 
   @override
   void dispose() {
+    CommunityBgmService.stop();
+
     _loadingController.dispose();
     albumScrollController.dispose();
     super.dispose();
