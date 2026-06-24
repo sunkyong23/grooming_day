@@ -69,9 +69,7 @@ class HomeFeedList extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.only(bottom: 18),
           child: CatPostCard(
-            imagePath: post.thumbnailUrl.isNotEmpty
-                ? post.thumbnailUrl
-                : post.imageUrl,
+            imagePath: post.imageUrl,
             originalImagePath: post.imageUrl,
             caption: post.caption,
             catProfileImageUrl: post.catProfileImageUrl,
