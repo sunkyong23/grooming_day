@@ -15,6 +15,8 @@ import '../widgets/post_detail_dialog.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../widgets/catti/catti_card.dart';
+
 class CatProfileDetailScreen extends StatefulWidget {
   final CatProfile cat;
 
@@ -535,6 +537,10 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
               ),
               const SizedBox(height: 16),
             ],
+
+            CattiCard(catProfile: widget.cat),
+
+            const SizedBox(height: 18),
 
             if (!widget.cat.isVirtualCat)
               _catInfoCard(
