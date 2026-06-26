@@ -8,10 +8,11 @@ class CattiTraitPresets {
   ];
 
   static const kneading = [
-    CattiTraitScore(trait: CattiTrait.touch, value: 3),
-    CattiTraitScore(trait: CattiTrait.lap, value: 3),
-    CattiTraitScore(trait: CattiTrait.kneading, value: 3),
-    CattiTraitScore(trait: CattiTrait.purring, value: 2),
+    CattiTraitScore(trait: CattiTrait.touch, value: 4),
+    CattiTraitScore(trait: CattiTrait.lap, value: 4),
+    CattiTraitScore(trait: CattiTrait.kneading, value: 5),
+    CattiTraitScore(trait: CattiTrait.purring, value: 3),
+    CattiTraitScore(trait: CattiTrait.trust, value: 2),
   ];
 
   static const zoomies = [
@@ -52,9 +53,9 @@ class CattiTraitPresets {
   ];
 
   static const box = [
-    CattiTraitScore(trait: CattiTrait.hide, value: 3),
     CattiTraitScore(trait: CattiTrait.curious, value: 3),
     CattiTraitScore(trait: CattiTrait.explorer, value: 2),
+    CattiTraitScore(trait: CattiTrait.hide, value: 1),
   ];
 
   static const explorer = [
@@ -87,8 +88,8 @@ class CattiTraitPresets {
     CattiTraitScore(trait: CattiTrait.rest, value: 2),
   ];
 
-  static const shy = [
-    CattiTraitScore(trait: CattiTrait.observe, value: 3),
+  static const List<CattiTraitScore> shy = [
+    CattiTraitScore(trait: CattiTrait.hide, value: 2),
     CattiTraitScore(trait: CattiTrait.personalSpace, value: 2),
     CattiTraitScore(trait: CattiTrait.trust, value: 1),
   ];

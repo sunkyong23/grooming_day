@@ -45,9 +45,9 @@ const List<CattiQuestion> cattiQuestions = [
           CattiScore(axis: CattiAxis.emotion, value: -2),
         ],
         traits: [
-          CattiTraitScore(trait: CattiTrait.observe, value: 2),
-          CattiTraitScore(trait: CattiTrait.personalSpace, value: 1),
           CattiTraitScore(trait: CattiTrait.observe, value: 1),
+          CattiTraitScore(trait: CattiTrait.personalSpace, value: 1),
+          CattiTraitScore(trait: CattiTrait.trust, value: 1),
         ],
       ),
       CattiOption(
@@ -110,8 +110,9 @@ const List<CattiQuestion> cattiQuestions = [
           CattiScore(axis: CattiAxis.emotion, value: -2),
         ],
         traits: [
-          CattiTraitScore(trait: CattiTrait.observe, value: 3),
+          CattiTraitScore(trait: CattiTrait.observe, value: 1),
           CattiTraitScore(trait: CattiTrait.personalSpace, value: 2),
+          CattiTraitScore(trait: CattiTrait.trust, value: 1),
         ],
       ),
       CattiOption(
@@ -174,8 +175,8 @@ const List<CattiQuestion> cattiQuestions = [
           CattiScore(axis: CattiAxis.emotion, value: -2),
         ],
         traits: [
-          CattiTraitScore(trait: CattiTrait.hide, value: 2),
-          CattiTraitScore(trait: CattiTrait.observe, value: 2),
+          CattiTraitScore(trait: CattiTrait.hide, value: 3),
+          CattiTraitScore(trait: CattiTrait.trust, value: 1),
           CattiTraitScore(trait: CattiTrait.personalSpace, value: 1),
         ],
       ),
@@ -188,8 +189,8 @@ const List<CattiQuestion> cattiQuestions = [
           CattiScore(axis: CattiAxis.emotion, value: -2),
         ],
         traits: [
-          CattiTraitScore(trait: CattiTrait.hide, value: 3),
-          CattiTraitScore(trait: CattiTrait.observe, value: 3),
+          CattiTraitScore(trait: CattiTrait.hide, value: 4),
+          CattiTraitScore(trait: CattiTrait.observe, value: 1),
           CattiTraitScore(trait: CattiTrait.independent, value: 1),
         ],
       ),
@@ -240,7 +241,6 @@ const List<CattiQuestion> cattiQuestions = [
         traits: [
           CattiTraitScore(trait: CattiTrait.personalSpace, value: 2),
           CattiTraitScore(trait: CattiTrait.independent, value: 1),
-          CattiTraitScore(trait: CattiTrait.observe, value: 1),
         ],
       ),
       CattiOption(
@@ -316,9 +316,9 @@ const List<CattiQuestion> cattiQuestions = [
           CattiScore(axis: CattiAxis.emotion, value: -2),
         ],
         traits: [
-          CattiTraitScore(trait: CattiTrait.observe, value: 3),
-          CattiTraitScore(trait: CattiTrait.personalSpace, value: 2),
           CattiTraitScore(trait: CattiTrait.observe, value: 1),
+          CattiTraitScore(trait: CattiTrait.personalSpace, value: 2),
+          CattiTraitScore(trait: CattiTrait.trust, value: 1),
         ],
       ),
       CattiOption(id: 'E', text: '아직 잘 모르겠어요.', scores: [], traits: []),
@@ -961,7 +961,7 @@ const List<CattiQuestion> cattiQuestions = [
         ],
         traits: [
           ...CattiTraitPresets.shy,
-          CattiTraitScore(trait: CattiTrait.hide, value: 1),
+          CattiTraitScore(trait: CattiTrait.hide, value: 2),
         ],
       ),
       CattiOption(

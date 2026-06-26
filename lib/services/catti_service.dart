@@ -140,7 +140,7 @@ class CattiService {
     required Map<CattiTrait, int> traitScores,
     String? tieBreakerType,
   }) {
-    final allCandidates = cattiTypeProfiles.map((profile) {
+    final candidates = cattiTypeProfiles.map((profile) {
       final distance = _distance(
         socialPercent,
         curiosityPercent,
@@ -152,53 +152,47 @@ class CattiService {
         profile.targetEmotion,
       );
 
-      return _ProfileCandidate(
+      final traitFitScore = _calculateTraitFitScore(
         profile: profile,
-        distance: distance,
-        baseScore: _distanceToBaseScore(distance),
-        traitScore: 0,
-        tieBreakerScore: 0,
-        finalScore: 0,
-      );
-    }).toList();
-
-    allCandidates.sort((a, b) => a.distance.compareTo(b.distance));
-
-    final top5 = allCandidates.take(5).map((candidate) {
-      final traitScore = _calculateTraitScore(
-        profile: candidate.profile,
         traitScores: traitScores,
       );
 
+      final axisScore = _distanceToAxisScore(distance);
+
       final tieBreakerScore = _getTieBreakerBonus(
-        profile: candidate.profile,
+        profile: profile,
         tieBreakerType: tieBreakerType,
       );
 
-      final finalScore = candidate.baseScore + traitScore + tieBreakerScore;
+      // 핵심 구조:
+      // Trait가 후보를 만들고, 4축 점수는 보정만 한다.
+      final finalScore = traitFitScore + axisScore + tieBreakerScore;
 
-      return candidate.copyWith(
-        traitScore: traitScore,
+      return _ProfileCandidate(
+        profile: profile,
+        distance: distance,
+        baseScore: axisScore,
+        traitScore: traitFitScore,
         tieBreakerScore: tieBreakerScore,
         finalScore: finalScore,
       );
     }).toList();
 
-    top5.sort((a, b) => b.finalScore.compareTo(a.finalScore));
+    candidates.sort((a, b) => b.finalScore.compareTo(a.finalScore));
 
-    final matches = top5.take(3).map((candidate) {
+    final matches = candidates.take(3).map((candidate) {
       return CattiMatch(
         typeId: candidate.profile.id,
         matchPercent: candidate.finalScore.round().clamp(0, 100),
       );
     }).toList();
 
-    final debug = top5.map((candidate) {
+    final debug = candidates.take(5).map((candidate) {
       return {
         'typeId': candidate.profile.id,
         'distance': candidate.distance.toStringAsFixed(1),
-        'baseScore': candidate.baseScore.toStringAsFixed(1),
-        'traitScore': candidate.traitScore.toStringAsFixed(1),
+        'axisScore': candidate.baseScore.toStringAsFixed(1),
+        'traitFitScore': candidate.traitScore.toStringAsFixed(1),
         'tieBreakerScore': candidate.tieBreakerScore.toStringAsFixed(1),
         'finalScore': candidate.finalScore.toStringAsFixed(1),
       };
@@ -207,44 +201,263 @@ class CattiService {
     return TopMatchResult(matches: matches, debug: debug);
   }
 
-  double _distanceToBaseScore(double distance) {
+  double _distanceToAxisScore(double distance) {
     const maxDistance = 140.0;
     final normalized = 1 - (distance / maxDistance);
-    return (normalized * 68).clamp(0, 68);
+
+    // 4축은 최종 타입 결정의 보조 역할만 한다.
+    return (normalized * 25).clamp(0, 25);
   }
 
-  double _calculateTraitScore({
+  double _calculateTraitFitScore({
     required CattiTypeProfile profile,
     required Map<CattiTrait, int> traitScores,
   }) {
-    double coreMatched = 0;
-    double bonusMatched = 0;
+    double coreScore = 0;
+    double bonusScore = 0;
+    int matchedCoreCount = 0;
 
     for (final trait in profile.coreTraits) {
-      coreMatched += traitScores[trait] ?? 0;
+      final value = traitScores[trait] ?? 0;
+
+      coreScore += value;
+
+      if (value >= 7) {
+        matchedCoreCount++;
+      }
     }
 
     for (final trait in profile.bonusTraits) {
-      bonusMatched += traitScores[trait] ?? 0;
+      final value = traitScores[trait] ?? 0;
+      bonusScore += value;
     }
 
     final coreAverage = profile.coreTraits.isEmpty
-        ? 0
-        : coreMatched / profile.coreTraits.length;
+        ? 0.0
+        : coreScore / profile.coreTraits.length;
 
     final bonusAverage = profile.bonusTraits.isEmpty
-        ? 0
-        : bonusMatched / profile.bonusTraits.length;
+        ? 0.0
+        : bonusScore / profile.bonusTraits.length;
 
-    // Core Trait를 더 강하게 반영하고,
-    // Bonus Trait는 세부 보정으로만 사용.
-    final weightedAverage = (coreAverage * 0.75) + (bonusAverage * 0.25);
+    // Core 평균 중심. Bonus는 약하게만 반영.
+    var fitScore = (coreAverage * 3.1) + (bonusAverage * 0.9);
 
-    // 현재 질문 구조상 Trait 평균 18점 전후면 매우 강하게 일치한다고 봄.
-    final matchRatio = (weightedAverage / 18).clamp(0.0, 1.0);
+    // Core trait 여러 개가 동시에 맞으면 타입성 강화.
+    fitScore += matchedCoreCount * 4.0;
 
-    // Trait는 최대 32점까지 반영.
-    return matchRatio * 32;
+    // 타입별 시그니처 조합 보정.
+    fitScore += _getSignatureBonus(profile.id, traitScores);
+
+    // 반대 성향이면 감점.
+    fitScore += _getConflictPenalty(profile.id, traitScores);
+
+    return fitScore.clamp(-40, 75);
+  }
+
+  double _getSignatureBonus(
+    String profileId,
+    Map<CattiTrait, int> traitScores,
+  ) {
+    int v(CattiTrait trait) => traitScores[trait] ?? 0;
+
+    final approach = v(CattiTrait.approach);
+    final follow = v(CattiTrait.follow);
+    final touch = v(CattiTrait.touch);
+    final lap = v(CattiTrait.lap);
+    final kneading = v(CattiTrait.kneading);
+    final purring = v(CattiTrait.purring);
+    final attention = v(CattiTrait.attention);
+    final talkative = v(CattiTrait.talkative);
+    final curious = v(CattiTrait.curious);
+    final explorer = v(CattiTrait.explorer);
+    final energy = v(CattiTrait.energy);
+    final play = v(CattiTrait.play);
+    final hunter = v(CattiTrait.hunter);
+    final calm = v(CattiTrait.calm);
+    final rest = v(CattiTrait.rest);
+    final routine = v(CattiTrait.routine);
+    final sun = v(CattiTrait.sun);
+    final stable = v(CattiTrait.stable);
+    final comfort = v(CattiTrait.comfort);
+    final personalSpace = v(CattiTrait.personalSpace);
+    final trust = v(CattiTrait.trust);
+    final independent = v(CattiTrait.independent);
+    final observe = v(CattiTrait.observe);
+    final hide = v(CattiTrait.hide);
+    final highPlace = v(CattiTrait.highPlace);
+    final sleep = v(CattiTrait.sleep);
+
+    switch (profileId) {
+      case 'cherry_blossom':
+        if (approach >= 10 && curious >= 6 && explorer >= 6) return 22;
+        if (approach >= 12 && follow >= 8 && curious >= 5) return 14;
+        return 0;
+
+      case 'ribbon':
+        if (attention >= 8 && talkative >= 4 && follow >= 8) return 24;
+        if (attention >= 8 && touch >= 6 && talkative >= 3) return 16;
+        return 0;
+
+      case 'kneading':
+        if (touch >= 7 && lap >= 6 && kneading >= 5) return 32;
+        if (touch >= 7 && purring >= 4) return 20;
+        if (lap >= 6 && purring >= 4) return 14;
+        return 0;
+
+      case 'zoomies':
+        if (energy >= 10 && play >= 8) return 24;
+        if (energy + play + hunter >= 25) return 14;
+        return 0;
+
+      case 'feather':
+        if (play >= 10 && hunter >= 8) return 28;
+        if (play >= 8 && energy >= 8) return 16;
+        return 0;
+
+      case 'bread':
+        if (calm >= 8 && rest >= 8) return 24;
+        if (calm >= 7 && routine >= 5) return 12;
+        return 0;
+
+      case 'cactus':
+        if (personalSpace >= 10 && independent >= 8) return 28;
+        if (personalSpace >= 12 && touch <= 5) return 16;
+        return 0;
+
+      case 'queen':
+        if (personalSpace >= 10 && trust >= 8 && observe >= 6) return 26;
+        if (trust >= 8 && observe >= 8) return 14;
+        return 0;
+
+      case 'moon':
+        if (observe >= 8 && comfort >= 8 && trust >= 6) return 22;
+        if (comfort >= 10 && follow >= 8) return 12;
+        return 0;
+
+      case 'box':
+        if (hide >= 6 && curious >= 8 && explorer >= 8) return 24;
+        if (curious >= 10 && explorer >= 8) return 14;
+        return 0;
+
+      case 'explorer':
+        if (explorer >= 10 && highPlace >= 8 && curious >= 8) return 28;
+        if (explorer >= 10 && curious >= 10) return 16;
+        return 0;
+
+      case 'lion':
+        if (observe >= 8 && highPlace >= 8 && stable >= 5) return 26;
+        if (observe >= 10 && highPlace >= 6) return 16;
+        return 0;
+
+      case 'cloud':
+        if (comfort >= 10 && rest >= 8 && calm >= 8) return 28;
+        if (comfort >= 12 && rest >= 7) return 16;
+        return 0;
+
+      case 'nap':
+        if (sleep >= 8 && rest >= 8) return 30;
+        if (sleep >= 7 && sun >= 5) return 16;
+        return 0;
+
+      case 'shy':
+        if (hide >= 16 && comfort >= 10 && touch <= 5) return 24;
+        if (hide >= 14 && trust >= 6 && touch <= 5) return 14;
+        return 0;
+
+      case 'plant':
+        if (routine >= 8 && stable >= 8 && comfort >= 8) return 30;
+        if (routine >= 7 && rest >= 6) return 16;
+        return 0;
+    }
+
+    return 0;
+  }
+
+  double _getConflictPenalty(
+    String profileId,
+    Map<CattiTrait, int> traitScores,
+  ) {
+    int v(CattiTrait trait) => traitScores[trait] ?? 0;
+
+    final approach = v(CattiTrait.approach);
+    final follow = v(CattiTrait.follow);
+    final touch = v(CattiTrait.touch);
+    final lap = v(CattiTrait.lap);
+    final kneading = v(CattiTrait.kneading);
+    final purring = v(CattiTrait.purring);
+    final attention = v(CattiTrait.attention);
+    final curious = v(CattiTrait.curious);
+    final explorer = v(CattiTrait.explorer);
+    final energy = v(CattiTrait.energy);
+    final play = v(CattiTrait.play);
+    final hunter = v(CattiTrait.hunter);
+    final rest = v(CattiTrait.rest);
+    final sleep = v(CattiTrait.sleep);
+    final personalSpace = v(CattiTrait.personalSpace);
+    final hide = v(CattiTrait.hide);
+
+    switch (profileId) {
+      case 'cherry_blossom':
+        var penalty = 0.0;
+        if (hide >= 14 || personalSpace >= 12) penalty -= 16;
+        if (attention >= 10 && curious < 6) penalty -= 10;
+        if (touch >= 10 && lap >= 8 && curious < 6) penalty -= 12;
+        return penalty;
+
+      case 'ribbon':
+        var penalty = 0.0;
+        if (curious >= 12 && explorer >= 10) penalty -= 14;
+        if (hide >= 16 || personalSpace >= 14) penalty -= 16;
+        if (kneading >= 8 && lap >= 8) penalty -= 10;
+        return penalty;
+
+      case 'kneading':
+        var penalty = 0.0;
+        if (hide >= 14 && touch <= 5) penalty -= 24;
+        if (energy >= 12 || play >= 12 || hunter >= 10) penalty -= 12;
+        if (attention >= 10 && lap < 5) penalty -= 10;
+        return penalty;
+
+      case 'shy':
+        var penalty = 0.0;
+        if (touch >= 7 || lap >= 7 || kneading >= 5 || purring >= 5) {
+          penalty -= 34;
+        }
+        if (attention >= 8 && follow >= 8) penalty -= 18;
+        if (hide < 12) penalty -= 16;
+        return penalty;
+
+      case 'cloud':
+      case 'nap':
+      case 'bread':
+      case 'plant':
+        if (energy >= 10 || play >= 10 || hunter >= 10) return -18;
+        return 0;
+
+      case 'cactus':
+      case 'queen':
+        if (touch >= 8 && lap >= 7) return -20;
+        if (approach >= 14 && follow >= 10) return -12;
+        return 0;
+
+      case 'zoomies':
+      case 'feather':
+        if (rest >= 10 || sleep >= 8) return -18;
+        return 0;
+
+      case 'box':
+      case 'explorer':
+        if (touch >= 10 || lap >= 8) return -12;
+        return 0;
+
+      case 'lion':
+      case 'moon':
+        if (energy >= 12 || play >= 10) return -12;
+        return 0;
+    }
+
+    return 0;
   }
 
   double _getTieBreakerBonus({
@@ -362,6 +575,7 @@ class _ProfileCandidate {
   });
 
   _ProfileCandidate copyWith({
+    double? baseScore,
     double? traitScore,
     double? tieBreakerScore,
     double? finalScore,
@@ -369,7 +583,7 @@ class _ProfileCandidate {
     return _ProfileCandidate(
       profile: profile,
       distance: distance,
-      baseScore: baseScore,
+      baseScore: baseScore ?? this.baseScore,
       traitScore: traitScore ?? this.traitScore,
       tieBreakerScore: tieBreakerScore ?? this.tieBreakerScore,
       finalScore: finalScore ?? this.finalScore,

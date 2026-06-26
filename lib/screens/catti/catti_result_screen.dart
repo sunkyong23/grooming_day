@@ -113,42 +113,46 @@ class CattiResultScreen extends StatelessWidget {
               _sectionCard(
                 title: '비슷한 모습도 있어요',
                 child: Column(
-                  children: result.topMatches.map((match) {
-                    final matchProfile = cattiTypeProfiles.firstWhere(
-                      (profile) => profile.id == match.typeId,
-                    );
+                  children: result.topMatches
+                      .where((match) => match.typeId != result.code)
+                      .take(2)
+                      .map((match) {
+                        final matchProfile = cattiTypeProfiles.firstWhere(
+                          (profile) => profile.id == match.typeId,
+                        );
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        children: [
-                          Text(
-                            matchProfile.emoji,
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              matchProfile.name,
-                              style: const TextStyle(
-                                color: Color(0xFF3D241E),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            children: [
+                              Text(
+                                matchProfile.emoji,
+                                style: const TextStyle(fontSize: 24),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  matchProfile.name,
+                                  style: const TextStyle(
+                                    color: Color(0xFF3D241E),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${match.matchPercent}%',
+                                style: const TextStyle(
+                                  color: Color(0xFFE8A58C),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${match.matchPercent}%',
-                            style: const TextStyle(
-                              color: Color(0xFFE8A58C),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                        );
+                      })
+                      .toList(),
                 ),
               ),
 
