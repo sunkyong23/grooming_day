@@ -27,6 +27,7 @@ class CattiResultService {
         'curiosity': result.curiosityPercent,
         'activity': result.activityPercent,
         'emotion': result.emotionPercent,
+        'topMatches': result.topMatches.map((match) => match.toMap()).toList(),
         'testedAt': FieldValue.serverTimestamp(),
         'version': 1,
       },

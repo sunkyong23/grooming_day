@@ -4,6 +4,9 @@ import '../../models/cat_profile.dart';
 import '../../screens/catti/catti_intro_screen.dart';
 import 'catti_profile_card.dart';
 
+import '../../models/catti_result.dart';
+import '../../screens/catti/catti_result_screen.dart';
+
 class CattiCard extends StatelessWidget {
   final CatProfile catProfile;
 
@@ -21,6 +24,73 @@ class CattiCard extends StatelessWidget {
     );
   }
 
+  Future<void> _confirmRetest(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFF8F4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            '다시 검사할까요?',
+            style: TextStyle(
+              color: Color(0xFF3D241E),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: Text(
+            '${catProfile.name}의 새로운 CATTI 검사를 시작할게요.\n'
+            '기존 결과는 새 결과를 저장하기 전까지 유지돼요.',
+            style: const TextStyle(
+              color: Color(0xFF6B4A3A),
+              fontSize: 14,
+              height: 1.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Color(0xFF8A6A5A),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFD9C9),
+                foregroundColor: const Color(0xFF3D241E),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                '다시 검사',
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true && context.mounted) {
+      _openCattiTest(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final savedCatti = catProfile.catti;
@@ -30,13 +100,26 @@ class CattiCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: CattiProfileCard(
           catti: savedCatti,
+
           onTapResult: () {
-            ScaffoldMessenger.of(
+            final result = CattiResult.fromSaved(savedCatti);
+
+            Navigator.push(
               context,
-            ).showSnackBar(const SnackBar(content: Text('결과 보기 기능을 연결할게요.')));
+              MaterialPageRoute(
+                builder: (_) => CattiResultScreen(
+                  catProfileId: catProfile.id,
+                  catName: catProfile.name,
+                  result: result,
+                  answers: const {},
+                  readOnly: true,
+                ),
+              ),
+            );
           },
+
           onTapRetest: () {
-            _openCattiTest(context);
+            _confirmRetest(context);
           },
         ),
       );

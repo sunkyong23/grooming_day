@@ -1,3 +1,5 @@
+import 'catti_saved_result.dart';
+
 class CattiMatch {
   final String typeId;
   final int matchPercent;
@@ -24,8 +26,6 @@ class CattiResult {
 
   final List<CattiMatch> topMatches;
 
-  /// 개발용 디버그 정보
-  /// 출시 전 제거 예정
   final Map<String, dynamic> debugInfo;
 
   const CattiResult({
@@ -40,6 +40,22 @@ class CattiResult {
     required this.topMatches,
     this.debugInfo = const {},
   });
+
+  factory CattiResult.fromSaved(CattiSavedResult saved) {
+    return CattiResult(
+      code: saved.typeId,
+      scores: const {},
+      socialPercent: saved.social,
+      curiosityPercent: saved.curiosity,
+      activityPercent: saved.activity,
+      emotionPercent: saved.emotion,
+      answeredCount: 20,
+      unknownCount: 0,
+      topMatches: saved.topMatches.isNotEmpty
+          ? saved.topMatches
+          : [CattiMatch(typeId: saved.typeId, matchPercent: 100)],
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {

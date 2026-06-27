@@ -4,7 +4,6 @@ import '../../data/catti_type_profiles.dart';
 import '../../models/catti_question.dart';
 import '../../models/catti_result.dart';
 import '../../widgets/catti/catti_radar_chart.dart';
-
 import '../../services/catti_result_service.dart';
 
 class CattiResultScreen extends StatefulWidget {
@@ -13,12 +12,15 @@ class CattiResultScreen extends StatefulWidget {
   final CattiResult result;
   final Map<String, CattiOption> answers;
 
+  final bool readOnly;
+
   const CattiResultScreen({
     super.key,
     required this.catProfileId,
     required this.catName,
     required this.result,
     required this.answers,
+    this.readOnly = false,
   });
 
   @override
@@ -157,10 +159,15 @@ class _CattiResultScreenState extends State<CattiResultScreen>
       (profile) => profile.id == widget.result.code,
     );
 
+    final similarMatches = widget.result.topMatches
+        .where((match) => match.typeId != widget.result.code)
+        .take(2)
+        .toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F4),
       appBar: AppBar(
-        title: const Text('CATTI 결과'),
+        title: Text(widget.readOnly ? 'CATTI 기록' : 'CATTI 결과'),
         backgroundColor: const Color(0xFFFFF8F4),
         elevation: 0,
         foregroundColor: const Color(0xFF3D241E),
@@ -245,7 +252,6 @@ class _CattiResultScreenState extends State<CattiResultScreen>
 
                   const SizedBox(height: 16),
 
-                  // 대표 키워드
                   _appear(
                     begin: 0.22,
                     end: 0.40,
@@ -266,76 +272,69 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  if (similarMatches.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _appear(
+                      begin: 0.34,
+                      end: 0.52,
+                      child: _sectionCard(
+                        title: '비슷한 모습도 있어요',
+                        child: Column(
+                          children: similarMatches.map((match) {
+                            final matchProfile = cattiTypeProfiles.firstWhere(
+                              (profile) => profile.id == match.typeId,
+                            );
 
-                  // 비슷한 모습도 있어요
-                  _appear(
-                    begin: 0.34,
-                    end: 0.52,
-                    child: _sectionCard(
-                      title: '비슷한 모습도 있어요',
-                      child: Column(
-                        children: widget.result.topMatches
-                            .where(
-                              (match) => match.typeId != widget.result.code,
-                            )
-                            .take(2)
-                            .map((match) {
-                              final matchProfile = cattiTypeProfiles.firstWhere(
-                                (profile) => profile.id == match.typeId,
-                              );
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      matchProfile.emoji,
-                                      style: const TextStyle(fontSize: 24),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    matchProfile.emoji,
+                                    style: const TextStyle(fontSize: 24),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      matchProfile.name,
+                                      style: const TextStyle(
+                                        color: Color(0xFF3D241E),
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        matchProfile.name,
+                                  ),
+                                  TweenAnimationBuilder<int>(
+                                    tween: IntTween(
+                                      begin: 0,
+                                      end: match.matchPercent,
+                                    ),
+                                    duration: const Duration(
+                                      milliseconds: 1400,
+                                    ),
+                                    curve: Curves.easeOutCubic,
+                                    builder: (context, value, _) {
+                                      return Text(
+                                        '$value%',
                                         style: const TextStyle(
-                                          color: Color(0xFF3D241E),
+                                          color: Color(0xFFE8A58C),
                                           fontSize: 15,
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w900,
                                         ),
-                                      ),
-                                    ),
-                                    TweenAnimationBuilder<int>(
-                                      tween: IntTween(
-                                        begin: 0,
-                                        end: match.matchPercent,
-                                      ),
-                                      duration: const Duration(
-                                        milliseconds: 1400,
-                                      ),
-                                      curve: Curves.easeOutCubic,
-                                      builder: (context, value, _) {
-                                        return Text(
-                                          '$value%',
-                                          style: const TextStyle(
-                                            color: Color(0xFFE8A58C),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              );
-                            })
-                            .toList(),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
 
                   const SizedBox(height: 16),
 
-                  // profile.description 카드
                   _appear(
                     begin: 0.46,
                     end: 0.64,
@@ -354,7 +353,6 @@ class _CattiResultScreenState extends State<CattiResultScreen>
 
                   const SizedBox(height: 16),
 
-                  // 이런 모습을 보여요
                   _appear(
                     begin: 0.58,
                     end: 0.76,
@@ -371,7 +369,6 @@ class _CattiResultScreenState extends State<CattiResultScreen>
 
                   const SizedBox(height: 16),
 
-                  // 집사가 알아두면 좋아요
                   _appear(
                     begin: 0.68,
                     end: 0.86,
@@ -388,45 +385,46 @@ class _CattiResultScreenState extends State<CattiResultScreen>
 
                   const SizedBox(height: 16),
 
-                  // _smallNoteCard()
                   _appear(begin: 0.78, end: 0.96, child: _smallNoteCard()),
 
-                  const SizedBox(height: 20),
+                  if (!widget.readOnly &&
+                      widget.result.debugInfo.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    _appear(begin: 0.76, end: 0.96, child: _debugCard()),
+                  ],
 
-                  _appear(begin: 0.76, end: 0.96, child: _debugCard()),
-
-                  const SizedBox(height: 22),
-
-                  FadeTransition(
-                    opacity: _buttonOpacity,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFFD9C9),
-                          foregroundColor: const Color(0xFF3D241E),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
+                  if (!widget.readOnly) ...[
+                    const SizedBox(height: 22),
+                    FadeTransition(
+                      opacity: _buttonOpacity,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFD9C9),
+                            foregroundColor: const Color(0xFF3D241E),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
                           ),
-                        ),
-                        onPressed: _isSaving || _saved ? null : _saveResult,
-
-                        child: Text(
-                          _isSaving
-                              ? '저장 중...'
-                              : _saved
-                              ? '저장 완료'
-                              : '프로필에 저장하기',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                          onPressed: _isSaving || _saved ? null : _saveResult,
+                          child: Text(
+                            _isSaving
+                                ? '저장 중...'
+                                : _saved
+                                ? '저장 완료'
+                                : '프로필에 저장하기',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               );
             },
@@ -589,7 +587,7 @@ Widget _smallNoteCard() {
       borderRadius: BorderRadius.circular(18),
     ),
     child: RichText(
-      text: TextSpan(
+      text: const TextSpan(
         style: TextStyle(
           color: Color(0xFF9A7A6A),
           fontSize: 12,

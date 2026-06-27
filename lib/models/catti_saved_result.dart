@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'catti_result.dart';
+
 class CattiSavedResult {
   final String typeId;
   final String typeName;
@@ -12,6 +14,7 @@ class CattiSavedResult {
   final int emotion;
   final DateTime? testedAt;
   final int version;
+  final List<CattiMatch> topMatches;
 
   CattiSavedResult({
     required this.typeId,
@@ -25,6 +28,7 @@ class CattiSavedResult {
     required this.emotion,
     required this.testedAt,
     required this.version,
+    required this.topMatches,
   });
 
   factory CattiSavedResult.fromMap(Map<String, dynamic> map) {
@@ -42,6 +46,17 @@ class CattiSavedResult {
           ? (map['testedAt'] as Timestamp).toDate()
           : null,
       version: map['version'] ?? 1,
+      topMatches: (map['topMatches'] is List)
+          ? (map['topMatches'] as List)
+                .whereType<Map<String, dynamic>>()
+                .map(
+                  (item) => CattiMatch(
+                    typeId: item['typeId'] ?? '',
+                    matchPercent: item['matchPercent'] ?? 0,
+                  ),
+                )
+                .toList()
+          : const [],
     );
   }
 }
