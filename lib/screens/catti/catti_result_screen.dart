@@ -20,6 +20,7 @@ class CattiResultScreen extends StatefulWidget {
   final Map<String, CattiOption> answers;
 
   final bool readOnly;
+  final bool canShare;
 
   const CattiResultScreen({
     super.key,
@@ -28,6 +29,7 @@ class CattiResultScreen extends StatefulWidget {
     required this.result,
     required this.answers,
     this.readOnly = false,
+    this.canShare = true,
   });
 
   @override
@@ -93,6 +95,8 @@ class _CattiResultScreenState extends State<CattiResultScreen>
   }
 
   Future<void> _shareResult() async {
+    if (!widget.canShare) return;
+
     try {
       await Future.delayed(const Duration(milliseconds: 120));
 
@@ -214,9 +218,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                       child: Column(
                         children: [
                           _shareHeader(profile),
-
                           const SizedBox(height: 22),
-
                           _sectionCard(
                             child: Column(
                               children: [
@@ -242,9 +244,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                               ],
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             title: '대표 키워드',
                             child: Center(
@@ -260,9 +260,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             child: Text(
                               profile.description,
@@ -274,9 +272,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             title: '이런 모습을 보여요',
                             child: Column(
@@ -287,9 +283,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                                   .toList(),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             title: '집사가 알아두면 좋아요',
                             child: Column(
@@ -300,17 +294,13 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                                   .toList(),
                             ),
                           ),
-
                           const SizedBox(height: 16),
-
                           _smallNoteCard(),
                         ],
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 22),
-
                   _actionButtons(),
                 ],
               );
@@ -368,11 +358,47 @@ class _CattiResultScreenState extends State<CattiResultScreen>
   }
 
   Widget _actionButtons() {
+    if (widget.readOnly) {
+      if (!widget.canShare) {
+        return const SizedBox.shrink();
+      }
+
+      return FadeTransition(
+        opacity: _buttonOpacity,
+        child: SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: OutlinedButton(
+            onPressed: _shareResult,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF3D241E),
+              side: const BorderSide(color: Color(0xFFF0D5CA)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.ios_share_rounded, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  '공유하기',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return FadeTransition(
       opacity: _buttonOpacity,
-      child: widget.readOnly
-          ? SizedBox(
-              width: double.infinity,
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
               height: 54,
               child: OutlinedButton(
                 onPressed: _shareResult,
@@ -383,77 +409,44 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.ios_share_rounded, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '공유하기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+                child: const Text(
+                  '공유하기',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
               ),
-            )
-          : Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 54,
-                    child: OutlinedButton(
-                      onPressed: _shareResult,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF3D241E),
-                        side: const BorderSide(color: Color(0xFFF0D5CA)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child: const Text(
-                        '공유하기',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: _isSaving || _saved ? null : _saveResult,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD9C9),
-                        foregroundColor: const Color(0xFF3D241E),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child: Text(
-                        _isSaving
-                            ? '저장 중...'
-                            : _saved
-                            ? '저장 완료'
-                            : '프로필에 저장하기',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _isSaving || _saved ? null : _saveResult,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFD9C9),
+                  foregroundColor: const Color(0xFF3D241E),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: Text(
+                  _isSaving
+                      ? '저장 중...'
+                      : _saved
+                      ? '저장 완료'
+                      : '프로필에 저장하기',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -580,17 +573,13 @@ Widget _smallNoteCard() {
             fontWeight: FontWeight.w500,
           ),
         ),
-
         const SizedBox(height: 22),
-
         Container(
           width: double.infinity,
           height: 1,
           color: const Color(0xFFE6D8D2),
         ),
-
         const SizedBox(height: 12),
-
         const Text(
           'GroomingDay CATTI\ngroomingday.app',
           style: TextStyle(

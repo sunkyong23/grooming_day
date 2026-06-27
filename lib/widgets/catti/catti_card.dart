@@ -127,6 +127,7 @@ class CattiCard extends StatelessWidget {
                   result: result,
                   answers: const {},
                   readOnly: true,
+                  canShare: !readOnly,
                 ),
               ),
             );
