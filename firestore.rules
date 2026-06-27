@@ -278,28 +278,26 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /notifications/{notificationId} {
-      allow read: if isSignedIn()
-        && (
-          resource.data.receiverUid == request.auth.uid
-          || resource.data.senderUid == request.auth.uid
-        );
+  match /notifications/{notificationId} {
+  allow read: if isSignedIn()
+    && resource.data.receiverUid == request.auth.uid;
 
-      allow create: if isSignedIn()
-        && request.resource.data.senderUid == request.auth.uid
-        && request.resource.data.receiverUid != request.auth.uid
-        && request.resource.data.isRead == false;
+  allow create: if isSignedIn()
+    && request.resource.data.senderUid == request.auth.uid
+    && request.resource.data.receiverUid != request.auth.uid
+    && request.resource.data.isRead == false;
 
-      allow update: if isSignedIn()
-        && resource.data.receiverUid == request.auth.uid
-        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['isRead']);
+  allow update: if isSignedIn()
+    && resource.data.receiverUid == request.auth.uid
+    && request.resource.data.receiverUid == resource.data.receiverUid
+    && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+      'isRead',
+      'isDeleted',
+      'deletedAt'
+    ]);
 
-      allow delete: if isSignedIn()
-        && (
-          resource.data.receiverUid == request.auth.uid
-          || resource.data.senderUid == request.auth.uid
-        );
-    }
+  allow delete: if false;
+}
 
     match /{path=**}/favoriteCats/{catProfileId} {
       allow read: if isSignedIn();
