@@ -27,13 +27,17 @@ class CatProfileDetailScreen extends StatefulWidget {
 }
 
 class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
+  late CatProfile currentCat;
+
   List<Post> catPosts = [];
   bool isFavoriteCat = false;
   bool isFavoriteLoading = false;
+  bool _hasChanged = false;
 
   @override
   void initState() {
     super.initState();
+    currentCat = widget.cat;
     loadCatPosts();
     loadFavoriteState();
   }
@@ -176,7 +180,7 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
           catProfileId: widget.cat.id,
           ownerUid: widget.cat.ownerUid,
           catName: widget.cat.name,
-          catProfileImageUrl: widget.cat.profileImageUrl,
+          catProfileImageUrl: currentCat.profileImageUrl,
           ownerUserId: widget.cat.ownerUserId,
         );
       }
@@ -218,6 +222,17 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
 
     setState(() {
       isFavoriteCat = result;
+    });
+  }
+
+  Future<void> reloadCatProfile() async {
+    final updatedCat = await CatService.loadCatProfileById(currentCat.id);
+
+    if (!mounted || updatedCat == null) return;
+
+    setState(() {
+      currentCat = updatedCat;
+      _hasChanged = true;
     });
   }
 
@@ -392,250 +407,257 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
 
     final canFavorite = !isOwner;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF7F1),
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, _hasChanged);
+      },
+      child: Scaffold(
         backgroundColor: const Color(0xFFFFF7F1),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        actions: [
-          if (canFavorite)
-            GestureDetector(
-              onTap: toggleFavoriteCat,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Image.asset(
-                  isFavoriteCat
-                      ? 'assets/icons/paw_fill.png'
-                      : 'assets/icons/paw_outline.png',
-                  width: 40,
-                  height: 40,
-                ),
-              ),
-            ),
-
-          if (isOwner)
-            IconButton(
-              icon: const Icon(
-                Icons.more_horiz_rounded,
-                color: Color(0xFF5C4033),
-              ),
-              onPressed: () {
-                _showOwnerMenu();
-              },
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: CircleAvatar(
-                radius: 65,
-                backgroundColor: const Color(0xFFFFE2C6),
-                backgroundImage:
-                    !widget.cat.isVirtualCat &&
-                        widget.cat.profileImageUrl.isNotEmpty
-                    ? CachedNetworkImageProvider(widget.cat.profileImageUrl)
-                    : null,
-                child: widget.cat.isVirtualCat
-                    ? Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Image.asset(
-                          'assets/icons/today_cat.png',
-                          fit: BoxFit.contain,
-                        ),
-                      )
-                    : widget.cat.profileImageUrl.isEmpty
-                    ? const Icon(Icons.pets, size: 36)
-                    : null,
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            Center(
-              child: Text(
-                widget.cat.name,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F1A24),
-                ),
-              ),
-            ),
-
-            if (widget.cat.ownerUserId.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  '@${widget.cat.ownerUserId}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFB08678),
-                  ),
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 16),
-
-            if (widget.cat.introduction.isNotEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 9,
-                ),
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  widget.cat.introduction,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    height: 1.4,
-                    color: Color(0xFF4A2B22),
-                    fontWeight: FontWeight.w500,
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFFFF7F1),
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          actions: [
+            if (canFavorite)
+              GestureDetector(
+                onTap: toggleFavoriteCat,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Image.asset(
+                    isFavoriteCat
+                        ? 'assets/icons/paw_fill.png'
+                        : 'assets/icons/paw_outline.png',
+                    width: 40,
+                    height: 40,
                   ),
                 ),
               ),
 
-            if (widget.cat.personalityTags.isNotEmpty) ...[
+            if (isOwner)
+              IconButton(
+                icon: const Icon(
+                  Icons.more_horiz_rounded,
+                  color: Color(0xFF5C4033),
+                ),
+                onPressed: () {
+                  _showOwnerMenu();
+                },
+              ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Center(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: widget.cat.personalityTags.map((tag) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFE9DE),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        tag,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF8C6A5F),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                child: CircleAvatar(
+                  radius: 65,
+                  backgroundColor: const Color(0xFFFFE2C6),
+                  backgroundImage:
+                      !widget.cat.isVirtualCat &&
+                          widget.cat.profileImageUrl.isNotEmpty
+                      ? CachedNetworkImageProvider(widget.cat.profileImageUrl)
+                      : null,
+                  child: widget.cat.isVirtualCat
+                      ? Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Image.asset(
+                            'assets/icons/today_cat.png',
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : widget.cat.profileImageUrl.isEmpty
+                      ? const Icon(Icons.pets, size: 36)
+                      : null,
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
 
-            CattiCard(catProfile: widget.cat),
+              const SizedBox(height: 14),
 
-            const SizedBox(height: 18),
-
-            if (!widget.cat.isVirtualCat)
-              _catInfoCard(
-                breed: widget.cat.breed.isEmpty ? '미입력' : widget.cat.breed,
-                gender: widget.cat.gender,
-                birthDate: getBirthDateText(widget.cat.birthDate),
+              Center(
+                child: Text(
+                  currentCat.name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F1A24),
+                  ),
+                ),
               ),
 
-            const SizedBox(height: 18),
-
-            const Text(
-              '앨범',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1F1A24),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            catPosts.isEmpty
-                ? Container(
-                    height: 150,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+              if (widget.cat.ownerUserId.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Center(
+                  child: Text(
+                    '@${widget.cat.ownerUserId}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFB08678),
                     ),
-                    child: const Text('게시글이 없습니다 🐾'),
-                  )
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: catPosts.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 5,
-                          mainAxisSpacing: 5,
-                        ),
-                    itemBuilder: (context, index) {
-                      final post = catPosts[index];
+                  ),
+                ),
+              ],
 
-                      return GestureDetector(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => PostDetailDialog(
-                              imageUrl: post.imageUrl,
-                              catName: post.catName,
-                              caption: post.caption,
-                              postId: post.id,
-                              createdAt: post.createdAt ?? DateTime.now(),
-                              tagText: post.tags
-                                  .map((tag) => '#$tag')
-                                  .join(' '),
-                              canWriteReview:
-                                  post.ownerUid !=
-                                  FirebaseAuth.instance.currentUser?.uid,
-                            ),
-                          );
-                        },
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: post.imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) {
-                              return Container(
-                                color: const Color(0xFFFFEFE6),
-                                alignment: Alignment.center,
-                                child: const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Color(0xFFFFD8CC),
-                                  ),
-                                ),
-                              );
-                            },
-                            errorWidget: (context, url, error) {
-                              return Container(
-                                color: const Color(0xFFFFEFE6),
-                                alignment: Alignment.center,
-                                child: const Text('🐾'),
-                              );
-                            },
+              const SizedBox(height: 16),
+
+              if (currentCat.introduction.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 9,
+                  ),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    currentCat.introduction,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.4,
+                      color: Color(0xFF4A2B22),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
+              if (currentCat.personalityTags.isNotEmpty) ...[
+                Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: currentCat.personalityTags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE9DE),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF8C6A5F),
                           ),
                         ),
                       );
-                    },
+                    }).toList(),
                   ),
-          ],
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              CattiCard(catProfile: currentCat, onChanged: reloadCatProfile),
+
+              const SizedBox(height: 18),
+
+              if (!widget.cat.isVirtualCat)
+                _catInfoCard(
+                  breed: widget.cat.breed.isEmpty ? '미입력' : widget.cat.breed,
+                  gender: widget.cat.gender,
+                  birthDate: getBirthDateText(widget.cat.birthDate),
+                ),
+
+              const SizedBox(height: 18),
+
+              const Text(
+                '앨범',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F1A24),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              catPosts.isEmpty
+                  ? Container(
+                      height: 150,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Text('게시글이 없습니다 🐾'),
+                    )
+                  : GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: catPosts.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 5,
+                            mainAxisSpacing: 5,
+                          ),
+                      itemBuilder: (context, index) {
+                        final post = catPosts[index];
+
+                        return GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => PostDetailDialog(
+                                imageUrl: post.imageUrl,
+                                catName: post.catName,
+                                caption: post.caption,
+                                postId: post.id,
+                                createdAt: post.createdAt ?? DateTime.now(),
+                                tagText: post.tags
+                                    .map((tag) => '#$tag')
+                                    .join(' '),
+                                canWriteReview:
+                                    post.ownerUid !=
+                                    FirebaseAuth.instance.currentUser?.uid,
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: post.imageUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) {
+                                return Container(
+                                  color: const Color(0xFFFFEFE6),
+                                  alignment: Alignment.center,
+                                  child: const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Color(0xFFFFD8CC),
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorWidget: (context, url, error) {
+                                return Container(
+                                  color: const Color(0xFFFFEFE6),
+                                  alignment: Alignment.center,
+                                  child: const Text('🐾'),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ],
+          ),
         ),
       ),
     );

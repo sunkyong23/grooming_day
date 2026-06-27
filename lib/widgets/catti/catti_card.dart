@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../models/cat_profile.dart';
-import '../../screens/catti/catti_intro_screen.dart';
-import 'catti_profile_card.dart';
-
 import '../../models/catti_result.dart';
+import '../../screens/catti/catti_intro_screen.dart';
 import '../../screens/catti/catti_result_screen.dart';
+import 'catti_profile_card.dart';
 
 class CattiCard extends StatelessWidget {
   final CatProfile catProfile;
+  final VoidCallback? onChanged;
 
-  const CattiCard({super.key, required this.catProfile});
+  const CattiCard({super.key, required this.catProfile, this.onChanged});
 
-  void _openCattiTest(BuildContext context) {
-    Navigator.push(
+  Future<void> _openCattiTest(BuildContext context) async {
+    final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => CattiIntroScreen(
@@ -22,6 +22,10 @@ class CattiCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (changed == true) {
+      onChanged?.call();
+    }
   }
 
   Future<void> _confirmRetest(BuildContext context) async {
@@ -87,7 +91,7 @@ class CattiCard extends StatelessWidget {
     );
 
     if (result == true && context.mounted) {
-      _openCattiTest(context);
+      await _openCattiTest(context);
     }
   }
 
@@ -100,7 +104,6 @@ class CattiCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: CattiProfileCard(
           catti: savedCatti,
-
           onTapResult: () {
             final result = CattiResult.fromSaved(savedCatti);
 
@@ -117,7 +120,6 @@ class CattiCard extends StatelessWidget {
               ),
             );
           },
-
           onTapRetest: () {
             _confirmRetest(context);
           },

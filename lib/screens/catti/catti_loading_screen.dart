@@ -27,6 +27,7 @@ class CattiLoadingScreen extends StatefulWidget {
 class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
   int progress = 0;
   Timer? timer;
+  bool _openedReveal = false;
 
   @override
   void initState() {
@@ -37,19 +38,7 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
 
       if (progress >= 100) {
         timer.cancel();
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => CattiRevealScreen(
-              catProfileId: widget.catProfileId,
-              catName: widget.catName,
-              result: widget.result,
-              answers: widget.answers,
-            ),
-          ),
-        );
-
+        _openReveal();
         return;
       }
 
@@ -57,6 +46,27 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
         progress++;
       });
     });
+  }
+
+  Future<void> _openReveal() async {
+    if (_openedReveal) return;
+    _openedReveal = true;
+
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CattiRevealScreen(
+          catProfileId: widget.catProfileId,
+          catName: widget.catName,
+          result: widget.result,
+          answers: widget.answers,
+        ),
+      ),
+    );
+
+    if (saved == true && mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   @override
@@ -78,7 +88,6 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
               children: [
                 const Text('🐾', style: TextStyle(fontSize: 58)),
                 const SizedBox(height: 22),
-
                 const Text(
                   '우리 냥이만의\n특별한 성향을 분석하는 중...',
                   textAlign: TextAlign.center,
@@ -89,9 +98,7 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
                     color: Color(0xFF3D241E),
                   ),
                 ),
-
                 const SizedBox(height: 28),
-
                 Text(
                   '$progress%',
                   style: const TextStyle(
@@ -100,9 +107,7 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
                     color: Color(0xFFE8A58C),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 ClipRRect(
                   borderRadius: BorderRadius.circular(100),
                   child: LinearProgressIndicator(

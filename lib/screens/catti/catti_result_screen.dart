@@ -63,6 +63,12 @@ class _CattiResultScreenState extends State<CattiResultScreen>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('CATTI 결과를 프로필에 저장했어요.')));
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
 

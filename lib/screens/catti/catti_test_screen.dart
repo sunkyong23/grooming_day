@@ -22,20 +22,25 @@ class CattiTestScreen extends StatefulWidget {
 class _CattiTestScreenState extends State<CattiTestScreen> {
   int currentIndex = 0;
   CattiOption? selectedOption;
+  bool _isMovingNext = false;
 
   final Map<String, CattiOption> answers = {};
 
   CattiQuestion get currentQuestion => cattiQuestions[currentIndex];
 
-  void goNext() {
-    if (selectedOption == null) return;
+  Future<void> goNext() async {
+    if (selectedOption == null || _isMovingNext) return;
 
     answers[currentQuestion.id] = selectedOption!;
 
     if (currentIndex == cattiQuestions.length - 1) {
+      setState(() {
+        _isMovingNext = true;
+      });
+
       final result = CattiService().calculateResult(answers);
 
-      Navigator.pushReplacement(
+      final changed = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
           builder: (_) => CattiLoadingScreen(
@@ -46,6 +51,17 @@ class _CattiTestScreenState extends State<CattiTestScreen> {
           ),
         ),
       );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isMovingNext = false;
+      });
+
+      if (changed == true) {
+        Navigator.pop(context, true);
+      }
+
       return;
     }
 
@@ -56,6 +72,8 @@ class _CattiTestScreenState extends State<CattiTestScreen> {
   }
 
   void goPrevious() {
+    if (_isMovingNext) return;
+
     if (currentIndex == 0) {
       Navigator.pop(context);
       return;
@@ -131,11 +149,13 @@ class _CattiTestScreenState extends State<CattiTestScreen> {
                     final selected = selectedOption?.id == option.id;
 
                     return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedOption = option;
-                        });
-                      },
+                      onTap: _isMovingNext
+                          ? null
+                          : () {
+                              setState(() {
+                                selectedOption = option;
+                              });
+                            },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 180),
                         padding: const EdgeInsets.symmetric(
@@ -187,7 +207,7 @@ class _CattiTestScreenState extends State<CattiTestScreen> {
                 height: 54,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedOption == null
+                    backgroundColor: selectedOption == null || _isMovingNext
                         ? const Color(0xFFE8D8D0)
                         : const Color(0xFFFFD9C9),
                     foregroundColor: const Color(0xFF3D241E),
@@ -196,9 +216,15 @@ class _CattiTestScreenState extends State<CattiTestScreen> {
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  onPressed: selectedOption == null ? null : goNext,
+                  onPressed: selectedOption == null || _isMovingNext
+                      ? null
+                      : goNext,
                   child: Text(
-                    currentIndex == cattiQuestions.length - 1 ? '결과 보기' : '다음',
+                    _isMovingNext
+                        ? '이동 중...'
+                        : currentIndex == cattiQuestions.length - 1
+                        ? '결과 보기'
+                        : '다음',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,

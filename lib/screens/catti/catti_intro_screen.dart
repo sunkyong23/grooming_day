@@ -12,6 +12,20 @@ class CattiIntroScreen extends StatelessWidget {
     required this.catName,
   });
 
+  Future<void> _startTest(BuildContext context) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CattiTestScreen(catProfileId: catProfileId, catName: catName),
+      ),
+    );
+
+    if (changed == true && context.mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,15 +102,7 @@ class CattiIntroScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CattiTestScreen(
-                          catProfileId: catProfileId,
-                          catName: catName,
-                        ),
-                      ),
-                    );
+                    _startTest(context);
                   },
                   child: const Text(
                     '검사 시작하기',

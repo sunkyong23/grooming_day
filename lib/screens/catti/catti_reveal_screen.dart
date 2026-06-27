@@ -64,8 +64,8 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
     super.dispose();
   }
 
-  void _goToResult() {
-    Navigator.pushReplacement(
+  Future<void> _goToResult() async {
+    final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => CattiResultScreen(
@@ -76,6 +76,10 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
         ),
       ),
     );
+
+    if (saved == true && mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   @override
