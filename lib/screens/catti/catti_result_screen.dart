@@ -6,6 +6,13 @@ import '../../models/catti_result.dart';
 import '../../widgets/catti/catti_radar_chart.dart';
 import '../../services/catti_result_service.dart';
 
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+
 class CattiResultScreen extends StatefulWidget {
   final String catProfileId;
   final String catName;
@@ -29,6 +36,7 @@ class CattiResultScreen extends StatefulWidget {
 
 class _CattiResultScreenState extends State<CattiResultScreen>
     with SingleTickerProviderStateMixin {
+  final GlobalKey _shareKey = GlobalKey();
   late final AnimationController _controller;
 
   late final Animation<double> _headerOpacity;
@@ -84,6 +92,53 @@ class _CattiResultScreenState extends State<CattiResultScreen>
     }
   }
 
+  Future<void> _shareResult() async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 120));
+
+      final boundary =
+          _shareKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+
+      if (boundary == null) {
+        throw Exception('공유 영역을 찾을 수 없어요.');
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData == null) {
+        throw Exception('이미지 변환에 실패했어요.');
+      }
+
+      final pngBytes = byteData.buffer.asUint8List();
+
+      final directory = await getTemporaryDirectory();
+
+      final file = File(
+        '${directory.path}/catti_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+
+      await file.writeAsBytes(pngBytes);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'image/png')],
+          text: '${widget.catName}의 CATTI 결과 🐾',
+        ),
+      );
+    } catch (e, stack) {
+      debugPrint('CATTI SHARE ERROR: $e');
+      debugPrint('$stack');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('공유 이미지 오류: $e')));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -129,46 +184,11 @@ class _CattiResultScreenState extends State<CattiResultScreen>
     super.dispose();
   }
 
-  Animation<double> _fade(double begin, double end) {
-    return CurvedAnimation(
-      parent: _controller,
-      curve: Interval(begin, end, curve: Curves.easeOut),
-    );
-  }
-
-  Animation<Offset> _slide(double begin, double end) {
-    return Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Interval(begin, end, curve: Curves.easeOutCubic),
-      ),
-    );
-  }
-
-  Widget _appear({
-    required double begin,
-    required double end,
-    required Widget child,
-  }) {
-    return FadeTransition(
-      opacity: _fade(begin, end),
-      child: SlideTransition(position: _slide(begin, end), child: child),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final profile = cattiTypeProfiles.firstWhere(
       (profile) => profile.id == widget.result.code,
     );
-
-    final similarMatches = widget.result.topMatches
-        .where((match) => match.typeId != widget.result.code)
-        .take(2)
-        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F4),
@@ -186,257 +206,254 @@ class _CattiResultScreenState extends State<CattiResultScreen>
             builder: (context, _) {
               return Column(
                 children: [
-                  FadeTransition(
-                    opacity: _headerOpacity,
-                    child: SlideTransition(
-                      position: _headerSlide,
-                      child: ScaleTransition(
-                        scale: _headerScale,
-                        child: Column(
-                          children: [
-                            Text(
-                              profile.emoji,
-                              style: const TextStyle(fontSize: 58),
+                  RepaintBoundary(
+                    key: _shareKey,
+                    child: Container(
+                      color: const Color(0xFFFFF8F4),
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Column(
+                        children: [
+                          _shareHeader(profile),
+
+                          const SizedBox(height: 22),
+
+                          _sectionCard(
+                            child: Column(
+                              children: [
+                                CattiRadarChart(
+                                  key: ValueKey(
+                                    '${widget.result.code}-${widget.result.socialPercent}-${widget.result.curiosityPercent}-${widget.result.activityPercent}-${widget.result.emotionPercent}',
+                                  ),
+                                  socialPercent: widget.result.socialPercent,
+                                  curiosityPercent:
+                                      widget.result.curiosityPercent,
+                                  activityPercent:
+                                      widget.result.activityPercent,
+                                  emotionPercent: widget.result.emotionPercent,
+                                ),
+                                const SizedBox(height: 12),
+                                _scoreRow('사교성', widget.result.socialPercent),
+                                _scoreRow(
+                                  '호기심',
+                                  widget.result.curiosityPercent,
+                                ),
+                                _scoreRow('활동성', widget.result.activityPercent),
+                                _scoreRow('감정표현', widget.result.emotionPercent),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '${widget.catName}의 CATTI',
-                              style: const TextStyle(
-                                color: Color(0xFFB48A78),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          _sectionCard(
+                            title: '대표 키워드',
+                            child: Center(
+                              child: Text(
+                                '${profile.emoji} ${profile.keyword}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF3D241E),
+                                  fontSize: 22,
+                                  height: 1.35,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              profile.name,
-                              style: const TextStyle(
-                                color: Color(0xFF3D241E),
-                                fontSize: 32,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              profile.title,
-                              textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          _sectionCard(
+                            child: Text(
+                              profile.description,
                               style: const TextStyle(
                                 color: Color(0xFF6B4A3A),
-                                fontSize: 17,
-                                height: 1.4,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                height: 1.6,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          _sectionCard(
+                            title: '이런 모습을 보여요',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: profile.traits
+                                  .take(3)
+                                  .map((text) => _compactBullet(text))
+                                  .toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          _sectionCard(
+                            title: '집사가 알아두면 좋아요',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: profile.tips
+                                  .take(2)
+                                  .map((text) => _compactBullet(text))
+                                  .toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          _smallNoteCard(),
+                        ],
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 22),
 
-                  _sectionCard(
-                    child: Column(
-                      children: [
-                        CattiRadarChart(
-                          key: ValueKey(
-                            '${widget.result.code}-${widget.result.socialPercent}-${widget.result.curiosityPercent}-${widget.result.activityPercent}-${widget.result.emotionPercent}',
-                          ),
-                          socialPercent: widget.result.socialPercent,
-                          curiosityPercent: widget.result.curiosityPercent,
-                          activityPercent: widget.result.activityPercent,
-                          emotionPercent: widget.result.emotionPercent,
-                        ),
-                        const SizedBox(height: 12),
-                        _scoreRow('사교성', widget.result.socialPercent),
-                        _scoreRow('호기심', widget.result.curiosityPercent),
-                        _scoreRow('활동성', widget.result.activityPercent),
-                        _scoreRow('감정표현', widget.result.emotionPercent),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _appear(
-                    begin: 0.22,
-                    end: 0.40,
-                    child: _sectionCard(
-                      title: '대표 키워드',
-                      child: Center(
-                        child: Text(
-                          '${profile.emoji} ${profile.keyword}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFF3D241E),
-                            fontSize: 22,
-                            height: 1.35,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  if (similarMatches.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _appear(
-                      begin: 0.34,
-                      end: 0.52,
-                      child: _sectionCard(
-                        title: '비슷한 모습도 있어요',
-                        child: Column(
-                          children: similarMatches.map((match) {
-                            final matchProfile = cattiTypeProfiles.firstWhere(
-                              (profile) => profile.id == match.typeId,
-                            );
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    matchProfile.emoji,
-                                    style: const TextStyle(fontSize: 24),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      matchProfile.name,
-                                      style: const TextStyle(
-                                        color: Color(0xFF3D241E),
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  TweenAnimationBuilder<int>(
-                                    tween: IntTween(
-                                      begin: 0,
-                                      end: match.matchPercent,
-                                    ),
-                                    duration: const Duration(
-                                      milliseconds: 1400,
-                                    ),
-                                    curve: Curves.easeOutCubic,
-                                    builder: (context, value, _) {
-                                      return Text(
-                                        '$value%',
-                                        style: const TextStyle(
-                                          color: Color(0xFFE8A58C),
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 16),
-
-                  _appear(
-                    begin: 0.46,
-                    end: 0.64,
-                    child: _sectionCard(
-                      child: Text(
-                        profile.description,
-                        style: const TextStyle(
-                          color: Color(0xFF6B4A3A),
-                          fontSize: 15,
-                          height: 1.6,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _appear(
-                    begin: 0.58,
-                    end: 0.76,
-                    child: _sectionCard(
-                      title: '이런 모습을 보여요',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: profile.traits
-                            .map((text) => _bullet(text))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _appear(
-                    begin: 0.68,
-                    end: 0.86,
-                    child: _sectionCard(
-                      title: '집사가 알아두면 좋아요',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: profile.tips
-                            .map((text) => _bullet(text))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _appear(begin: 0.78, end: 0.96, child: _smallNoteCard()),
-
-                  if (!widget.readOnly &&
-                      widget.result.debugInfo.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    _appear(begin: 0.76, end: 0.96, child: _debugCard()),
-                  ],
-
-                  if (!widget.readOnly) ...[
-                    const SizedBox(height: 22),
-                    FadeTransition(
-                      opacity: _buttonOpacity,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFD9C9),
-                            foregroundColor: const Color(0xFF3D241E),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          onPressed: _isSaving || _saved ? null : _saveResult,
-                          child: Text(
-                            _isSaving
-                                ? '저장 중...'
-                                : _saved
-                                ? '저장 완료'
-                                : '프로필에 저장하기',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  _actionButtons(),
                 ],
               );
             },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _shareHeader(dynamic profile) {
+    return FadeTransition(
+      opacity: _headerOpacity,
+      child: SlideTransition(
+        position: _headerSlide,
+        child: ScaleTransition(
+          scale: _headerScale,
+          child: Column(
+            children: [
+              Text(profile.emoji, style: const TextStyle(fontSize: 58)),
+              const SizedBox(height: 12),
+              Text(
+                '${widget.catName}의 CATTI',
+                style: const TextStyle(
+                  color: Color(0xFFB48A78),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                profile.name,
+                style: const TextStyle(
+                  color: Color(0xFF3D241E),
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                profile.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF6B4A3A),
+                  fontSize: 17,
+                  height: 1.4,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _actionButtons() {
+    return FadeTransition(
+      opacity: _buttonOpacity,
+      child: widget.readOnly
+          ? SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: OutlinedButton(
+                onPressed: _shareResult,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF3D241E),
+                  side: const BorderSide(color: Color(0xFFF0D5CA)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.ios_share_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      '공유하기',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 54,
+                    child: OutlinedButton(
+                      onPressed: _shareResult,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF3D241E),
+                        side: const BorderSide(color: Color(0xFFF0D5CA)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: const Text(
+                        '공유하기',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: SizedBox(
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _isSaving || _saved ? null : _saveResult,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFD9C9),
+                        foregroundColor: const Color(0xFF3D241E),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                      child: Text(
+                        _isSaving
+                            ? '저장 중...'
+                            : _saved
+                            ? '저장 완료'
+                            : '프로필에 저장하기',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -469,14 +486,14 @@ class _CattiResultScreenState extends State<CattiResultScreen>
     );
   }
 
-  Widget _bullet(String text) {
+  Widget _compactBullet(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 9),
+      padding: const EdgeInsets.only(bottom: 7),
       child: Text(
         '• $text',
         style: const TextStyle(
           color: Color(0xFF6B4A3A),
-          fontSize: 14.5,
+          fontSize: 13,
           height: 1.45,
           fontWeight: FontWeight.w600,
         ),
@@ -526,7 +543,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     color: Color(0xFF3D241E),
-                    fontSize: 17,
+                    fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -535,50 +552,6 @@ class _CattiResultScreenState extends State<CattiResultScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _debugCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black87,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: DefaultTextStyle(
-        style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '🐞 DEBUG',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 14),
-            Text('Social : ${widget.result.socialPercent}'),
-            Text('Curiosity : ${widget.result.curiosityPercent}'),
-            Text('Activity : ${widget.result.activityPercent}'),
-            Text('Emotion : ${widget.result.emotionPercent}'),
-            const SizedBox(height: 16),
-            const Text(
-              'Top Matches',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            ...widget.result.topMatches.map(
-              (e) => Text('${e.typeId}   ${e.matchPercent}%'),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Trait Scores',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            ...widget.result.debugInfo.entries.map(
-              (e) => Text('${e.key} : ${e.value}'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -592,27 +565,42 @@ Widget _smallNoteCard() {
       color: const Color(0xFFFFF8F4),
       borderRadius: BorderRadius.circular(18),
     ),
-    child: RichText(
-      text: const TextSpan(
-        style: TextStyle(
-          color: Color(0xFF9A7A6A),
-          fontSize: 12,
-          height: 1.75,
-          fontWeight: FontWeight.w500,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'CATTI는 정답을 맞히는 검사가 아닙니다.\n\n'
+          '우리 냥이를 조금 더 오래 바라보고\n'
+          '조금 더 이해하기 위한 작은 관찰 기록이에요.\n\n'
+          '모든 고양이는 저마다의 방식으로 우리를 사랑하고 있어요.',
+          style: TextStyle(
+            color: Color(0xFF9A7A6A),
+            fontSize: 12,
+            height: 1.75,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        children: [
-          TextSpan(
-            text:
-                'CATTI는 정답을 맞히는 검사가 아닙니다.\n\n'
-                '우리 냥이를 조금 더 오래 바라보고,\n'
-                '조금 더 이해하기 위한 작은 관찰 기록이에요.\n\n',
+
+        const SizedBox(height: 22),
+
+        Container(
+          width: double.infinity,
+          height: 1,
+          color: const Color(0xFFE6D8D2),
+        ),
+
+        const SizedBox(height: 12),
+
+        const Text(
+          'GroomingDay CATTI\ngroomingday.app',
+          style: TextStyle(
+            color: Color(0xFFC7B2A9),
+            fontSize: 11,
+            height: 1.5,
+            fontWeight: FontWeight.w500,
           ),
-          TextSpan(
-            text: '모든 고양이는 저마다의 방식으로\n우리를 사랑하고 있어요.',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
