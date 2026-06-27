@@ -559,8 +559,12 @@ class _CatProfileDetailScreenState extends State<CatProfileDetailScreen> {
                 const SizedBox(height: 16),
               ],
 
-              CattiCard(catProfile: currentCat, onChanged: reloadCatProfile),
-
+              if (isOwner || currentCat.catti != null)
+                CattiCard(
+                  catProfile: currentCat,
+                  onChanged: isOwner ? reloadCatProfile : null,
+                  readOnly: !isOwner,
+                ),
               const SizedBox(height: 18),
 
               if (!widget.cat.isVirtualCat)

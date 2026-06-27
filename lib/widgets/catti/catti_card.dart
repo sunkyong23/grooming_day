@@ -9,10 +9,18 @@ import 'catti_profile_card.dart';
 class CattiCard extends StatelessWidget {
   final CatProfile catProfile;
   final VoidCallback? onChanged;
+  final bool readOnly;
 
-  const CattiCard({super.key, required this.catProfile, this.onChanged});
+  const CattiCard({
+    super.key,
+    required this.catProfile,
+    this.onChanged,
+    this.readOnly = false,
+  });
 
   Future<void> _openCattiTest(BuildContext context) async {
+    if (readOnly) return;
+
     final changed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -29,6 +37,8 @@ class CattiCard extends StatelessWidget {
   }
 
   Future<void> _confirmRetest(BuildContext context) async {
+    if (readOnly) return;
+
     final result = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -103,6 +113,7 @@ class CattiCard extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: CattiProfileCard(
+          readOnly: readOnly,
           catti: savedCatti,
           onTapResult: () {
             final result = CattiResult.fromSaved(savedCatti);
@@ -120,11 +131,17 @@ class CattiCard extends StatelessWidget {
               ),
             );
           },
-          onTapRetest: () {
-            _confirmRetest(context);
-          },
+          onTapRetest: readOnly
+              ? null
+              : () {
+                  _confirmRetest(context);
+                },
         ),
       );
+    }
+
+    if (readOnly) {
+      return const SizedBox.shrink();
     }
 
     return Padding(
@@ -196,9 +213,7 @@ class CattiCard extends StatelessWidget {
                   Text('✨', style: TextStyle(fontSize: 20)),
                 ],
               ),
-
               const SizedBox(height: 18),
-
               Text(
                 '${catProfile.name}의 성향을\n관찰해보세요.',
                 textAlign: TextAlign.center,
@@ -209,9 +224,7 @@ class CattiCard extends StatelessWidget {
                   color: Color(0xFF3D241E),
                 ),
               ),
-
               const SizedBox(height: 10),
-
               const Text(
                 '20개의 질문으로 우리 냥이를 더 오래 바라보고\n이해하기 위한 작은 관찰 기록이에요.',
                 textAlign: TextAlign.center,
@@ -222,9 +235,7 @@ class CattiCard extends StatelessWidget {
                   color: Color(0xFF8C6A5F),
                 ),
               ),
-
               const SizedBox(height: 18),
-
               Container(
                 width: double.infinity,
                 height: 46,

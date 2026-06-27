@@ -5,13 +5,15 @@ import '../../models/catti_saved_result.dart';
 class CattiProfileCard extends StatelessWidget {
   final CattiSavedResult catti;
   final VoidCallback onTapResult;
-  final VoidCallback onTapRetest;
+  final VoidCallback? onTapRetest;
+  final bool readOnly;
 
   const CattiProfileCard({
     super.key,
     required this.catti,
     required this.onTapResult,
-    required this.onTapRetest,
+    this.onTapRetest,
+    this.readOnly = false,
   });
 
   String _testedAtText() {
@@ -65,9 +67,7 @@ class CattiProfileCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
           Row(
             children: [
               Text(catti.emoji, style: const TextStyle(fontSize: 38)),
@@ -98,49 +98,67 @@ class CattiProfileCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onTapResult,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF3D241E),
-                    side: const BorderSide(color: Color(0xFFF0D5CA)),
-                    minimumSize: const Size.fromHeight(42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    '결과 보기',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+          if (readOnly)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: onTapResult,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF3D241E),
+                  side: const BorderSide(color: Color(0xFFF0D5CA)),
+                  minimumSize: const Size.fromHeight(42),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onTapRetest,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD9C9),
-                    foregroundColor: const Color(0xFF3D241E),
-                    elevation: 0,
-                    minimumSize: const Size.fromHeight(42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    '다시 검사',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
+                child: const Text(
+                  '결과 보기',
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
-            ],
-          ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onTapResult,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF3D241E),
+                      side: const BorderSide(color: Color(0xFFF0D5CA)),
+                      minimumSize: const Size.fromHeight(42),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      '결과 보기',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: onTapRetest,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFD9C9),
+                      foregroundColor: const Color(0xFF3D241E),
+                      elevation: 0,
+                      minimumSize: const Size.fromHeight(42),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      '다시 검사',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
