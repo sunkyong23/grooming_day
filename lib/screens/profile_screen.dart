@@ -328,21 +328,25 @@ class ProfileScreenState extends State<ProfileScreen> {
                 )
               : Column(
                   children: catProfiles.map((cat) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: SizedBox(
-                        height: 76,
-                        child: Center(
-                          child: CatProfileCard(
-                            cat: cat,
-                            onChanged: () async {
-                              await loadCatProfiles();
-                              await loadMyPostCount();
-                              widget.onRefreshPosts?.call();
-                            },
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: SizedBox(
+                            height: 76,
+                            child: Center(
+                              child: CatProfileCard(
+                                cat: cat,
+                                onChanged: () async {
+                                  await loadCatProfiles();
+                                  await loadMyPostCount();
+                                  widget.onRefreshPosts?.call();
+                                },
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     );
                   }).toList(),
                 ),

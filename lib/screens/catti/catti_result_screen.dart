@@ -5,6 +5,8 @@ import '../../models/catti_question.dart';
 import '../../models/catti_result.dart';
 import '../../widgets/catti/catti_radar_chart.dart';
 
+import '../../services/catti_result_service.dart';
+
 class CattiResultScreen extends StatefulWidget {
   final String catProfileId;
   final String catName;
@@ -32,6 +34,47 @@ class _CattiResultScreenState extends State<CattiResultScreen>
   late final Animation<Offset> _headerSlide;
 
   late final Animation<double> _buttonOpacity;
+
+  final CattiResultService _cattiResultService = CattiResultService();
+  bool _isSaving = false;
+  bool _saved = false;
+
+  Future<void> _saveResult() async {
+    if (_isSaving || _saved) return;
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _cattiResultService.saveCattiResult(
+        catProfileId: widget.catProfileId,
+        result: widget.result,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _saved = true;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CATTI 결과를 프로필에 저장했어요.')));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장 중 문제가 발생했어요. 다시 시도해 주세요.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -368,16 +411,15 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('다음 단계에서 저장 기능을 연결할게요.'),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          '프로필에 저장하기',
-                          style: TextStyle(
+                        onPressed: _isSaving || _saved ? null : _saveResult,
+
+                        child: Text(
+                          _isSaving
+                              ? '저장 중...'
+                              : _saved
+                              ? '저장 완료'
+                              : '프로필에 저장하기',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),

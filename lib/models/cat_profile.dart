@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'catti_saved_result.dart';
 
 class CatProfile {
   final String id;
@@ -22,6 +23,7 @@ class CatProfile {
   final String ownerUserId;
 
   final DateTime? createdAt;
+  final CattiSavedResult? catti;
 
   CatProfile({
     required this.id,
@@ -44,6 +46,8 @@ class CatProfile {
 
     this.createdAt,
     required this.ownerUserId,
+
+    this.catti,
   });
 
   factory CatProfile.fromMap(Map<String, dynamic> data) {
@@ -72,6 +76,10 @@ class CatProfile {
       createdAt: data['createdAt'] == null
           ? null
           : (data['createdAt'] as Timestamp).toDate(),
+
+      catti: data['catti'] is Map<String, dynamic>
+          ? CattiSavedResult.fromMap(data['catti'] as Map<String, dynamic>)
+          : null,
     );
   }
 

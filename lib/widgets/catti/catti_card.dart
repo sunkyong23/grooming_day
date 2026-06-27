@@ -2,28 +2,52 @@ import 'package:flutter/material.dart';
 
 import '../../models/cat_profile.dart';
 import '../../screens/catti/catti_intro_screen.dart';
+import 'catti_profile_card.dart';
 
 class CattiCard extends StatelessWidget {
   final CatProfile catProfile;
 
   const CattiCard({super.key, required this.catProfile});
 
+  void _openCattiTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CattiIntroScreen(
+          catProfileId: catProfile.id,
+          catName: catProfile.name,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final savedCatti = catProfile.catti;
+
+    if (savedCatti != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: CattiProfileCard(
+          catti: savedCatti,
+          onTapResult: () {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('결과 보기 기능을 연결할게요.')));
+          },
+          onTapRetest: () {
+            _openCattiTest(context);
+          },
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CattiIntroScreen(
-                catProfileId: catProfile.id,
-                catName: catProfile.name,
-              ),
-            ),
-          );
+          _openCattiTest(context);
         },
         child: Container(
           width: double.infinity,
