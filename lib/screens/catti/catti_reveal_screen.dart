@@ -29,6 +29,10 @@ class CattiRevealScreen extends StatefulWidget {
 
 class _CattiRevealScreenState extends State<CattiRevealScreen> {
   int step = 0;
+  Timer? stepTimer1;
+  Timer? stepTimer2;
+  Timer? stepTimer3;
+
   late final String todayMessage;
 
   @override
@@ -38,33 +42,40 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
     todayMessage =
         cattiTodayMessages[Random().nextInt(cattiTodayMessages.length)];
 
-    Timer(const Duration(milliseconds: 900), () {
+    stepTimer1 = Timer(const Duration(milliseconds: 850), () {
       if (mounted) setState(() => step = 1);
     });
 
-    Timer(const Duration(milliseconds: 1800), () {
+    stepTimer2 = Timer(const Duration(milliseconds: 1650), () {
       if (mounted) setState(() => step = 2);
     });
 
-    Timer(const Duration(milliseconds: 2850), () {
+    stepTimer3 = Timer(const Duration(milliseconds: 2500), () {
       if (mounted) setState(() => step = 3);
     });
+  }
 
-    Timer(const Duration(milliseconds: 5600), () {
-      if (!mounted) return;
+  @override
+  void dispose() {
+    stepTimer1?.cancel();
+    stepTimer2?.cancel();
+    stepTimer3?.cancel();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CattiResultScreen(
-            catProfileId: widget.catProfileId,
-            catName: widget.catName,
-            result: widget.result,
-            answers: widget.answers,
-          ),
+    super.dispose();
+  }
+
+  void _goToResult() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CattiResultScreen(
+          catProfileId: widget.catProfileId,
+          catName: widget.catName,
+          result: widget.result,
+          answers: widget.answers,
         ),
-      );
-    });
+      ),
+    );
   }
 
   @override
@@ -83,12 +94,12 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(28),
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 650),
+                  duration: const Duration(milliseconds: 620),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
                   transitionBuilder: (child, animation) {
                     final slide = Tween<Offset>(
-                      begin: const Offset(0, 0.04),
+                      begin: const Offset(0, 0.045),
                       end: Offset.zero,
                     ).animate(animation);
 
@@ -119,7 +130,7 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
     if (step == 1) {
       return _messageStep(
         key: const ValueKey('step1'),
-        icon: '🐾',
+        icon: '✨',
         text: '성향을\n정리하고 있어요.',
       );
     }
@@ -127,7 +138,7 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
     if (step == 2) {
       return _messageStep(
         key: const ValueKey('step2'),
-        icon: '🐾',
+        icon: '🐱',
         text: '가장 닮은 모습을\n찾았어요.',
       );
     }
@@ -175,6 +186,17 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
       key: const ValueKey('step3'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        const Text(
+          'CATTI 분석 완료',
+          style: TextStyle(
+            color: Color(0xFFB48A78),
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 22),
+
         TweenAnimationBuilder<double>(
           tween: Tween(begin: 0.45, end: 1),
           duration: const Duration(milliseconds: 850),
@@ -183,51 +205,59 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
             return Transform.scale(scale: scale, child: child);
           },
           child: Container(
-            width: 116,
-            height: 116,
+            width: 120,
+            height: 120,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.82),
+              color: Colors.white.withValues(alpha: 0.88),
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFFFFD9C9), width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE8A58C).withValues(alpha: 0.18),
-                  blurRadius: 24,
+                  color: const Color(0xFFE8A58C).withValues(alpha: 0.2),
+                  blurRadius: 26,
                   offset: const Offset(0, 12),
                 ),
               ],
             ),
-            child: Text(profile.emoji, style: const TextStyle(fontSize: 62)),
+            child: Text(profile.emoji, style: const TextStyle(fontSize: 64)),
           ),
         ),
+
         const SizedBox(height: 26),
+
         Text(
-          profile.name,
+          '${profile.name}을 발견했어요',
+          textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFF3D241E),
-            fontSize: 36,
+            fontSize: 32,
+            height: 1.25,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.5,
           ),
         ),
+
         const SizedBox(height: 10),
+
         Text(
           profile.title,
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFF6B4A3A),
-            fontSize: 17,
+            fontSize: 16.5,
             height: 1.45,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 32),
+
+        const SizedBox(height: 30),
+
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.72),
+            color: Colors.white.withValues(alpha: 0.74),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFF0D5CA)),
           ),
@@ -253,6 +283,36 @@ class _CattiRevealScreenState extends State<CattiRevealScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 650),
+          curve: Curves.easeOut,
+          builder: (context, opacity, child) {
+            return Opacity(opacity: opacity, child: child);
+          },
+          child: SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFD9C9),
+                foregroundColor: const Color(0xFF3D241E),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+              ),
+              onPressed: _goToResult,
+              child: const Text(
+                '결과 확인하기',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+              ),
+            ),
           ),
         ),
       ],

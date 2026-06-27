@@ -25,42 +25,62 @@ class CattiLoadingScreen extends StatefulWidget {
 }
 
 class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
+  int progress = 0;
+  Timer? timer;
+
   @override
   void initState() {
     super.initState();
 
-    Timer(const Duration(milliseconds: 1200), () {
+    timer = Timer.periodic(const Duration(milliseconds: 14), (timer) {
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CattiRevealScreen(
-            catProfileId: widget.catProfileId,
-            catName: widget.catName,
-            result: widget.result,
-            answers: widget.answers,
+      if (progress >= 100) {
+        timer.cancel();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CattiRevealScreen(
+              catProfileId: widget.catProfileId,
+              catName: widget.catName,
+              result: widget.result,
+              answers: widget.answers,
+            ),
           ),
-        ),
-      );
+        );
+
+        return;
+      }
+
+      setState(() {
+        progress++;
+      });
     });
   }
 
   @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFFF8F4),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF8F4),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(28),
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('🐾', style: TextStyle(fontSize: 58)),
-                SizedBox(height: 22),
-                Text(
-                  '우리 냥이의 성향을\n살펴보는 중...',
+                const Text('🐾', style: TextStyle(fontSize: 58)),
+                const SizedBox(height: 22),
+
+                const Text(
+                  '우리 냥이만의\n특별한 성향을 분석하는 중...',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 26,
@@ -69,13 +89,27 @@ class _CattiLoadingScreenState extends State<CattiLoadingScreen> {
                     color: Color(0xFF3D241E),
                   ),
                 ),
-                SizedBox(height: 22),
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
+
+                const SizedBox(height: 28),
+
+                Text(
+                  '$progress%',
+                  style: const TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
                     color: Color(0xFFE8A58C),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: LinearProgressIndicator(
+                    value: progress / 100,
+                    minHeight: 10,
+                    backgroundColor: const Color(0xFFF3DDD3),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFFE8A58C)),
                   ),
                 ),
               ],
