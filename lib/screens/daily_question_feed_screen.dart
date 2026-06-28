@@ -185,7 +185,7 @@ class _DailyQuestionFeedScreenState extends State<DailyQuestionFeedScreen> {
             style: TextStyle(
               color: Color(0xFF8A5A44),
               fontSize: 14,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 10),
@@ -194,7 +194,7 @@ class _DailyQuestionFeedScreenState extends State<DailyQuestionFeedScreen> {
             style: const TextStyle(
               color: Color(0xFF3D241E),
               fontSize: 17,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
               height: 1.4,
             ),
           ),
@@ -233,13 +233,8 @@ class _DailyQuestionFeedScreenState extends State<DailyQuestionFeedScreen> {
         backgroundColor: const Color(0xFFFFF7F1),
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: const Text(
-          '오늘의 냥문답',
-          style: TextStyle(
-            color: Color(0xFF1F1A24),
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        centerTitle: false,
+        title: const SizedBox.shrink(),
       ),
       body: isLoading
           ? const Center(

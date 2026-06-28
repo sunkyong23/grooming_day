@@ -154,7 +154,7 @@ class _CatPostCardState extends State<CatPostCard>
             style: TextStyle(
               color: Color(0xFF5C4033),
               fontSize: 20,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
             ),
           ),
           content: Text(

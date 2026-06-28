@@ -519,6 +519,7 @@ class HomeScreenState extends State<HomeScreen>
       await PostService.deletePost(post);
 
       await refreshPostLists();
+      await loadTodayQuestion();
 
       if (!mounted) return;
 

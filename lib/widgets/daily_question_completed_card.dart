@@ -30,7 +30,7 @@ class DailyQuestionCompletedCard extends StatelessWidget {
                     style: TextStyle(
                       color: Color(0xFF3D241E),
                       fontSize: 16,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(height: 4),
