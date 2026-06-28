@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/daily_question.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 class DailyQuestionService {
   DailyQuestionService._();
 
@@ -54,8 +56,12 @@ class DailyQuestionService {
     return '$year-$month-$day';
   }
 
+  String _uidKey() {
+    return FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+  }
+
   String _answeredKey(DateTime date) {
-    return 'daily_question_answered_${_dateKey(date)}';
+    return 'daily_question_answered_${_uidKey()}_${_dateKey(date)}';
   }
 
   Future<bool> isTodayAnswered({DateTime? date}) async {
@@ -73,7 +79,7 @@ class DailyQuestionService {
   }
 
   String _dismissedKey(DateTime date) {
-    return 'daily_question_dismissed_${_dateKey(date)}';
+    return 'daily_question_dismissed_${_uidKey()}_${_dateKey(date)}';
   }
 
   Future<bool> isTodayDismissed({DateTime? date}) async {

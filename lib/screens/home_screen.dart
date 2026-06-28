@@ -569,6 +569,8 @@ class HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final shouldShowDailyQuestionCard =
+        selectedFeedTag == '오늘의' && todayQuestion != null;
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7F1),
       body: SafeArea(
@@ -584,7 +586,7 @@ class HomeScreenState extends State<HomeScreen>
               onCommunityBgmTap: _toggleCommunityBgm,
             ),
 
-            if (todayQuestion != null)
+            if (shouldShowDailyQuestionCard)
               DailyQuestionCardV2(
                 question: todayQuestion!,
                 answered: isDailyQuestionAnswered,
