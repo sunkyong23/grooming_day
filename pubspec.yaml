@@ -78,6 +78,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/audio/
+    - assets/data/
 
   fonts:
     - family: SUIT

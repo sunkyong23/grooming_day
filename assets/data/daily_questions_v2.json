@@ -1,0 +1,26 @@
+[
+  {
+    "id": "01-01",
+    "month": 1,
+    "day": 1,
+    "question": "새해 첫날, 우리 아이에게 가장 해주고 싶은 말은?",
+    "hint": "새해의 다짐이나 소원을 적어보세요.",
+    "category": "추억",
+    "season": "winter",
+    "emoji": "🐾",
+    "cardColor": "#FFF1EA",
+    "isActive": true
+  },
+  {
+    "id": "06-28",
+    "month": 6,
+    "day": 28,
+    "question": "오늘 우리 고양이의 가장 귀여웠던 순간은?",
+    "hint": "사진과 함께 짧게 남겨보세요.",
+    "category": "일상",
+    "season": "summer",
+    "emoji": "☀️",
+    "cardColor": "#FFF7D6",
+    "isActive": true
+  }
+]

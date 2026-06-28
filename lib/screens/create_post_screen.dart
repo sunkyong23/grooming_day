@@ -15,14 +15,19 @@ import 'cat_profile_type_select_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../models/daily_question.dart';
+import '../services/daily_question_service.dart';
+
 class CreatePostScreen extends StatefulWidget {
   final Function(Post, bool) onPostCreated;
+  final DailyQuestion? dailyQuestion;
   final File? initialImage;
 
   const CreatePostScreen({
     super.key,
     required this.onPostCreated,
     this.initialImage,
+    this.dailyQuestion,
   });
 
   @override
@@ -355,6 +360,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
       if (newPost == null) return;
 
+      if (widget.dailyQuestion != null) {
+        await DailyQuestionService.instance.markTodayAnswered();
+      }
+
       widget.onPostCreated(newPost, isAlbumOnlyPost);
 
       if (mounted) {
@@ -545,6 +554,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
               const SizedBox(height: 18),
 
+              _dailyQuestionPromptCard(),
+
               TextField(
                 controller: captionController,
                 cursorColor: const Color(0xFF8A5A44),
@@ -683,6 +694,66 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _dailyQuestionPromptCard() {
+    final dailyQuestion = widget.dailyQuestion;
+
+    if (dailyQuestion == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1EA),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFF0D5CA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(dailyQuestion.emoji, style: const TextStyle(fontSize: 15)),
+              const SizedBox(width: 6),
+              const Text(
+                '오늘의 냥문답',
+                style: TextStyle(
+                  color: Color(0xFF8A5A44),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            dailyQuestion.question,
+            style: const TextStyle(
+              color: Color(0xFF3D241E),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              height: 1.35,
+            ),
+          ),
+          if (dailyQuestion.hint.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              dailyQuestion.hint,
+              style: const TextStyle(
+                color: Color(0xFF8A6A5A),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

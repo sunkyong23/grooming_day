@@ -26,6 +26,11 @@ import '../widgets/home/home_feed_list.dart';
 import '../widgets/home/home_tag_header.dart';
 import '../services/community_bgm_service.dart';
 
+import '../models/daily_question.dart';
+import '../services/daily_question_service.dart';
+import '../widgets/daily_question_card.dart';
+import '../widgets/daily_question_completed_card.dart';
+
 Set<String> scrappedPostIds = {};
 
 class HomeScreen extends StatefulWidget {
@@ -71,6 +76,10 @@ class HomeScreenState extends State<HomeScreen>
   bool _isLoadingPosts = false;
   bool _hasMorePosts = true;
 
+  DailyQuestion? todayQuestion;
+  bool isLoadingDailyQuestion = true;
+  bool isDailyQuestionAnswered = false;
+
   static const int _postPageLimit = 20;
 
   late final AnimationController _loadingController;
@@ -89,12 +98,14 @@ class HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
 
+    loadTodayQuestion();
     _initializeCommunityBgm();
 
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat();
+
     loadInitialData();
 
     feedScrollController.addListener(() {
@@ -145,6 +156,20 @@ class HomeScreenState extends State<HomeScreen>
     } else {
       await CommunityBgmService.stop();
     }
+  }
+
+  Future<void> loadTodayQuestion() async {
+    final answered = await DailyQuestionService.instance.isTodayAnswered();
+    final dismissed = await DailyQuestionService.instance.isTodayDismissed();
+    final question = await DailyQuestionService.instance.getTodayQuestion();
+
+    if (!mounted) return;
+
+    setState(() {
+      isDailyQuestionAnswered = answered;
+      todayQuestion = answered || dismissed ? null : question;
+      isLoadingDailyQuestion = false;
+    });
   }
 
   Future<void> loadInitialData() async {
@@ -531,7 +556,42 @@ class HomeScreenState extends State<HomeScreen>
               communityBgmEnabled: _communityBgmEnabled,
               onCommunityBgmTap: _toggleCommunityBgm,
             ),
-            const SizedBox(height: 16),
+
+            if (todayQuestion != null)
+              DailyQuestionCard(
+                question: todayQuestion!,
+                onTapAnswer: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreatePostScreen(
+                        onPostCreated: (post, isAlbumOnlyPost) {
+                          widget.onPostCreatedFromHome?.call(
+                            post,
+                            isAlbumOnlyPost,
+                          );
+                          loadTodayQuestion();
+                        },
+                        dailyQuestion: todayQuestion,
+                      ),
+                    ),
+                  );
+                },
+                onTapDismiss: () async {
+                  await DailyQuestionService.instance.dismissToday();
+
+                  if (!mounted) return;
+
+                  setState(() {
+                    todayQuestion = null;
+                  });
+                },
+              )
+            else if (isDailyQuestionAnswered)
+              const DailyQuestionCompletedCard()
+            else
+              const SizedBox(height: 16),
+
             Expanded(
               child: HomeFeedList(
                 isLoadingPosts: _isLoadingPosts,
