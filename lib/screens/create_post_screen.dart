@@ -356,6 +356,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         userId: currentUserId,
         catProfileImageUrl: selectedCatProfile!.profileImageUrl,
         isVirtualCat: selectedCatProfile!.isVirtualCat,
+        dailyQuestionId: widget.dailyQuestion?.id,
+        dailyQuestionText: widget.dailyQuestion?.question,
       );
 
       if (newPost == null) return;

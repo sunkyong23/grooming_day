@@ -58,6 +58,8 @@ class PostService {
       commentCount: data['commentCount'] ?? 0,
       visibility: data['visibility'] ?? 'public',
       unreadReviewCount: data['unreadReviewCount'] ?? 0,
+      dailyQuestionId: data['dailyQuestionId'] as String?,
+      dailyQuestionText: data['dailyQuestionText'] as String?,
     );
   }
 
@@ -318,6 +320,8 @@ class PostService {
     required String userId,
     required String catProfileImageUrl,
     required bool isVirtualCat,
+    String? dailyQuestionId,
+    String? dailyQuestionText,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -370,6 +374,8 @@ class PostService {
       commentCount: 0,
       visibility: tags.isEmpty ? 'private' : 'public',
       unreadReviewCount: 0,
+      dailyQuestionId: dailyQuestionId,
+      dailyQuestionText: dailyQuestionText,
     );
 
     await FirebaseFirestore.instance.collection('posts').doc(postId).set({
@@ -396,6 +402,8 @@ class PostService {
       'commentCount': 0,
       'unreadReviewCount': 0,
       'visibility': tags.isEmpty ? 'private' : 'public',
+      'dailyQuestionId': dailyQuestionId,
+      'dailyQuestionText': dailyQuestionText,
     });
 
     if (tags.isNotEmpty) {

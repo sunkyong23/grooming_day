@@ -33,6 +33,9 @@ class Post {
   final String catProfileImageUrl;
   final bool isVirtualCat;
 
+  final String? dailyQuestionId;
+  final String? dailyQuestionText;
+
   Post({
     required this.id,
     required this.ownerUid,
@@ -57,6 +60,8 @@ class Post {
     this.visibility = 'public',
     this.storagePath = '',
     this.thumbnailStoragePath = '',
+    this.dailyQuestionId,
+    this.dailyQuestionText,
   });
 
   factory Post.fromDoc(DocumentSnapshot doc) {
@@ -94,6 +99,8 @@ class Post {
 
       catProfileImageUrl: data['catProfileImageUrl'] ?? '',
       isVirtualCat: data['isVirtualCat'] ?? false,
+      dailyQuestionId: data['dailyQuestionId'] as String?,
+      dailyQuestionText: data['dailyQuestionText'] as String?,
     );
   }
 }

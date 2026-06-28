@@ -83,6 +83,8 @@ class HomeFeedList extends StatelessWidget {
             postId: post.id,
             canWriteReview: post.ownerUid != currentUid,
             isScrapped: scrappedPostIds.contains(post.id),
+            dailyQuestionId: post.dailyQuestionId,
+            dailyQuestionText: post.dailyQuestionText,
             onReviewChanged: (commentCount) {
               onReviewChanged(post.id, commentCount);
             },

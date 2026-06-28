@@ -26,6 +26,8 @@ class CatPostCard extends StatefulWidget {
   final String postId;
   final bool canWriteReview;
   final void Function(int commentCount)? onReviewChanged;
+  final String? dailyQuestionId;
+  final String? dailyQuestionText;
 
   const CatPostCard({
     super.key,
@@ -47,6 +49,8 @@ class CatPostCard extends StatefulWidget {
     required this.postId,
     this.canWriteReview = true,
     this.onReviewChanged,
+    this.dailyQuestionId,
+    this.dailyQuestionText,
   });
 
   @override
@@ -111,6 +115,95 @@ class _CatPostCardState extends State<CatPostCard>
       currentCommentCount = loadedReviews.length;
       isLoadingReviews = false;
     });
+  }
+
+  Future<void> showDailyQuestionDialog() async {
+    final questionText = widget.dailyQuestionText;
+
+    if (questionText == null || questionText.trim().isEmpty) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFF8F2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          title: const Text(
+            '오늘의 냥문답',
+            style: TextStyle(
+              color: Color(0xFF5C4033),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          content: Text(
+            questionText,
+            style: const TextStyle(
+              color: Color(0xFF5A372F),
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                '닫기',
+                style: TextStyle(
+                  color: Color(0xFFE8A58A),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _dailyQuestionBadge() {
+    final hasDailyQuestion =
+        widget.dailyQuestionId != null && widget.dailyQuestionId!.isNotEmpty;
+
+    if (!hasDailyQuestion) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 9),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: showDailyQuestionDialog,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF4EC),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFF0D5CA)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('🐾', style: TextStyle(fontSize: 12)),
+                SizedBox(width: 4),
+                Text(
+                  '오늘의 냥문답',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF8A5A44),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> showEditReviewDialog(Review review) async {
@@ -655,7 +748,7 @@ class _CatPostCardState extends State<CatPostCard>
               ],
             ),
           ),
-
+          _dailyQuestionBadge(),
           GestureDetector(
             onTap: () {
               showDialog(
