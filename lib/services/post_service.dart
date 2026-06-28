@@ -449,6 +449,34 @@ class PostService {
     return page.posts;
   }
 
+  static Future<List<Post>> loadPostsByDailyQuestionId(
+    String dailyQuestionId,
+  ) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .where('dailyQuestionId', isEqualTo: dailyQuestionId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('visibility', isEqualTo: 'public')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs.map(_postFromDoc).toList();
+  }
+
+  static Future<int> countPostsByDailyQuestionId(String dailyQuestionId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('posts')
+        .where('dailyQuestionId', isEqualTo: dailyQuestionId)
+        .where('isDeleted', isEqualTo: false)
+        .where('isHidden', isEqualTo: false)
+        .where('visibility', isEqualTo: 'public')
+        .count()
+        .get();
+
+    return snapshot.count ?? 0;
+  }
+
   static Future<void> updatePost({
     required Post post,
     required String caption,

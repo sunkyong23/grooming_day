@@ -28,8 +28,10 @@ import '../services/community_bgm_service.dart';
 
 import '../models/daily_question.dart';
 import '../services/daily_question_service.dart';
-import '../widgets/daily_question_card.dart';
-import '../widgets/daily_question_completed_card.dart';
+
+import '../widgets/daily_question_card_v2.dart';
+
+import 'daily_question_feed_screen.dart';
 
 Set<String> scrappedPostIds = {};
 
@@ -44,6 +46,7 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
+  int todayQuestionAnswerCount = 0;
   final List<String> tags = const [
     '오늘의',
     '아깽이',
@@ -163,13 +166,36 @@ class HomeScreenState extends State<HomeScreen>
     final dismissed = await DailyQuestionService.instance.isTodayDismissed();
     final question = await DailyQuestionService.instance.getTodayQuestion();
 
+    int answerCount = 0;
+
+    if (question != null) {
+      answerCount = await PostService.countPostsByDailyQuestionId(question.id);
+    }
+
     if (!mounted) return;
 
     setState(() {
       isDailyQuestionAnswered = answered;
-      todayQuestion = answered || dismissed ? null : question;
+      todayQuestion = dismissed ? null : question;
+      todayQuestionAnswerCount = answerCount;
       isLoadingDailyQuestion = false;
     });
+  }
+
+  void openTodayQuestionFeed() {
+    final question = todayQuestion;
+
+    if (question == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DailyQuestionFeedScreen(
+          dailyQuestionId: question.id,
+          dailyQuestionText: question.question,
+        ),
+      ),
+    );
   }
 
   Future<void> loadInitialData() async {
@@ -558,8 +584,11 @@ class HomeScreenState extends State<HomeScreen>
             ),
 
             if (todayQuestion != null)
-              DailyQuestionCard(
+              DailyQuestionCardV2(
                 question: todayQuestion!,
+                answered: isDailyQuestionAnswered,
+                answerCount: todayQuestionAnswerCount,
+                onTapFeed: openTodayQuestionFeed,
                 onTapAnswer: () {
                   Navigator.push(
                     context,
@@ -587,8 +616,6 @@ class HomeScreenState extends State<HomeScreen>
                   });
                 },
               )
-            else if (isDailyQuestionAnswered)
-              const DailyQuestionCompletedCard()
             else
               const SizedBox(height: 16),
 

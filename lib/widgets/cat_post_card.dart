@@ -6,6 +6,10 @@ import '../services/review_service.dart';
 import '../services/report_service.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import '../screens/daily_question_feed_screen.dart';
+
+import '../services/cat_service.dart';
+import '../screens/cat_profile_detail_screen.dart';
 
 class CatPostCard extends StatefulWidget {
   final String imagePath;
@@ -17,6 +21,7 @@ class CatPostCard extends StatefulWidget {
   final String userId;
   final bool isScrapped;
   final bool showMoreButton;
+  final String catProfileId;
   final int scrapCount;
   final VoidCallback? onScrapTap;
   final VoidCallback? onMoreTap;
@@ -42,6 +47,7 @@ class CatPostCard extends StatefulWidget {
     required this.isScrapped,
     this.showMoreButton = false,
     required this.onScrapTap,
+    required this.catProfileId,
     this.onMoreTap,
     required this.catProfileImageUrl,
     required this.isVirtualCat,
@@ -99,6 +105,19 @@ class _CatPostCardState extends State<CatPostCard>
 
   String formatReviewDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> openCatProfile() async {
+    if (widget.catProfileId.isEmpty) return;
+
+    final cat = await CatService.loadCatProfileById(widget.catProfileId);
+
+    if (!mounted || cat == null) return;
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => CatProfileDetailScreen(cat: cat)),
+    );
   }
 
   Future<void> loadReviews() async {
@@ -177,7 +196,28 @@ class _CatPostCardState extends State<CatPostCard>
       child: Align(
         alignment: Alignment.centerLeft,
         child: GestureDetector(
-          onTap: showDailyQuestionDialog,
+          onTap: () {
+            final dailyQuestionId = widget.dailyQuestionId;
+            final dailyQuestionText = widget.dailyQuestionText;
+
+            if (dailyQuestionId == null ||
+                dailyQuestionId.isEmpty ||
+                dailyQuestionText == null ||
+                dailyQuestionText.isEmpty) {
+              showDailyQuestionDialog();
+              return;
+            }
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DailyQuestionFeedScreen(
+                  dailyQuestionId: dailyQuestionId,
+                  dailyQuestionText: dailyQuestionText,
+                ),
+              ),
+            );
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
@@ -690,51 +730,60 @@ class _CatPostCardState extends State<CatPostCard>
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 17,
-                  backgroundColor: const Color(0xFFFFE2C6),
-                  backgroundImage: widget.catProfileImageUrl.isNotEmpty
-                      ? CachedNetworkImageProvider(widget.catProfileImageUrl)
-                      : null,
-                  child: widget.catProfileImageUrl.isEmpty
-                      ? (widget.isVirtualCat
-                            ? Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Image.asset(
-                                  'assets/icons/today_cat.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              )
-                            : const Text('🐱', style: TextStyle(fontSize: 17)))
-                      : null,
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: openCatProfile,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        widget.catName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF3D241E),
-                        ),
+                      CircleAvatar(
+                        radius: 17,
+                        backgroundColor: const Color(0xFFFFE2C6),
+                        backgroundImage: widget.catProfileImageUrl.isNotEmpty
+                            ? CachedNetworkImageProvider(
+                                widget.catProfileImageUrl,
+                              )
+                            : null,
+                        child: widget.catProfileImageUrl.isEmpty
+                            ? (widget.isVirtualCat
+                                  ? Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Image.asset(
+                                        'assets/icons/today_cat.png',
+                                        fit: BoxFit.contain,
+                                      ),
+                                    )
+                                  : const Text(
+                                      '🐱',
+                                      style: TextStyle(fontSize: 17),
+                                    ))
+                            : null,
                       ),
-                      Text(
-                        '@${widget.userId}',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFFB08678),
-                        ),
+                      const SizedBox(width: 9),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.catName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF3D241E),
+                            ),
+                          ),
+                          Text(
+                            '@${widget.userId}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFB08678),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                Text(
-                  "${widget.createdAt.year}.${widget.createdAt.month.toString().padLeft(2, '0')}.${widget.createdAt.day.toString().padLeft(2, '0')} · ${widget.createdAt.hour.toString().padLeft(2, '0')}:${widget.createdAt.minute.toString().padLeft(2, '0')}",
-                  style: const TextStyle(fontSize: 9, color: Color(0xFFC9AFA7)),
-                ),
+                const Spacer(),
                 const SizedBox(width: 12),
                 if (widget.showMoreButton)
                   GestureDetector(

@@ -78,6 +78,7 @@ class HomeFeedList extends StatelessWidget {
             tagText: post.tags.map((tag) => '#$tag').join('   '),
             createdAt: post.createdAt ?? DateTime.now(),
             catName: post.catName,
+            catProfileId: post.catProfileId,
             userId: post.userId,
             commentCount: commentCountOverrides[post.id] ?? post.commentCount,
             postId: post.id,

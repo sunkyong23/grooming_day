@@ -722,6 +722,7 @@ class AlbumScreenState extends State<AlbumScreen>
             tagText: post.tags.map((tag) => '#$tag').join('   '),
             createdAt: post.createdAt ?? DateTime.now(),
             catName: post.catName,
+            catProfileId: post.catProfileId,
             catProfileImageUrl: post.catProfileImageUrl,
             isVirtualCat: post.isVirtualCat,
             commentCount: post.commentCount,
