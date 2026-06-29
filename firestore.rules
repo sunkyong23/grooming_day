@@ -280,7 +280,10 @@ service cloud.firestore {
 
   match /notifications/{notificationId} {
   allow read: if isSignedIn()
-    && resource.data.receiverUid == request.auth.uid;
+    && (
+      resource.data.receiverUid == request.auth.uid
+      || resource.data.senderUid == request.auth.uid
+    );
 
   allow create: if isSignedIn()
     && request.resource.data.senderUid == request.auth.uid
@@ -296,7 +299,11 @@ service cloud.firestore {
       'deletedAt'
     ]);
 
-  allow delete: if false;
+  allow delete: if isSignedIn()
+    && (
+      resource.data.receiverUid == request.auth.uid
+      || resource.data.senderUid == request.auth.uid
+    );
 }
 
     match /{path=**}/favoriteCats/{catProfileId} {

@@ -194,6 +194,8 @@ class _CattiResultScreenState extends State<CattiResultScreen>
       (profile) => profile.id == widget.result.code,
     );
 
+    final similarProfiles = _similarProfiles(profile);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F4),
       appBar: AppBar(
@@ -255,7 +257,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                                   color: Color(0xFF3D241E),
                                   fontSize: 22,
                                   height: 1.35,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
@@ -272,6 +274,21 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                               ),
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          _sectionCard(
+                            title: '비슷한 냥이',
+                            child: Column(
+                              children: similarProfiles
+                                  .map(
+                                    (item) => _similarTypeRow(
+                                      item.profile,
+                                      item.percent,
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          ),
+
                           const SizedBox(height: 16),
                           _sectionCard(
                             title: '이런 모습을 보여요',
@@ -336,7 +353,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                 style: const TextStyle(
                   color: Color(0xFF3D241E),
                   fontSize: 32,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 8),
@@ -468,7 +485,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
               style: const TextStyle(
                 color: Color(0xFF3D241E),
                 fontSize: 17,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 22),
@@ -490,6 +507,85 @@ class _CattiResultScreenState extends State<CattiResultScreen>
           height: 1.45,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+
+  List<({dynamic profile, int percent})> _similarProfiles(
+    dynamic currentProfile,
+  ) {
+    final maxDistance = 400;
+
+    final sorted =
+        cattiTypeProfiles.where((item) => item.id != currentProfile.id).map((
+          item,
+        ) {
+          final distance = _profileDistance(currentProfile, item);
+          final percent = ((1 - (distance / maxDistance)) * 100)
+              .clamp(0, 100)
+              .round();
+
+          return (profile: item, percent: percent);
+        }).toList()..sort((a, b) => b.percent.compareTo(a.percent));
+
+    return sorted.take(2).toList();
+  }
+
+  int _profileDistance(dynamic a, dynamic b) {
+    return (a.targetSocial - b.targetSocial).abs() +
+        (a.targetCuriosity - b.targetCuriosity).abs() +
+        (a.targetActivity - b.targetActivity).abs() +
+        (a.targetEmotion - b.targetEmotion).abs();
+  }
+
+  Widget _similarTypeRow(dynamic profile, int percent) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Text(profile.emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.name,
+                  style: const TextStyle(
+                    color: Color(0xFF3D241E),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  profile.keyword,
+                  style: const TextStyle(
+                    color: Color(0xFF9A7A6A),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF1EA),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFF0D5CA)),
+            ),
+            child: Text(
+              '$percent%',
+              style: const TextStyle(
+                color: Color(0xFFE09086),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -537,7 +633,7 @@ class _CattiResultScreenState extends State<CattiResultScreen>
                   style: const TextStyle(
                     color: Color(0xFF3D241E),
                     fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

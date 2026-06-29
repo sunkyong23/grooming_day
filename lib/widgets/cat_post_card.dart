@@ -103,8 +103,14 @@ class _CatPostCardState extends State<CatPostCard>
     super.dispose();
   }
 
-  String formatReviewDate(DateTime date) {
-    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  String formatDateTime(DateTime date) {
+    final year = date.year.toString();
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    return '$year.$month.$day $hour:$minute';
   }
 
   Future<void> openCatProfile() async {
@@ -784,7 +790,18 @@ class _CatPostCardState extends State<CatPostCard>
                   ),
                 ),
                 const Spacer(),
-                const SizedBox(width: 12),
+
+                Text(
+                  formatDateTime(widget.createdAt),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFFC0A39A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
                 if (widget.showMoreButton)
                   GestureDetector(
                     onTap: widget.onMoreTap,
@@ -1300,13 +1317,13 @@ class _CatPostCardState extends State<CatPostCard>
                                             ),
                                           ],
                                         ),
-
+                                        const SizedBox(height: 4),
                                         Text(
                                           review.createdAt == null
                                               ? ''
                                               : review.updatedAt != null
-                                              ? '${formatReviewDate(review.createdAt!)} · 수정됨'
-                                              : formatReviewDate(
+                                              ? '${formatDateTime(review.createdAt!)} · 수정됨'
+                                              : formatDateTime(
                                                   review.createdAt!,
                                                 ),
                                           style: const TextStyle(
